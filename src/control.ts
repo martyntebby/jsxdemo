@@ -1,44 +1,41 @@
 
-const prefixLength = document.location.pathname.lastIndexOf('/');
-
 main();
 
 function main() {
-  doFetch(document.location);
+  doFetch('/', true);
   document.body.onclick = onClick;
   window.onpopstate = onPopState;
 }
 
 function onClick(e: Event) {
   if (e.target instanceof HTMLAnchorElement && e.target.dataset.cmd != null) {
-    doFetch(e.target, true);
+    doFetch(e.target.pathname, true);
     e.preventDefault();
   }
 }
 
 function onPopState(e: Event) {
-  doFetch(document.location);
+  doFetch(document.location.pathname);
 }
 
-function link2cmd(link: HTMLHyperlinkElementUtils) {
-  const strs = link.pathname.substring(prefixLength).split('/');
+function link2cmd(pathname: string) {
+  const strs = pathname.split('/');
   if(strs[1] === 'index.html') strs[1] = '';
   const cmd = strs[1] || 'news';
   const arg = strs[2] || '1';
-  const url = link.protocol + '//node-hnapi.herokuapp.com/' + cmd +
+  const url = 'https://node-hnapi.herokuapp.com/' + cmd +
     ((cmd === 'user' || cmd === 'item') ? '/' : '?page=') + arg;
   return { cmd, arg, url };
 }
 
-async function doFetch(link: HTMLHyperlinkElementUtils, updateHistory?: boolean) {
-  console.log('doFetch', link.pathname);
-  const { cmd, arg, url } = link2cmd(link);
+async function doFetch(pathname: string, updateHistory?: boolean) {
+  console.log('doFetch', pathname);
+  const { cmd, arg, url } = link2cmd(pathname);
   const vnode = fetchFormat(url, cmd, arg);
   const elem = document.getElementsByTagName('main')[0];
   elem.firstElementChild!.className = 'fade';
   if (updateHistory) {
-    const path = '/' + cmd + '/' + arg;
-    window.history.pushState({}, '', path);
+    window.history.pushState({}, '', pathname);
   }
   render((await vnode) as any, elem);
 }
