@@ -1,0 +1,53 @@
+
+nav {
+  background: orange;
+  padding: 0.2em;
+}
+
+main {
+  margin: 0.2em;
+}
+
+ul {
+  list-style-type: none;
+}
+
+li {
+  margin-bottom: 0.5em;
+}
+
+details {
+  margin-top: 0.5em;
+  margin-left: 1em;
+}
+
+a {
+  color: black;
+}
+
+a:link {
+  color: #333;
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+tbody {
+  vertical-align: top;
+}
+
+.bold {
+  font-weight: bold;
+}
+
+.smallgrey {
+  font-size: small;
+  color: grey;
+}
+
+.fade {
+  opacity: 0.2;
+  transition: 0.8s;
+}

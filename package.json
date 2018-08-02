@@ -1,0 +1,17 @@
+{
+  "name": "jsx-hackernews",
+  "version": "0.1.0",
+  "description": "Sample Hacker News app using jsxrender.",
+  "main": "out/main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Martyn Tebby",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/react": "^16.4.7",
+    "@types/react-dom": "^16.0.6",
+    "typescript": "^3.0.1"
+  },
+  "dependencies": {}
+}
