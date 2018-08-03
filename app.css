@@ -26,7 +26,7 @@ a {
 }
 
 a:link {
-  color: #333;
+  color: #444;
   text-decoration: none;
 }
 
@@ -44,10 +44,11 @@ tbody {
 
 .smallgrey {
   font-size: small;
-  color: grey;
+  color: #666;
 }
 
-.fade {
+.loading {
+  cursor: progress;
   opacity: 0.2;
   transition: 0.8s;
 }

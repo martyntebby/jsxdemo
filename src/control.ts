@@ -1,15 +1,17 @@
+const prepath = document.location.pathname.substring(
+  0, document.location.pathname.lastIndexOf('/'));
 
 main();
 
 function main() {
-  doFetch('/', true);
+  doFetch(document.location.pathname);
   document.body.onclick = onClick;
   window.onpopstate = onPopState;
 }
 
 function onClick(e: Event) {
   if (e.target instanceof HTMLAnchorElement && e.target.dataset.cmd != null) {
-    doFetch(e.target.pathname, true);
+    doFetch(prepath + e.target.pathname, true);
     e.preventDefault();
   }
 }
@@ -19,7 +21,7 @@ function onPopState(e: Event) {
 }
 
 function link2cmd(pathname: string) {
-  const strs = pathname.split('/');
+  const strs = pathname.substring(prepath.length).split('/');
   if(strs[1] === 'index.html') strs[1] = '';
   const cmd = strs[1] || 'news';
   const arg = strs[2] || '1';
@@ -33,7 +35,7 @@ async function doFetch(pathname: string, updateHistory?: boolean) {
   const { cmd, arg, url } = link2cmd(pathname);
   const vnode = fetchFormat(url, cmd, arg);
   const elem = document.getElementsByTagName('main')[0];
-  elem.firstElementChild!.className = 'fade';
+  elem.firstElementChild!.className = 'loading';
   if (updateHistory) {
     window.history.pushState({}, '', pathname);
   }

@@ -1,13 +1,14 @@
 "use strict";
+const prepath = document.location.pathname.substring(0, document.location.pathname.lastIndexOf('/'));
 main();
 function main() {
-    doFetch('/', true);
+    doFetch(document.location.pathname);
     document.body.onclick = onClick;
     window.onpopstate = onPopState;
 }
 function onClick(e) {
     if (e.target instanceof HTMLAnchorElement && e.target.dataset.cmd != null) {
-        doFetch(e.target.pathname, true);
+        doFetch(prepath + e.target.pathname, true);
         e.preventDefault();
     }
 }
@@ -15,7 +16,7 @@ function onPopState(e) {
     doFetch(document.location.pathname);
 }
 function link2cmd(pathname) {
-    const strs = pathname.split('/');
+    const strs = pathname.substring(prepath.length).split('/');
     if (strs[1] === 'index.html')
         strs[1] = '';
     const cmd = strs[1] || 'news';
@@ -29,7 +30,7 @@ async function doFetch(pathname, updateHistory) {
     const { cmd, arg, url } = link2cmd(pathname);
     const vnode = fetchFormat(url, cmd, arg);
     const elem = document.getElementsByTagName('main')[0];
-    elem.firstElementChild.className = 'fade';
+    elem.firstElementChild.className = 'loading';
     if (updateHistory) {
         window.history.pushState({}, '', pathname);
     }
@@ -111,10 +112,9 @@ function doChildren(children) {
 }
 function ItemsView(props) {
     return (h("div", null,
-        h("ol", { start: (props.page - 1) * 30 + 1 },
-            props.items.map(item => h("li", null,
-                h(ItemView, { item: item }))),
-            h("a", { href: `/${props.cmd}/${props.page + 1}`, "data-cmd": true }, "More"))));
+        h("ol", { start: (props.page - 1) * 30 + 1 }, props.items.map(item => h("li", null,
+            h(ItemView, { item: item })))),
+        h("a", { href: `/${props.cmd}/${props.page + 1}`, "data-cmd": true }, "More")));
 }
 function ItemView(props) {
     const i = props.item;

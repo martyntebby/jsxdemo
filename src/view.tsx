@@ -4,8 +4,8 @@ function ItemsView(props: { items: HnItem[], cmd: string, page: number }) {
     <div>
       <ol start={(props.page - 1) * 30 + 1}>
         {props.items.map(item => <li><ItemView item={item}/></li>)}
-        <a href={`/${props.cmd}/${props.page + 1}`} data-cmd>More</a>
       </ol>
+      <a href={`/${props.cmd}/${props.page + 1}`} data-cmd>More</a>
     </div>
   );
 }
