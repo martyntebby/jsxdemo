@@ -52,8 +52,7 @@ async function fetchFormat(url, cmd, arg) {
     }
 }
 function render(element, container) {
-    const str = renderToString(element);
-    window.requestAnimationFrame(() => container.innerHTML = str);
+    container.innerHTML = renderToString(element);
 }
 function renderToString(element) {
     const { type, props, children } = element;
@@ -114,7 +113,7 @@ function ItemsView(props) {
     return (h("div", null,
         h("ol", { start: (props.page - 1) * 30 + 1 }, props.items.map(item => h("li", null,
             h(ItemView, { item: item })))),
-        h("a", { href: `/${props.cmd}/${props.page + 1}`, "data-cmd": true }, "More")));
+        h("a", { href: `/${props.cmd}/${props.page + 1}`, "data-cmd": true }, "Next Page")));
 }
 function ItemView(props) {
     const i = props.item;

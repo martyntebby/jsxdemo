@@ -49,6 +49,6 @@ tbody {
 
 .loading {
   cursor: progress;
-  opacity: 0.2;
-  transition: 0.8s;
+  opacity: 0.1;
+  transition: 1s;
 }

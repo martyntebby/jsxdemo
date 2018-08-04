@@ -10,8 +10,7 @@ interface VNode {
 }
 
 function render(element: VNode, container: Element): void {
-  const str = renderToString(element);
-  window.requestAnimationFrame(() => container.innerHTML = str);
+  container.innerHTML = renderToString(element);
 }
 
 function renderToString(element: VNode): string {
