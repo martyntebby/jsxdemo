@@ -1,16 +1,12 @@
 {
-  "exclude": [ "demo/sw/*" ],
+  "files": [ "sw.ts" ],
   "compilerOptions": {
     "target": "es2017",
     "module": "none",
     "moduleResolution": "node",
-    "outFile": "demo/dist/main.js",
-    //"outDir": "demo/dist",
-    "rootDir": "src",
-    "rootDirs": [ "src", "demo/src" ],
-    "jsx": "react",
-    "jsxFactory": "h",
-    //"lib": ["dom", "es2017", "scripthost", "webworker"],
+//    "outFile": "../sw.js",
+    "outDir": "..",
+    "lib": ["es2017", "webworker"],
     /* Basic Options */
     //"target": "es5",                          /* Specify ECMAScript target version: 'ES3' (default), 'ES5', 'ES2015', 'ES2016', 'ES2017','ES2018' or 'ESNEXT'. */
     //"module": "commonjs",                     /* Specify module code generation: 'none', 'commonjs', 'amd', 'system', 'umd', 'es2015', or 'ESNext'. */

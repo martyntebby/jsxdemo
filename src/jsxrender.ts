@@ -1,3 +1,4 @@
+//export { render, renderToString, createElement, h, Fragment };
 
 type Props = { [key: string]: any };
 

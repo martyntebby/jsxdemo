@@ -1,3 +1,13 @@
+//export { doRender };
+//import { h, render } from './jsxrender.js';
+
+function doRender(cmd: string, arg: string, data: any, elem: Element) {
+  const vnode = typeof data === 'string' ? ErrorView(data) :
+  cmd === 'user' ? UserView({ user: data }) :
+  cmd === 'item' ? ItemView({ item: data }) :
+  ItemsView({ items: data, cmd: cmd, page: Number.parseInt(arg) });
+  render(vnode as any, elem);
+}
 
 function ItemsView(props: { items: HnItem[], cmd: string, page: number }) {
   return (

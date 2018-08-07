@@ -1,6 +1,6 @@
 {
   "name": "jsx-hackernews",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Sample Hacker News app using jsxrender.",
   "main": "out/main.js",
   "scripts": {
@@ -11,7 +11,9 @@
   "devDependencies": {
     "@types/react": "^16.4.7",
     "@types/react-dom": "^16.0.6",
+    "csstype": "^2.5.6",
     "typescript": "^3.0.1"
   },
-  "dependencies": {}
+  "dependencies": {
+  }
 }

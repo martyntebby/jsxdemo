@@ -1,19 +1,37 @@
 "use strict";
-const prepath = document.location.pathname.substring(0, document.location.pathname.lastIndexOf('/'));
+//import { doRender } from './view.js';
+let prepath;
 main();
 function main() {
-    doFetch(document.location.pathname);
-    document.body.onclick = onClick;
+    console.log('main');
+    const pathname = document.location.pathname;
+    prepath = pathname.substring(0, pathname.lastIndexOf('/'));
+    fetchRender(pathname);
     window.onpopstate = onPopState;
-}
-function onClick(e) {
-    if (e.target instanceof HTMLAnchorElement && e.target.dataset.cmd != null) {
-        doFetch(prepath + e.target.pathname, true);
-        e.preventDefault();
+    document.body.onclick = onClick;
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('sw.js');
     }
 }
 function onPopState(e) {
-    doFetch(document.location.pathname);
+    fetchRender(document.location.pathname);
+}
+function onClick(e) {
+    if (e.target instanceof HTMLAnchorElement && e.target.dataset.cmd != null) {
+        fetchRender(prepath + e.target.pathname, {});
+        e.preventDefault();
+    }
+}
+async function fetchRender(pathname, state) {
+    console.log('fetchRender', pathname);
+    const { cmd, arg, url } = link2cmd(pathname);
+    const datap = doFetch(url);
+    if (state)
+        window.history.pushState(state, '', pathname);
+    const elem = document.getElementsByTagName('main')[0];
+    elem.firstElementChild.className = 'loading';
+    //  const doRender = (await import('./view.js')).doRender;
+    doRender(cmd, arg, await datap, elem);
 }
 function link2cmd(pathname) {
     const strs = pathname.substring(prepath.length).split('/');
@@ -25,89 +43,26 @@ function link2cmd(pathname) {
         ((cmd === 'user' || cmd === 'item') ? '/' : '?page=') + arg;
     return { cmd, arg, url };
 }
-async function doFetch(pathname, updateHistory) {
-    console.log('doFetch', pathname);
-    const { cmd, arg, url } = link2cmd(pathname);
-    const vnode = fetchFormat(url, cmd, arg);
-    const elem = document.getElementsByTagName('main')[0];
-    elem.firstElementChild.className = 'loading';
-    if (updateHistory) {
-        window.history.pushState({}, '', pathname);
-    }
-    render((await vnode), elem);
-}
-async function fetchFormat(url, cmd, arg) {
+async function doFetch(url) {
     try {
         const resp = await fetch(url);
         if (!resp.ok)
-            return ErrorView(resp.statusText);
+            return resp.statusText;
         const json = await resp.json();
-        return json.error ? ErrorView(json.error) :
-            cmd === 'user' ? UserView({ user: json }) :
-                cmd === 'item' ? ItemView({ item: json }) :
-                    ItemsView({ items: json, cmd: cmd, page: Number.parseInt(arg) });
+        return json.error ? json.error.toString() : json;
     }
     catch (err) {
-        return ErrorView(err.toString());
+        return err.toString();
     }
 }
-function render(element, container) {
-    container.innerHTML = renderToString(element);
-}
-function renderToString(element) {
-    const { type, props, children } = element;
-    let str = '';
-    if (type) {
-        str += '<' + type;
-        for (const name in props) {
-            str += doProp(name, props[name]);
-        }
-        str += '>';
-    }
-    if (children)
-        str += doChildren(children);
-    if (type)
-        str += '</' + type + '>';
-    return str;
-}
-function createElement(type, props, ...children) {
-    props = props || {};
-    if (typeof type === 'function') {
-        props.children = children;
-        return type(props);
-    }
-    return { type, props, children };
-}
-const h = createElement;
-function Fragment(props) {
-    return createElement('', null, ...props.children);
-}
-function doProp(name, value) {
-    if (name === 'key' || name === 'ref' || value == null || value === false)
-        return '';
-    if (name === 'className')
-        name = 'class';
-    else if (name === 'forHtml')
-        name = 'for';
-    else if (name === 'defaultValue')
-        name = 'value';
-    else if (name === 'style' && typeof value === 'object') {
-        value = Object.keys(value).map(key => `${key}:${value[key]};`).join('');
-    }
-    return ' ' + name + '="' + value + '"';
-}
-function doChildren(children) {
-    let str = '';
-    for (const child of children) {
-        if (child == null || typeof child === 'boolean') { }
-        else if (Array.isArray(child))
-            str += doChildren(child);
-        else if (typeof child === 'object')
-            str += renderToString(child);
-        else
-            str += child;
-    }
-    return str;
+//export { doRender };
+//import { h, render } from './jsxrender.js';
+function doRender(cmd, arg, data, elem) {
+    const vnode = typeof data === 'string' ? ErrorView(data) :
+        cmd === 'user' ? UserView({ user: data }) :
+            cmd === 'item' ? ItemView({ item: data }) :
+                ItemsView({ items: data, cmd: cmd, page: Number.parseInt(arg) });
+    render(vnode, elem);
 }
 function ItemsView(props) {
     return (h("div", null,
@@ -185,4 +140,63 @@ function ErrorView(err) {
     return h("div", null,
         "Error: ",
         err);
+}
+//export { render, renderToString, createElement, h, Fragment };
+function render(element, container) {
+    container.innerHTML = renderToString(element);
+}
+function renderToString(element) {
+    const { type, props, children } = element;
+    let str = '';
+    if (type) {
+        str += '<' + type;
+        for (const name in props) {
+            str += doProp(name, props[name]);
+        }
+        str += '>';
+    }
+    if (children)
+        str += doChildren(children);
+    if (type)
+        str += '</' + type + '>';
+    return str;
+}
+function createElement(type, props, ...children) {
+    props = props || {};
+    if (typeof type === 'function') {
+        props.children = children;
+        return type(props);
+    }
+    return { type, props, children };
+}
+const h = createElement;
+function Fragment(props) {
+    return createElement('', null, ...props.children);
+}
+function doProp(name, value) {
+    if (name === 'key' || name === 'ref' || value == null || value === false)
+        return '';
+    if (name === 'className')
+        name = 'class';
+    else if (name === 'forHtml')
+        name = 'for';
+    else if (name === 'defaultValue')
+        name = 'value';
+    else if (name === 'style' && typeof value === 'object') {
+        value = Object.keys(value).map(key => `${key}:${value[key]};`).join('');
+    }
+    return ' ' + name + '="' + value + '"';
+}
+function doChildren(children) {
+    let str = '';
+    for (const child of children) {
+        if (child == null || typeof child === 'boolean') { }
+        else if (Array.isArray(child))
+            str += doChildren(child);
+        else if (typeof child === 'object')
+            str += renderToString(child);
+        else
+            str += child;
+    }
+    return str;
 }
