@@ -104,7 +104,9 @@ function ItemView(props) {
         h(CommentsView, { comments: i.comments })));
 }
 function CommentsView(props) {
-    return (h("div", null, props.comments && props.comments.map(comment => h(CommentView, { comment: comment }))));
+    return (h("div", null,
+        props.comments && h("p", null),
+        props.comments && props.comments.map(comment => h(CommentView, { comment: comment }))));
 }
 function CommentView(props) {
     const c = props.comment;
@@ -119,22 +121,24 @@ function CommentView(props) {
 function UserNameView(props) {
     return h("a", { className: 'bold', href: '/user/' + props.user, "data-cmd": true }, props.user);
 }
+const Y_URL = 'https://news.ycombinator.com/';
 function UserView(props) {
     const u = props.user;
-    return (h("table", null,
-        h("tbody", null,
-            h("tr", null,
-                h("td", null, "user:"),
-                h("td", null, u.id)),
-            h("tr", null,
-                h("td", null, "created:"),
-                h("td", null, u.created)),
-            h("tr", null,
-                h("td", null, "karma:"),
-                h("td", null, u.karma)),
-            h("tr", null,
-                h("td", null, "about:"),
-                h("td", null, u.about)))));
+    return (h("div", null,
+        h("p", null,
+            "user ",
+            h("span", { className: 'bold large' },
+                u.id,
+                " "),
+            "(",
+            u.karma,
+            ") created ",
+            u.created),
+        h("div", null, u.about),
+        h("p", null,
+            h("a", { href: Y_URL + 'submitted?id=' + u.id }, "submissions"),
+            h("span", null, " | "),
+            h("a", { href: Y_URL + 'threads?id=' + u.id }, "comments"))));
 }
 function ErrorView(err) {
     return h("div", null,

@@ -42,6 +42,7 @@ function ItemView(props: { item: HnItem }) {
 function CommentsView(props: {comments?: HnComment[]}) {
   return (
     <div>
+      {props.comments && <p/>}
       {props.comments && props.comments.map(comment =>
       <CommentView comment={comment}/>)}
     </div>
@@ -61,21 +62,27 @@ function CommentView(props: { comment: HnComment }): JSX.Element {
   );
 }
 
-function UserNameView(props: { user: string}) {
+function UserNameView(props: { user: string }) {
   return <a className='bold' href={'/user/' + props.user} data-cmd>{props.user}</a>;
 }
+
+const Y_URL = 'https://news.ycombinator.com/';
 
 function UserView(props: { user: HnUser }) {
   const u = props.user;
   return (
-    <table>
-      <tbody>
-        <tr><td>user:</td><td>{u.id}</td></tr>
-        <tr><td>created:</td><td>{u.created}</td></tr>
-        <tr><td>karma:</td><td>{u.karma}</td></tr>
-        <tr><td>about:</td><td>{u.about}</td></tr>
-      </tbody>
-    </table>
+    <div>
+      <p>
+        user <span className='bold large'>{u.id} </span>
+        ({u.karma}) created {u.created}
+      </p>
+      <div>{u.about}</div>
+      <p>
+        <a href={Y_URL + 'submitted?id=' + u.id}>submissions</a>
+        <span> | </span>
+        <a href={Y_URL + 'threads?id=' + u.id}>comments</a>
+      </p>
+    </div>
   );
 }
 

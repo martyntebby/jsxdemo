@@ -1,8 +1,8 @@
 {
   "name": "JSX Hacker News",
   "short_name": "Hacker News",
-  "start_url": ".",
-  "display": "minimal-ui",
+  "start_url": "./",
+  "display": "standalone",
   "background_color": "white",
   "theme_color": "orange",
   "icons": [

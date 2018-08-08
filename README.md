@@ -3,7 +3,7 @@ JSX Hacker News
 Sample Hacker News app using jsxrender.
 
 Try it at
-[https://rawgit.com/martyntebby/jsx-hackernews/master/demo/index.html]
+[https://rawgit.com/martyntebby/jsx-hackernews/master/demo/]
 
 TODO
 ----

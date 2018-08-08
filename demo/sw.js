@@ -1,6 +1,6 @@
 "use strict";
 const CACHE_NAME = 'v1';
-const PRE_CACHE = ['dist/main.js', 'app.css', 'manifest.json'];
+const PRE_CACHE = ['./', 'app.css', 'dist/main.js', 'manifest.json'];
 const _self = self;
 sw();
 function sw() {
@@ -25,7 +25,9 @@ function onFetch(e) {
     e.respondWith(cacheFetch(e.request));
 }
 async function cacheFetch(request) {
-    console.log('cacheFetch', request);
+    console.log('cacheFetch', request.url);
+    if (request.mode === 'cors')
+        return fetch(request);
     const cache = await caches.open(CACHE_NAME);
     let response = await cache.match(request);
     if (!response) {
@@ -36,7 +38,7 @@ async function cacheFetch(request) {
         }
     }
     else {
-        console.log('from cache', response);
+        console.log('from cache', response.url);
     }
     return response;
 }

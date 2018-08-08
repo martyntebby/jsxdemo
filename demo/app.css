@@ -1,52 +1,49 @@
-
-nav {
+header {
   background: orange;
   padding: 0.2em;
 }
-
+footer {
+  padding: 0.2em;
+}
 main {
   margin: 0.2em;
 }
-
 ul {
   list-style-type: none;
 }
-
 li {
   margin-bottom: 0.5em;
 }
-
 details {
   margin-top: 0.5em;
   margin-left: 1em;
 }
-
 a {
   color: black;
 }
-
 a:link {
   color: #444;
   text-decoration: none;
 }
-
 a:hover {
   text-decoration: underline;
 }
-
 tbody {
   vertical-align: top;
 }
-
 .bold {
   font-weight: bold;
 }
-
+.center {
+  text-align: center;
+}
+.large {
+  font-size: large;
+}
 .smallgrey {
   font-size: small;
   color: #666;
 }
-
 .loading {
   cursor: progress;
   opacity: 0.1;
