@@ -1,14 +1,13 @@
 {
-  "include": [ "src/*.ts" ],
+  "include": [ "src/*.ts", "../src/*.ts" ],
   "compilerOptions": {
     "target": "es2017",
-    "module": "es6",
+    "module": "amd",
     "moduleResolution": "node",
-    "outDir": "dist",
+    "outFile": "../dist/main.js",
     //"rootDir": "src",
-//    "rootDirs": [ "src", "demo/src" ],
-   // "jsx": "react",
-   // "jsxFactory": "h",
+    "jsx": "react",
+    "jsxFactory": "h",
     //"lib": ["dom", "es2017", "scripthost", "webworker"],
     /* Basic Options */
     //"target": "es5",                          /* Specify ECMAScript target version: 'ES3' (default), 'ES5', 'ES2015', 'ES2016', 'ES2017','ES2018' or 'ESNEXT'. */

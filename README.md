@@ -2,10 +2,9 @@ JSX Hacker News
 ---------------
 Sample Hacker News app using jsxrender.
 
-Try it at
-[https://rawgit.com/martyntebby/jsx-hackernews/master/demo/]
+Build
+-----
+npm run build
 
-TODO
-----
-use modules and typescript related projects
-add more links
+Try it at
+[https://rawgit.com/martyntebby/jsx-hackernews/master/dist/]

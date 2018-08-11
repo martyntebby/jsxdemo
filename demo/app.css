@@ -1,8 +1,11 @@
-header {
+nav {
   background: orange;
+  font-size: large;
   padding: 0.2em;
 }
 footer {
+  text-align: center;
+  font-size: small;
   padding: 0.2em;
 }
 main {
@@ -28,14 +31,8 @@ a:link {
 a:hover {
   text-decoration: underline;
 }
-tbody {
-  vertical-align: top;
-}
 .bold {
   font-weight: bold;
-}
-.center {
-  text-align: center;
 }
 .large {
   font-size: large;

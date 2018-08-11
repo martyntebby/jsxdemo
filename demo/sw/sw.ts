@@ -1,13 +1,15 @@
 
-const CACHE_NAME = 'v1';
-const PRE_CACHE = [ './', 'app.css',  'dist/main.js', 'manifest.json' ];
+interface Text {} // hack to quiet error
+
+const CACHE_NAME = Date.now().toString();
+const PRE_CACHE = [ './' ]; //, '../demo/manifest.json' ]; //'../demo/app.css',  '../dist/main.js',
 
 const _self = self as ServiceWorkerGlobalScope;
 
 sw();
 
 function sw() {
-  console.log('sw');
+  console.log('sw', CACHE_NAME);
   _self.addEventListener('install', onInstall);
   _self.addEventListener('activate', onActivate);
   _self.addEventListener('fetch', onFetch);
@@ -16,15 +18,15 @@ function sw() {
 function onInstall(e: ExtendableEvent) {
   console.log('onInstall', e);
   console.log('precache', PRE_CACHE);
-  e.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(PRE_CACHE)));
-  _self.skipWaiting();
+  e.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(PRE_CACHE))
+  .then(() =>_self.skipWaiting()));
 }
 
 function onActivate(e: ExtendableEvent) {
   console.log('onActivate', e);
-  e.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(key =>
-    key !== CACHE_NAME).map(name => caches.delete(name)))));
-  _self.clients.claim();
+  e.waitUntil(_self.clients.claim()
+  .then(() => caches.keys().then(keys => Promise.all(keys.filter(key =>
+  key !== CACHE_NAME).map(name => caches.delete(name))))));
 }
 
 function onFetch(e: FetchEvent) {
@@ -34,7 +36,7 @@ function onFetch(e: FetchEvent) {
 
 async function cacheFetch(request: Request) {
   console.log('cacheFetch', request.url);
-  if(request.mode === 'cors') return fetch(request);
+//  if(request.mode === 'cors') return fetch(request);
   const cache = await caches.open(CACHE_NAME);
   let response = await cache.match(request);
   if(!response) {

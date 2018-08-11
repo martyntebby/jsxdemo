@@ -1,4 +1,4 @@
-//import { doRender } from './view.js';
+import { doRender } from './view';
 
 let prepath: string;
 
@@ -14,7 +14,7 @@ function main() {
   document.body.onclick = onClick;
 
   if('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js');
+    navigator.serviceWorker.register('../dist/sw.js');
   }
 }
 

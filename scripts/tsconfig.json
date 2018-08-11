@@ -1,18 +1,9 @@
 {
-  "include": [ "src/*.ts" ],
   "compilerOptions": {
-    "target": "es2017",
-    "module": "es6",
-    "moduleResolution": "node",
-    "outDir": "dist",
-    //"rootDir": "src",
-//    "rootDirs": [ "src", "demo/src" ],
-   // "jsx": "react",
-   // "jsxFactory": "h",
-    //"lib": ["dom", "es2017", "scripthost", "webworker"],
+    "outDir": "../dist",
     /* Basic Options */
-    //"target": "es5",                          /* Specify ECMAScript target version: 'ES3' (default), 'ES5', 'ES2015', 'ES2016', 'ES2017','ES2018' or 'ESNEXT'. */
-    //"module": "commonjs",                     /* Specify module code generation: 'none', 'commonjs', 'amd', 'system', 'umd', 'es2015', or 'ESNext'. */
+    "target": "es5",                          /* Specify ECMAScript target version: 'ES3' (default), 'ES5', 'ES2015', 'ES2016', 'ES2017','ES2018' or 'ESNEXT'. */
+    "module": "commonjs",                     /* Specify module code generation: 'none', 'commonjs', 'amd', 'system', 'umd', 'es2015', or 'ESNext'. */
     // "lib": [],                             /* Specify library files to be included in the compilation. */
     // "allowJs": true,                       /* Allow javascript files to be compiled. */
     // "checkJs": true,                       /* Report errors in .js files. */
@@ -57,8 +48,8 @@
     // "preserveSymlinks": true,              /* Do not resolve the real path of symlinks. */
 
     /* Source Map Options */
-    // "sourceRoot": "./",                    /* Specify the location where debugger should locate TypeScript files instead of source locations. */
-    // "mapRoot": "./",                       /* Specify the location where debugger should locate map files instead of generated locations. */
+    // "sourceRoot": "",                      /* Specify the location where debugger should locate TypeScript files instead of source locations. */
+    // "mapRoot": "",                         /* Specify the location where debugger should locate map files instead of generated locations. */
     // "inlineSourceMap": true,               /* Emit a single file with source maps instead of having a separate file. */
     // "inlineSources": true,                 /* Emit the source alongside the sourcemaps within a single file; requires '--inlineSourceMap' or '--sourceMap' to be set. */
 

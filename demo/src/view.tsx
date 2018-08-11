@@ -1,5 +1,5 @@
-//export { doRender };
-//import { h, render } from './jsxrender.js';
+export { doRender }
+import { h, render } from '../../src/jsxrender';
 
 function doRender(cmd: string, arg: string, data: any, elem: Element) {
   const vnode = typeof data === 'string' ? ErrorView(data) :

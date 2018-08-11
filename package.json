@@ -1,9 +1,12 @@
 {
   "name": "jsx-hackernews",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Sample Hacker News app using jsxrender.",
-  "main": "out/main.js",
+  "main": "dist/bundle.js",
   "scripts": {
+    "build": "tsc -b . demo demo/sw scripts && (cd demo; node ../dist/bundle.js)",
+    "watch": "tsc -b scripts demo/sw demo -w",
+    "clean": "rm -rf dist",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Martyn Tebby",

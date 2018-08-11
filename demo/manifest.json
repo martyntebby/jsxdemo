@@ -1,10 +1,10 @@
 {
   "name": "JSX Hacker News",
   "short_name": "Hacker News",
-  "start_url": "./",
+  "start_url": "../dist/",
   "display": "standalone",
-  "background_color": "white",
   "theme_color": "orange",
+  "background_color": "white",
   "icons": [
     {
       "src": "https://hnpwa.com/assets/images/favicon.png",
