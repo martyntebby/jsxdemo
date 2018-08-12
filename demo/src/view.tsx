@@ -10,11 +10,15 @@ function doRender(cmd: string, arg: string, data: any, elem: Element) {
 }
 
 function ItemsView(props: { items: HnItem[], cmd: string, page: number }) {
+  const prev = props.page === 1 ? <span className='grey'>Prev Page</span> :
+  <a href={`/${props.cmd}/${props.page - 1}`} data-cmd>Prev Page</a>
   return (
     <div>
       <ol start={(props.page - 1) * 30 + 1}>
         {props.items.map(item => <li><ItemView item={item}/></li>)}
       </ol>
+      {prev}
+      <span> | Page {props.page} | </span>
       <a href={`/${props.cmd}/${props.page + 1}`} data-cmd>Next Page</a>
     </div>
   );

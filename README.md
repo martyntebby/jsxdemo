@@ -6,5 +6,6 @@ Build
 -----
 npm run build
 
-Try it at
-[https://rawgit.com/martyntebby/jsx-hackernews/master/dist/]
+Try it
+------
+[https://cdn.rawgit.com/martyntebby/jsx-hackernews/0.4/dist/]

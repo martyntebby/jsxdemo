@@ -78,9 +78,16 @@ define("demo/src/view", ["require", "exports", "src/jsxrender"], function (requi
     }
     exports.doRender = doRender;
     function ItemsView(props) {
+        const prev = props.page === 1 ? jsxrender_1.h("span", { className: 'grey' }, "Prev Page") :
+            jsxrender_1.h("a", { href: `/${props.cmd}/${props.page - 1}`, "data-cmd": true }, "Prev Page");
         return (jsxrender_1.h("div", null,
             jsxrender_1.h("ol", { start: (props.page - 1) * 30 + 1 }, props.items.map(item => jsxrender_1.h("li", null,
                 jsxrender_1.h(ItemView, { item: item })))),
+            prev,
+            jsxrender_1.h("span", null,
+                " | Page ",
+                props.page,
+                " | "),
             jsxrender_1.h("a", { href: `/${props.cmd}/${props.page + 1}`, "data-cmd": true }, "Next Page")));
     }
     function ItemView(props) {

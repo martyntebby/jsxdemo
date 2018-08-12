@@ -1,3 +1,9 @@
+header {
+  background: white;
+  position: sticky;
+  padding-bottom: 1em;
+  top: 0px;
+}
 nav {
   background: orange;
   font-size: large;
@@ -36,6 +42,9 @@ a:hover {
 }
 .large {
   font-size: large;
+}
+.grey {
+  color: grey;
 }
 .smallgrey {
   font-size: small;

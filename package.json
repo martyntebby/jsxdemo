@@ -1,10 +1,10 @@
 {
   "name": "jsx-hackernews",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Sample Hacker News app using jsxrender.",
   "main": "dist/bundle.js",
   "scripts": {
-    "build": "tsc -b . demo demo/sw scripts && (cd demo; node ../dist/bundle.js)",
+    "build": "rm -rf dist && tsc -b . demo demo/sw scripts && (cd demo; node ../dist/bundle.js)",
     "watch": "tsc -b scripts demo/sw demo -w",
     "clean": "rm -rf dist",
     "test": "echo \"Error: no test specified\" && exit 1"
