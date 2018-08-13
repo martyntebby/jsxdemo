@@ -1,21 +1,23 @@
+body {
+  margin: 0px;
+}
 header {
   background: white;
   position: sticky;
-  padding-bottom: 1em;
   top: 0px;
 }
 nav {
   background: orange;
   font-size: large;
-  padding: 0.2em;
+  padding: 0.3em;
 }
 footer {
   text-align: center;
   font-size: small;
-  padding: 0.2em;
+  padding: 0.5em;
 }
 main {
-  margin: 0.2em;
+  margin: 0.5em;
 }
 ul {
   list-style-type: none;
@@ -44,7 +46,7 @@ a:hover {
   font-size: large;
 }
 .grey {
-  color: grey;
+  color: #666;
 }
 .smallgrey {
   font-size: small;

@@ -36,7 +36,7 @@ function onFetch(e: FetchEvent) {
 
 async function cacheFetch(request: Request) {
   console.log('cacheFetch', request.url);
-//  if(request.mode === 'cors') return fetch(request);
+//if(request.mode === 'cors') return fetch(request);
   const cache = await caches.open(CACHE_NAME);
   let response = await cache.match(request);
   if(!response) {

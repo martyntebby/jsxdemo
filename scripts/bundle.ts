@@ -14,8 +14,8 @@ function main() {
   fs.writeFileSync(outFile, outStr, encoding);
 }
 
-function replacer(substring: string, arg1: string, arg2: string) {
-  const tag = arg1 ? 'style' : 'script';
-  const text = fs.readFileSync(arg1 || arg2, encoding);
+function replacer(substring: string, href: string, src: string) {
+  const tag = href ? 'style' : 'script';
+  const text = fs.readFileSync(href || src, encoding);
   return `<${tag}>\n${text}</${tag}>`;
 }

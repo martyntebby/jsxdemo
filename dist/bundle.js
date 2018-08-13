@@ -19,8 +19,8 @@ function main() {
     var outStr = inStr.replace(regex, replacer);
     fs.writeFileSync(outFile, outStr, encoding);
 }
-function replacer(substring, arg1, arg2) {
-    var tag = arg1 ? 'style' : 'script';
-    var text = fs.readFileSync(arg1 || arg2, encoding);
+function replacer(substring, href, src) {
+    var tag = href ? 'style' : 'script';
+    var text = fs.readFileSync(href || src, encoding);
     return "<" + tag + ">\n" + text + "</" + tag + ">";
 }
