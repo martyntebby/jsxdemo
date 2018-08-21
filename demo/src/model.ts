@@ -4,7 +4,6 @@ interface HnUser {
   created_time: number;
   created: string;
   karma: number;
-  avg: null;
   about: string;
 }
 

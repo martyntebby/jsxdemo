@@ -7,7 +7,7 @@ It is small (~60 loc), designed for fast initial page load,
 and also for server side rendering.
 
 It is written in typescript and useable with React @type files.
-The generated javascript ([dist/jsxrender.js]) can also be used with webpack.
+The generated javascript (dist/jsxrender.js) can also be used with webpack, ...
 
 JSX Hacker News
 ---------------
@@ -31,4 +31,4 @@ Interactive (regular 3G): 1.6s (1st view), 0.5s (repeat)
 
 Try it
 ------
-[https://cdn.rawgit.com/martyntebby/jsx-hackernews/0.5/dist/]
+[https://cdn.rawgit.com/martyntebby/jsx-hackernews/0.6/dist/]

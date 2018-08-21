@@ -45,8 +45,9 @@ function link2cmd(pathname: string) {
   if(strs[1] === 'index.html') strs[1] = '';
   const cmd = strs[1] || 'news';
   const arg = strs[2] || '1';
-  const url = 'https://node-hnapi.herokuapp.com/' + cmd +
-    ((cmd === 'user' || cmd === 'item') ? '/' : '?page=') + arg;
+  const url = cmd === 'newest'
+  ? `https://node-hnapi.herokuapp.com/${cmd}?page=${arg}`
+  : `https://api.hnpwa.com/v0/${cmd}/${arg}.json`;
   return { cmd, arg, url };
 }
 

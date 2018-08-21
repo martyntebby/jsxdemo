@@ -3,10 +3,10 @@ define("src/jsxrender", ["require", "exports"], function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     function render(element, container) {
-        container.innerHTML = renderToString(element);
+        container.innerHTML = renderToStaticMarkup(element);
     }
     exports.render = render;
-    function renderToString(element) {
+    function renderToStaticMarkup(element) {
         const { type, props, children } = element;
         let str = '';
         if (type) {
@@ -22,7 +22,7 @@ define("src/jsxrender", ["require", "exports"], function (require, exports) {
             str += '</' + type + '>';
         return str;
     }
-    exports.renderToString = renderToString;
+    exports.renderToStaticMarkup = renderToStaticMarkup;
     function createElement(type, props, ...children) {
         props = props || {};
         if (typeof type === 'function') {
@@ -59,7 +59,7 @@ define("src/jsxrender", ["require", "exports"], function (require, exports) {
             else if (Array.isArray(child))
                 str += doChildren(child);
             else if (typeof child === 'object')
-                str += renderToString(child);
+                str += renderToStaticMarkup(child);
             else
                 str += child;
         }
@@ -70,25 +70,21 @@ define("demo/src/view", ["require", "exports", "src/jsxrender"], function (requi
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     function doRender(cmd, arg, data, elem) {
-        const vnode = typeof data === 'string' ? ErrorView(data) :
+        const vnode = MainView(cmd, arg, data);
+        elem.innerHTML = jsxrender_1.renderToStaticMarkup(vnode);
+    }
+    exports.doRender = doRender;
+    function MainView(cmd, arg, data) {
+        return typeof data === 'string' ? ErrorView(data) :
             cmd === 'user' ? UserView({ user: data }) :
                 cmd === 'item' ? ItemView({ item: data }) :
                     ItemsView({ items: data, cmd: cmd, page: Number.parseInt(arg) });
-        jsxrender_1.render(vnode, elem);
     }
-    exports.doRender = doRender;
     function ItemsView(props) {
-        const prev = props.page === 1 ? jsxrender_1.h("span", { className: 'grey' }, "Prev Page") :
-            jsxrender_1.h("a", { href: `/${props.cmd}/${props.page - 1}`, "data-cmd": true }, "Prev Page");
         return (jsxrender_1.h("div", null,
             jsxrender_1.h("ol", { start: (props.page - 1) * 30 + 1 }, props.items.map(item => jsxrender_1.h("li", null,
                 jsxrender_1.h(ItemView, { item: item })))),
-            prev,
-            jsxrender_1.h("span", null,
-                " | Page ",
-                props.page,
-                " | "),
-            jsxrender_1.h("a", { href: `/${props.cmd}/${props.page + 1}`, "data-cmd": true }, "Next Page")));
+            PagerView(props)));
     }
     function ItemView(props) {
         const i = props.item;
@@ -109,7 +105,7 @@ define("demo/src/view", ["require", "exports", "src/jsxrender"], function (requi
                 jsxrender_1.h("a", { href: '/item/' + i.id, "data-cmd": true },
                     i.comments_count,
                     " comments"));
-        return (jsxrender_1.h("div", null,
+        return (jsxrender_1.h("div", { className: i.comments && 'inset' },
             jsxrender_1.h("a", { href: url, "data-cmd": !i.domain }, i.title),
             " ",
             domain,
@@ -144,7 +140,7 @@ define("demo/src/view", ["require", "exports", "src/jsxrender"], function (requi
     const Y_URL = 'https://news.ycombinator.com/';
     function UserView(props) {
         const u = props.user;
-        return (jsxrender_1.h("div", null,
+        return (jsxrender_1.h("div", { className: 'inset' },
             jsxrender_1.h("p", null,
                 "user ",
                 jsxrender_1.h("span", { className: 'bold large' },
@@ -159,6 +155,17 @@ define("demo/src/view", ["require", "exports", "src/jsxrender"], function (requi
                 jsxrender_1.h("a", { href: Y_URL + 'submitted?id=' + u.id }, "submissions"),
                 jsxrender_1.h("span", null, " | "),
                 jsxrender_1.h("a", { href: Y_URL + 'threads?id=' + u.id }, "comments"))));
+    }
+    function PagerView(props) {
+        const nolink = props.page > 1 ? undefined : 'nolink';
+        const prev = jsxrender_1.h("a", { href: `/${props.cmd}/${props.page - 1}`, "data-cmd": true, className: nolink }, "< prev");
+        const next = jsxrender_1.h("a", { href: `/${props.cmd}/${props.page + 1}`, "data-cmd": true }, "next >");
+        return (jsxrender_1.h("div", { className: 'pager' },
+            prev,
+            " \u00A0 page ",
+            props.page,
+            " \u00A0 ",
+            next));
     }
     function ErrorView(err) {
         return jsxrender_1.h("div", null,
@@ -208,8 +215,9 @@ define("demo/src/main", ["require", "exports", "demo/src/view"], function (requi
             strs[1] = '';
         const cmd = strs[1] || 'news';
         const arg = strs[2] || '1';
-        const url = 'https://node-hnapi.herokuapp.com/' + cmd +
-            ((cmd === 'user' || cmd === 'item') ? '/' : '?page=') + arg;
+        const url = cmd === 'newest'
+            ? `https://node-hnapi.herokuapp.com/${cmd}?page=${arg}`
+            : `https://api.hnpwa.com/v0/${cmd}/${arg}.json`;
         return { cmd, arg, url };
     }
     async function doFetch(url) {

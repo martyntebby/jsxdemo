@@ -6,7 +6,7 @@
   <title>JSX Hacker News</title>
   <link rel="stylesheet" href="../demo/app.css"/>
   <link rel="preload" as="fetch" crossorigin
-  href="https://node-hnapi.herokuapp.com/news?page=1"/>
+  href="https://api.hnpwa.com/v0/news/1.json"/>
   <link rel="icon" href="https://hnpwa.com/assets/favicon.ico">
   <link rel="manifest" href="../demo/manifest.json">
   <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -18,19 +18,15 @@
 <body>
   <noscript>enable javascript</noscript>
   <header><nav>
-    <a href='/' data-cmd class='bold'>JSX Hacker News</a> &nbsp;
-    <a href='/news'   data-cmd>top</a> |
-    <a href='/newest' data-cmd>new</a> |
-    <a href='/show'   data-cmd>show</a> |
-    <a href='/ask'    data-cmd>ask</a> |
+    <a href='/'       data-cmd>JSX</a>
+    <a href='/news'   data-cmd>top</a>
+    <a href='/newest' data-cmd>new</a>
+    <a href='/show'   data-cmd>show</a>
+    <a href='/ask'    data-cmd>ask</a>
     <a href='/jobs'   data-cmd>jobs</a>
+    <a href='https://github.com/martyntebby/jsx-hackernews'>about</a>
   </nav></header>
-  <p/>
   <main><div>Content ...</div></main>
-  <footer>
-    <a href='https://github.com/martyntebby/jsx-hackernews'>
-      github.com/martyntebby/jsx-hackernews</a>
-  </footer>
   <script src="../dist/main.js"></script>
 </body>
 

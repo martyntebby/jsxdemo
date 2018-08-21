@@ -1,8 +1,8 @@
-export { render, renderToString, createElement, h, Fragment };
+export { render, renderToStaticMarkup, createElement, h, Fragment };
 function render(element, container) {
-    container.innerHTML = renderToString(element);
+    container.innerHTML = renderToStaticMarkup(element);
 }
-function renderToString(element) {
+function renderToStaticMarkup(element) {
     const { type, props, children } = element;
     let str = '';
     if (type) {
@@ -51,7 +51,7 @@ function doChildren(children) {
         else if (Array.isArray(child))
             str += doChildren(child);
         else if (typeof child === 'object')
-            str += renderToString(child);
+            str += renderToStaticMarkup(child);
         else
             str += child;
     }

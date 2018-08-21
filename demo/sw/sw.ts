@@ -1,7 +1,7 @@
 
 interface Text {} // hack to quiet error
 
-const CACHE_NAME = Date.now().toString();
+const CACHE_NAME = '0.6'; // Date.now().toString();
 const PRE_CACHE = [ './', '../demo/manifest.json' ]; //'../demo/app.css',  '../dist/main.js',
 
 const _self = self as ServiceWorkerGlobalScope;

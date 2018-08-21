@@ -1,25 +1,25 @@
 export { doRender }
-import { h, render } from '../../src/jsxrender';
+import { h, renderToStaticMarkup } from '../../src/jsxrender';
 
 function doRender(cmd: string, arg: string, data: any, elem: Element) {
-  const vnode = typeof data === 'string' ? ErrorView(data) :
+  const vnode = MainView(cmd, arg, data);
+  elem.innerHTML = renderToStaticMarkup(vnode as any);
+}
+
+function MainView(cmd: string, arg: string, data: any) {
+  return typeof data === 'string' ? ErrorView(data) :
   cmd === 'user' ? UserView({ user: data }) :
   cmd === 'item' ? ItemView({ item: data }) :
   ItemsView({ items: data, cmd: cmd, page: Number.parseInt(arg) });
-  render(vnode as any, elem);
 }
 
 function ItemsView(props: { items: HnItem[], cmd: string, page: number }) {
-  const prev = props.page === 1 ? <span className='grey'>Prev Page</span> :
-  <a href={`/${props.cmd}/${props.page - 1}`} data-cmd>Prev Page</a>
   return (
     <div>
       <ol start={(props.page - 1) * 30 + 1}>
         {props.items.map(item => <li><ItemView item={item}/></li>)}
       </ol>
-      {prev}
-      <span> | Page {props.page} | </span>
-      <a href={`/${props.cmd}/${props.page + 1}`} data-cmd>Next Page</a>
+      {PagerView(props)}
     </div>
   );
 }
@@ -33,7 +33,7 @@ function ItemView(props: { item: HnItem }) {
   const comments = i.comments_count > 0 &&
   <span>| <a href={'/item/' + i.id} data-cmd>{i.comments_count} comments</a></span>;
   return (
-    <div>
+    <div className={i.comments && 'inset'}>
       <a href={url} data-cmd={!i.domain}>{i.title}</a> {domain}
       <div className='smallgrey'>
         {points} {user} {i.time_ago} {comments}
@@ -75,7 +75,7 @@ const Y_URL = 'https://news.ycombinator.com/';
 function UserView(props: { user: HnUser }) {
   const u = props.user;
   return (
-    <div>
+    <div className='inset'>
       <p>
         user <span className='bold large'>{u.id} </span>
         ({u.karma}) created {u.created}
@@ -86,6 +86,17 @@ function UserView(props: { user: HnUser }) {
         <span> | </span>
         <a href={Y_URL + 'threads?id=' + u.id}>comments</a>
       </p>
+    </div>
+  );
+}
+
+function PagerView(props: { cmd: string, page: number }) {
+  const nolink = props.page > 1 ? undefined : 'nolink';
+  const prev = <a href={`/${props.cmd}/${props.page - 1}`} data-cmd className={nolink}>&lt; prev</a>;
+  const next = <a href={`/${props.cmd}/${props.page + 1}`} data-cmd>next &gt;</a>;
+  return (
+    <div className='pager'>
+      {prev} &nbsp; page {props.page} &nbsp; {next}
     </div>
   );
 }

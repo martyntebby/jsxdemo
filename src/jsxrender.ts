@@ -1,4 +1,4 @@
-export { render, renderToString, createElement, h, Fragment };
+export { render, renderToStaticMarkup, createElement, h, Fragment };
 
 type Props = { [key: string]: any };
 
@@ -11,10 +11,10 @@ interface VNode {
 }
 
 function render(element: VNode, container: Element): void {
-  container.innerHTML = renderToString(element);
+  container.innerHTML = renderToStaticMarkup(element);
 }
 
-function renderToString(element: VNode): string {
+function renderToStaticMarkup(element: VNode): string {
   const { type, props, children } = element;
   let str = '';
   if(type) {
@@ -60,7 +60,7 @@ function doChildren(children: NodeType[]): string {
   for(const child of children) {
     if(child == null || typeof child === 'boolean') {}
     else if(Array.isArray(child)) str += doChildren(child);
-    else if(typeof child === 'object') str += renderToString(child);
+    else if(typeof child === 'object') str += renderToStaticMarkup(child);
     else str += child;
   }
   return str;
