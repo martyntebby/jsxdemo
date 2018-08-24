@@ -1,4 +1,6 @@
-import { doRender } from './view';
+import { nodejs } from './nodejs';
+import { link2cmd } from './link2cmd';
+import { renderMarkup } from './view';
 
 let prepath: string;
 
@@ -6,9 +8,20 @@ main();
 
 function main() {
   console.log('main');
-  const pathname = document.location.pathname;
-  prepath = pathname.substring(0, pathname.lastIndexOf('/'));
-  fetchRender(pathname);
+  typeof process === 'object' && process.version ? nodejs() : browser();
+}
+
+function browser() {
+  console.log('browser');
+  const path = document.location.pathname;
+  let pos = path.search(/\/d(ist|emo)\//);
+  pos = pos > -1 ? pos + 5 : path.lastIndexOf('/');
+  prepath = path.substring(0, pos);
+  console.log('prepath', prepath);
+
+  if(!document.getElementsByTagName('main')[0].firstElementChild) {
+    clientRequest(path);
+  }
 
   window.onpopstate = onPopState;
   document.body.onclick = onClick;
@@ -19,44 +32,36 @@ function main() {
 }
 
 function onPopState(e: Event) {
-  fetchRender(document.location.pathname);
+  clientRequest(document.location.pathname);
 }
 
 function onClick(e: Event) {
   if (e.target instanceof HTMLAnchorElement && e.target.dataset.cmd != null) {
-    fetchRender(prepath + e.target.pathname, {});
+    clientRequest(prepath + e.target.pathname, {});
     e.preventDefault();
   }
 }
 
-async function fetchRender(pathname: string, state?: any) {
-  console.log('fetchRender', pathname);
-  const { cmd, arg, url } = link2cmd(pathname);
-  const datap = doFetch(url);
-  if (state) window.history.pushState(state, '', pathname);
+async function clientRequest(pathname: string, state?: any) {
+  console.log('clientRequest', pathname);
+  const { cmd, arg, url } = link2cmd(pathname, prepath.length);
+  const datap = clientFetch(url);
+
+  if (state) window.history.pushState(state, undefined, pathname);
   const elem = document.getElementsByTagName('main')[0];
-  elem.firstElementChild!.className = 'loading';
-//  const doRender = (await import('./view.js')).doRender;
-  doRender(cmd, arg, await datap, elem);
+  const child = elem.firstElementChild;
+  if(child) child.className = 'loading';
+
+  const html = renderMarkup(cmd, arg, await datap);
+  elem.innerHTML = html;
 }
 
-function link2cmd(pathname: string) {
-  const strs = pathname.substring(prepath.length).split('/');
-  if(strs[1] === 'index.html') strs[1] = '';
-  const cmd = strs[1] || 'news';
-  const arg = strs[2] || '1';
-  const url = cmd === 'newest'
-  ? `https://node-hnapi.herokuapp.com/${cmd}?page=${arg}`
-  : `https://api.hnpwa.com/v0/${cmd}/${arg}.json`;
-  return { cmd, arg, url };
-}
-
-async function doFetch(url: string) {
+async function clientFetch(url: string) {
   try {
     const resp = await fetch(url);
     if (!resp.ok) return resp.statusText;
     const json = await resp.json();
-    return json.error ? json.error.toString() : json;
+    return !json ? 'No data' : json.error ? json.error.toString() : json;
   }
   catch (err) {
     return err.toString();

@@ -1,4 +1,20 @@
 "use strict";
+define("demo/src/link2cmd", ["require", "exports"], function (require, exports) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    function link2cmd(pathname, prePathLen) {
+        const strs = pathname.substring(prePathLen).split('/');
+        if (strs[1] === 'index.html')
+            strs[1] = '';
+        const cmd = strs[1] || 'news';
+        const arg = strs[2] || '1';
+        const url = false && cmd === 'newest'
+            ? `https://node-hnapi.herokuapp.com/${cmd}?page=${arg}`
+            : `https://api.hnpwa.com/v0/${cmd}/${arg}.json`;
+        return { cmd, arg, url };
+    }
+    exports.link2cmd = link2cmd;
+});
 define("src/jsxrender", ["require", "exports"], function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -69,17 +85,14 @@ define("src/jsxrender", ["require", "exports"], function (require, exports) {
 define("demo/src/view", ["require", "exports", "src/jsxrender"], function (require, exports, jsxrender_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    function doRender(cmd, arg, data, elem) {
-        const vnode = MainView(cmd, arg, data);
-        elem.innerHTML = jsxrender_1.renderToStaticMarkup(vnode);
-    }
-    exports.doRender = doRender;
-    function MainView(cmd, arg, data) {
-        return typeof data === 'string' ? ErrorView(data) :
+    function renderMarkup(cmd, arg, data) {
+        const vnode = typeof data === 'string' ? ErrorView(data) :
             cmd === 'user' ? UserView({ user: data }) :
                 cmd === 'item' ? ItemView({ item: data }) :
                     ItemsView({ items: data, cmd: cmd, page: Number.parseInt(arg) });
+        return jsxrender_1.renderToStaticMarkup(vnode);
     }
+    exports.renderMarkup = renderMarkup;
     function ItemsView(props) {
         return (jsxrender_1.h("div", null,
             jsxrender_1.h("ol", { start: (props.page - 1) * 30 + 1 }, props.items.map(item => jsxrender_1.h("li", null,
@@ -105,7 +118,7 @@ define("demo/src/view", ["require", "exports", "src/jsxrender"], function (requi
                 jsxrender_1.h("a", { href: '/item/' + i.id, "data-cmd": true },
                     i.comments_count,
                     " comments"));
-        return (jsxrender_1.h("div", { className: i.comments && 'inset' },
+        return (jsxrender_1.h("article", { className: i.comments && 'inset' },
             jsxrender_1.h("a", { href: url, "data-cmd": !i.domain }, i.title),
             " ",
             domain,
@@ -158,13 +171,15 @@ define("demo/src/view", ["require", "exports", "src/jsxrender"], function (requi
     }
     function PagerView(props) {
         const nolink = props.page > 1 ? undefined : 'nolink';
-        const prev = jsxrender_1.h("a", { href: `/${props.cmd}/${props.page - 1}`, "data-cmd": true, className: nolink }, "< prev");
-        const next = jsxrender_1.h("a", { href: `/${props.cmd}/${props.page + 1}`, "data-cmd": true }, "next >");
+        const prev = jsxrender_1.h("a", { href: `/${props.cmd}/${props.page - 1}`, "data-cmd": true, className: nolink }, "\u21D0 prev");
+        const next = jsxrender_1.h("a", { href: `/${props.cmd}/${props.page + 1}`, "data-cmd": true }, "next \u21D2");
         return (jsxrender_1.h("div", { className: 'pager' },
             prev,
-            " \u00A0 page ",
-            props.page,
-            " \u00A0 ",
+            " ",
+            jsxrender_1.h("span", null,
+                "page ",
+                props.page),
+            " ",
             next));
     }
     function ErrorView(err) {
@@ -173,16 +188,83 @@ define("demo/src/view", ["require", "exports", "src/jsxrender"], function (requi
             err);
     }
 });
-define("demo/src/main", ["require", "exports", "demo/src/view"], function (require, exports, view_1) {
+define("demo/src/nodejs", ["require", "exports", "fs", "http", "https", "demo/src/link2cmd", "demo/src/view"], function (require, exports, fs, http, https, link2cmd_1, view_1) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    let indexHtmlStr = '';
+    let mainPos = 0;
+    function nodejs() {
+        const port = 3000;
+        console.log('nodejs', port);
+        indexHtmlStr = fs.readFileSync('dist/index.html', 'utf8');
+        mainPos = indexHtmlStr.indexOf('</main>');
+        http.createServer(serverRequest).listen(port);
+    }
+    exports.nodejs = nodejs;
+    function serverRequest(req, res) {
+        console.log('serverRequest', req.url);
+        if (!req.url)
+            return;
+        if (req.url.startsWith('/demo/') || req.url.startsWith('/dist/')) {
+            fs.readFile('.' + req.url, 'utf8', (err, data) => {
+                if (err)
+                    console.log(err.message);
+                res.statusCode = 200;
+                res.end(data);
+            });
+            return;
+        }
+        const { cmd, arg, url } = link2cmd_1.link2cmd(req.url, 0);
+        function sendResp(data) {
+            const main = view_1.renderMarkup(cmd, arg, data);
+            const html = indexHtmlStr.substring(0, mainPos) + main + indexHtmlStr.substring(mainPos);
+            res.statusCode = 200;
+            res.setHeader('Content-Type', 'text/html');
+            res.end(html);
+        }
+        https.get(url, res2 => {
+            if (res2.statusCode !== 200) {
+                res2.resume();
+                sendResp(res2.statusCode + ': ' + res2.statusMessage);
+            }
+            else {
+                let data = '';
+                res2.on('data', chunk => data += chunk);
+                res2.on('end', () => {
+                    try {
+                        const json = JSON.parse(data);
+                        data = !json ? 'No data' : json.error ? json.error.toString() : json;
+                    }
+                    catch (err) {
+                        data = err.toString();
+                    }
+                    sendResp(data);
+                });
+            }
+        }).on('error', err => {
+            sendResp(err.message);
+        });
+    }
+});
+define("demo/src/main", ["require", "exports", "demo/src/nodejs", "demo/src/link2cmd", "demo/src/view"], function (require, exports, nodejs_1, link2cmd_2, view_2) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     let prepath;
     main();
     function main() {
         console.log('main');
-        const pathname = document.location.pathname;
-        prepath = pathname.substring(0, pathname.lastIndexOf('/'));
-        fetchRender(pathname);
+        typeof process === 'object' && process.version ? nodejs_1.nodejs() : browser();
+    }
+    function browser() {
+        console.log('browser');
+        const path = document.location.pathname;
+        let pos = path.search(/\/d(ist|emo)\//);
+        pos = pos > -1 ? pos + 5 : path.lastIndexOf('/');
+        prepath = path.substring(0, pos);
+        console.log('prepath', prepath);
+        if (!document.getElementsByTagName('main')[0].firstElementChild) {
+            clientRequest(path);
+        }
         window.onpopstate = onPopState;
         document.body.onclick = onClick;
         if ('serviceWorker' in navigator) {
@@ -190,43 +272,34 @@ define("demo/src/main", ["require", "exports", "demo/src/view"], function (requi
         }
     }
     function onPopState(e) {
-        fetchRender(document.location.pathname);
+        clientRequest(document.location.pathname);
     }
     function onClick(e) {
         if (e.target instanceof HTMLAnchorElement && e.target.dataset.cmd != null) {
-            fetchRender(prepath + e.target.pathname, {});
+            clientRequest(prepath + e.target.pathname, {});
             e.preventDefault();
         }
     }
-    async function fetchRender(pathname, state) {
-        console.log('fetchRender', pathname);
-        const { cmd, arg, url } = link2cmd(pathname);
-        const datap = doFetch(url);
+    async function clientRequest(pathname, state) {
+        console.log('clientRequest', pathname);
+        const { cmd, arg, url } = link2cmd_2.link2cmd(pathname, prepath.length);
+        const datap = clientFetch(url);
         if (state)
-            window.history.pushState(state, '', pathname);
+            window.history.pushState(state, undefined, pathname);
         const elem = document.getElementsByTagName('main')[0];
-        elem.firstElementChild.className = 'loading';
-        //  const doRender = (await import('./view.js')).doRender;
-        view_1.doRender(cmd, arg, await datap, elem);
+        const child = elem.firstElementChild;
+        if (child)
+            child.className = 'loading';
+        const html = view_2.renderMarkup(cmd, arg, await datap);
+        elem.innerHTML = html;
     }
-    function link2cmd(pathname) {
-        const strs = pathname.substring(prepath.length).split('/');
-        if (strs[1] === 'index.html')
-            strs[1] = '';
-        const cmd = strs[1] || 'news';
-        const arg = strs[2] || '1';
-        const url = cmd === 'newest'
-            ? `https://node-hnapi.herokuapp.com/${cmd}?page=${arg}`
-            : `https://api.hnpwa.com/v0/${cmd}/${arg}.json`;
-        return { cmd, arg, url };
-    }
-    async function doFetch(url) {
+    async function clientFetch(url) {
         try {
             const resp = await fetch(url);
             if (!resp.ok)
                 return resp.statusText;
             const json = await resp.json();
-            return json.error ? json.error.toString() : json;
+            return !json ? 'No data' : json.error ? json.error.toString() : json;
         }
         catch (err) {
             return err.toString();
@@ -235,10 +308,13 @@ define("demo/src/main", ["require", "exports", "demo/src/view"], function (requi
 });
 // hacked fake requirejs - use AMD modules with single output file
 function define(name, params, func) {
-    self.myexports = self.myexports || {};
-    const args = [null, self.myexports[name] = {}];
+    // @ts-ignore: Window | Global not assignable to MySelf
+    const _self = typeof self === 'object' ? self : global;
+    _self.myexports = _self.myexports || {};
+    const req = typeof require === 'undefined' ? undefined : require;
+    const args = [req, _self.myexports[name] = {}];
     for (let i = 2; i < params.length; ++i) {
-        args[i] = self.myexports[params[i]];
+        args[i] = _self.myexports[params[i]] || (req && req(params[i]));
     }
     func.apply(null, args);
 }

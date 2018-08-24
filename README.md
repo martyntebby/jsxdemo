@@ -31,4 +31,4 @@ Interactive (regular 3G): 1.6s (1st view), 0.5s (repeat)
 
 Try it
 ------
-[https://cdn.rawgit.com/martyntebby/jsx-hackernews/0.6/dist/]
+[https://cdn.rawgit.com/martyntebby/jsx-hackernews/0.7/dist/]

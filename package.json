@@ -1,8 +1,8 @@
 {
   "name": "jsx-hackernews",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "description": "Sample Hacker News app using jsxrender.",
-  "main": "dist/bundle.js",
+  "main": "dist/main.js",
   "scripts": {
     "build": "rm -rf dist && tsc -b . demo demo/sw scripts && (cd demo; node ../dist/bundle.js)",
     "watch": "tsc -b scripts demo/sw demo -w",

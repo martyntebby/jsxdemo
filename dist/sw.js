@@ -1,6 +1,6 @@
 "use strict";
-const CACHE_NAME = '0.6'; // Date.now().toString();
-const PRE_CACHE = ['./', '../demo/manifest.json']; //'../demo/app.css',  '../dist/main.js',
+const CACHE_NAME = '0.7';
+const PRE_CACHE = ['./', '../demo/manifest.json']; // cache icons ???
 const _self = self;
 sw();
 function sw() {
@@ -21,12 +21,12 @@ function onActivate(e) {
         .then(() => caches.keys().then(keys => Promise.all(keys.filter(key => key !== CACHE_NAME).map(name => caches.delete(name))))));
 }
 function onFetch(e) {
-    //  console.log('onFetch', e);
     e.respondWith(cacheFetch(e.request));
 }
 async function cacheFetch(request) {
     console.log('cacheFetch', request.url);
-    //if(request.mode === 'cors') return fetch(request);
+    if (request.mode === 'navigate')
+        request = new Request('./');
     const cache = await caches.open(CACHE_NAME);
     let response = await cache.match(request);
     if (!response) {

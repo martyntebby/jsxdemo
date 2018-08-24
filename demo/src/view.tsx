@@ -1,16 +1,12 @@
-export { doRender }
+export { renderMarkup }
 import { h, renderToStaticMarkup } from '../../src/jsxrender';
 
-function doRender(cmd: string, arg: string, data: any, elem: Element) {
-  const vnode = MainView(cmd, arg, data);
-  elem.innerHTML = renderToStaticMarkup(vnode as any);
-}
-
-function MainView(cmd: string, arg: string, data: any) {
-  return typeof data === 'string' ? ErrorView(data) :
+function renderMarkup(cmd: string, arg: string, data: any) {
+  const vnode = typeof data === 'string' ? ErrorView(data) :
   cmd === 'user' ? UserView({ user: data }) :
   cmd === 'item' ? ItemView({ item: data }) :
   ItemsView({ items: data, cmd: cmd, page: Number.parseInt(arg) });
+  return renderToStaticMarkup(vnode as any);
 }
 
 function ItemsView(props: { items: HnItem[], cmd: string, page: number }) {
@@ -33,13 +29,13 @@ function ItemView(props: { item: HnItem }) {
   const comments = i.comments_count > 0 &&
   <span>| <a href={'/item/' + i.id} data-cmd>{i.comments_count} comments</a></span>;
   return (
-    <div className={i.comments && 'inset'}>
+    <article className={i.comments && 'inset'}>
       <a href={url} data-cmd={!i.domain}>{i.title}</a> {domain}
       <div className='smallgrey'>
         {points} {user} {i.time_ago} {comments}
       </div>
       <CommentsView comments={i.comments}/>
-    </div>
+    </article>
   );
 }
 
@@ -92,11 +88,12 @@ function UserView(props: { user: HnUser }) {
 
 function PagerView(props: { cmd: string, page: number }) {
   const nolink = props.page > 1 ? undefined : 'nolink';
-  const prev = <a href={`/${props.cmd}/${props.page - 1}`} data-cmd className={nolink}>&lt; prev</a>;
-  const next = <a href={`/${props.cmd}/${props.page + 1}`} data-cmd>next &gt;</a>;
+  const prev = <a href={`/${props.cmd}/${props.page - 1}`} data-cmd
+  className={nolink} >&lArr; prev</a>;
+  const next = <a href={`/${props.cmd}/${props.page + 1}`} data-cmd>next &rArr;</a>;
   return (
     <div className='pager'>
-      {prev} &nbsp; page {props.page} &nbsp; {next}
+      {prev} <span>page {props.page}</span> {next}
     </div>
   );
 }

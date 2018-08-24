@@ -1,12 +1,11 @@
 <!DOCTYPE html>
 <html lang='en'>
-
 <head>
   <meta charset="utf-8">
   <title>JSX Hacker News</title>
   <link rel="stylesheet" href="../demo/app.css"/>
-  <link rel="preload" as="fetch" crossorigin
-  href="https://api.hnpwa.com/v0/news/1.json"/>
+  <!--link rel="preload" as="fetch" crossorigin
+  href="https://api.hnpwa.com/v0/news/1.json"/-->
   <link rel="icon" href="https://hnpwa.com/assets/favicon.ico">
   <link rel="manifest" href="../demo/manifest.json">
   <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -14,10 +13,9 @@
   <meta name="theme-color" content="orange"/>
   <base target="_blank"/>
 </head>
-
 <body>
   <noscript>enable javascript</noscript>
-  <header><nav>
+  <nav>
     <a href='/'       data-cmd>JSX</a>
     <a href='/news'   data-cmd>top</a>
     <a href='/newest' data-cmd>new</a>
@@ -25,9 +23,8 @@
     <a href='/ask'    data-cmd>ask</a>
     <a href='/jobs'   data-cmd>jobs</a>
     <a href='https://github.com/martyntebby/jsx-hackernews'>about</a>
-  </nav></header>
-  <main><div>Content ...</div></main>
+  </nav>
+  <main></main>
   <script src="../dist/main.js"></script>
 </body>
-
 </html>
