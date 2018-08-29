@@ -34,6 +34,8 @@ function ItemView(props: { item: HnItem }) {
       <div className='smallgrey'>
         {points} {user} {i.time_ago} {comments}
       </div>
+      {i.content && <p/>}
+      {i.content}
       <CommentsView comments={i.comments}/>
     </article>
   );
@@ -89,8 +91,8 @@ function UserView(props: { user: HnUser }) {
 function PagerView(props: { cmd: string, page: number }) {
   const nolink = props.page > 1 ? undefined : 'nolink';
   const prev = <a href={`/${props.cmd}/${props.page - 1}`} data-cmd
-  className={nolink} >&lArr; prev</a>;
-  const next = <a href={`/${props.cmd}/${props.page + 1}`} data-cmd>next &rArr;</a>;
+  className={nolink} >&larr; prev</a>;
+  const next = <a href={`/${props.cmd}/${props.page + 1}`} data-cmd>next &rarr;</a>;
   return (
     <div className='pager'>
       {prev} <span>page {props.page}</span> {next}

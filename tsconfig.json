@@ -5,6 +5,7 @@
     "module": "es6",
     "moduleResolution": "node",
     "outDir": "dist",
+    "removeComments": true,
     //"rootDir": "src",
 //    "rootDirs": [ "src", "demo/src" ],
    // "jsx": "react",

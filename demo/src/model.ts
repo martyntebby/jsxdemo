@@ -18,6 +18,7 @@ interface HnItem {
   type: string;
   url: string;
   domain?: string;
+  content?: string;
   comments?: HnComment[];
 }
 

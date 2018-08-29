@@ -25,10 +25,10 @@ Performance
 -----------
 Lighthouse: 100/100
 
-Interactive (slow 3G): 2.1s (1st view), 0.5s (repeat)
+Interactive (slow 3G): 2.1s (1st view), 0.3s (repeat)
 
-Interactive (regular 3G): 1.6s (1st view), 0.5s (repeat)
+Interactive (regular 3G): 1.6s (1st view), 0.3s (repeat)
 
 Try it
 ------
-[https://cdn.rawgit.com/martyntebby/jsx-hackernews/0.7/dist/]
+[https://cdn.rawgit.com/martyntebby/jsx-hackernews/0.7.1/dist/]

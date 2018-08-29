@@ -130,6 +130,8 @@ define("demo/src/view", ["require", "exports", "src/jsxrender"], function (requi
                 i.time_ago,
                 " ",
                 comments),
+            i.content && jsxrender_1.h("p", null),
+            i.content,
             jsxrender_1.h(CommentsView, { comments: i.comments })));
     }
     function CommentsView(props) {
@@ -171,8 +173,8 @@ define("demo/src/view", ["require", "exports", "src/jsxrender"], function (requi
     }
     function PagerView(props) {
         const nolink = props.page > 1 ? undefined : 'nolink';
-        const prev = jsxrender_1.h("a", { href: `/${props.cmd}/${props.page - 1}`, "data-cmd": true, className: nolink }, "\u21D0 prev");
-        const next = jsxrender_1.h("a", { href: `/${props.cmd}/${props.page + 1}`, "data-cmd": true }, "next \u21D2");
+        const prev = jsxrender_1.h("a", { href: `/${props.cmd}/${props.page - 1}`, "data-cmd": true, className: nolink }, "\u2190 prev");
+        const next = jsxrender_1.h("a", { href: `/${props.cmd}/${props.page + 1}`, "data-cmd": true }, "next \u2192");
         return (jsxrender_1.h("div", { className: 'pager' },
             prev,
             " ",
@@ -215,12 +217,12 @@ define("demo/src/nodejs", ["require", "exports", "fs", "http", "https", "demo/sr
             return;
         }
         const { cmd, arg, url } = link2cmd_1.link2cmd(req.url, 0);
+        res.statusCode = 200;
+        res.setHeader('Content-Type', 'text/html');
+        res.write(indexHtmlStr.substring(0, mainPos));
         function sendResp(data) {
-            const main = view_1.renderMarkup(cmd, arg, data);
-            const html = indexHtmlStr.substring(0, mainPos) + main + indexHtmlStr.substring(mainPos);
-            res.statusCode = 200;
-            res.setHeader('Content-Type', 'text/html');
-            res.end(html);
+            res.write(view_1.renderMarkup(cmd, arg, data));
+            res.end(indexHtmlStr.substring(mainPos));
         }
         https.get(url, res2 => {
             if (res2.statusCode !== 200) {

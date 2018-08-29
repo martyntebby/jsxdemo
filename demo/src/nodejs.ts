@@ -31,12 +31,13 @@ function serverRequest(req: http.IncomingMessage, res: http.ServerResponse) {
 
   const { cmd, arg, url } = link2cmd(req.url, 0);
 
+  res.statusCode = 200;
+  res.setHeader('Content-Type', 'text/html');
+  res.write(indexHtmlStr.substring(0, mainPos));
+
   function sendResp(data: any) {
-    const main = renderMarkup(cmd, arg, data);
-    const html = indexHtmlStr.substring(0,mainPos) + main + indexHtmlStr.substring(mainPos);
-    res.statusCode = 200;
-    res.setHeader('Content-Type', 'text/html');
-    res.end(html);
+    res.write(renderMarkup(cmd, arg, data));
+    res.end(indexHtmlStr.substring(mainPos));
   }
 
   https.get(url, res2 => {
