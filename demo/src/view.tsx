@@ -6,7 +6,7 @@ function renderMarkup(cmd: string, arg: string, data: any) {
   cmd === 'user' ? UserView({ user: data }) :
   cmd === 'item' ? ItemView({ item: data }) :
   ItemsView({ items: data, cmd: cmd, page: Number.parseInt(arg) });
-  return renderToStaticMarkup(vnode as any);
+  return renderToStaticMarkup(vnode);
 }
 
 function ItemsView(props: { items: HnItem[], cmd: string, page: number }) {

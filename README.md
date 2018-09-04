@@ -3,7 +3,7 @@ JSX Render
 A stateless subset of React that just handles rendering.
 No state management, change tracking nor event handlers.
 
-It is small (~60 loc), designed for fast initial page load,
+It is small (~100 loc), designed for fast initial page load,
 and also for server side rendering.
 
 It is written in typescript and useable with React @type files.
@@ -20,6 +20,8 @@ Build
 npm install
 
 npm run build
+
+npm test
 
 Performance
 -----------

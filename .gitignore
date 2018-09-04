@@ -1,3 +1,7 @@
 .vscode/
 node_modules/
 package-lock.json
+dist/src
+dist/test
+dist/bundle.js
+

@@ -14,8 +14,8 @@ function render(element: VNode, container: Element): void {
   container.innerHTML = renderToStaticMarkup(element);
 }
 
-function renderToStaticMarkup(element: VNode): string {
-  const { type, props, children } = element;
+function renderToStaticMarkup(element: VNode | JSX.Element): string {
+  const { type, props, children } = element as VNode;
   let str = '';
   if(type) {
     str += '<' + type;
@@ -49,10 +49,15 @@ function doProp(name: string, value: any): string {
   if(name === 'className') name = 'class'
   else if(name === 'forHtml') name = 'for'
   else if(name === 'defaultValue') name = 'value'
-  else if(name === 'style' && typeof value === 'object') {
-    value = Object.keys(value).map(key => `${key}:${value[key]};`).join('');
-  }
+  else if(name === 'style' && typeof value === 'object') value = doStyle(value);
   return ' ' + name + '="' + value + '"';
+}
+
+function doStyle(style: any): string {
+  return Object.keys(style).map(key => {
+    const key2 = key.replace(/([A-Z])/g, '-$1').toLowerCase();
+    return `${key2}:${style[key]};`
+  }).join('');
 }
 
 function doChildren(children: NodeType[]): string {

@@ -7,27 +7,24 @@ interface HnUser {
   about: string;
 }
 
-interface HnItem {
+interface HnContent {
   id: number;
-  title: string;
-  points: number;
   user: string;
   time: number;
   time_ago: string;
-  comments_count: number;
-  type: string;
-  url: string;
-  domain?: string;
   content?: string;
   comments?: HnComment[];
 }
 
-interface HnComment {
-  id: number;
+interface HnComment extends HnContent {
   level: number;
-  user: string;
-  time: number;
-  time_ago: string;
-  content: string;
-  comments?: HnComment[];
+}
+
+interface HnItem extends HnContent {
+  points: number;
+  title: string;
+  type: string;
+  url: string;
+  domain?: string;
+  comments_count: number;
 }

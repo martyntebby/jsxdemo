@@ -4,10 +4,10 @@
   "description": "Sample Hacker News app using jsxrender.",
   "main": "dist/main.js",
   "scripts": {
-    "build": "rm -rf dist && tsc -b . demo demo/sw scripts && (cd demo; node ../dist/bundle.js)",
+    "build": "rm -rf dist && tsc -b . test demo demo/sw scripts && (cd demo; node ../dist/bundle.js)",
     "watch": "tsc -b scripts demo/sw demo -w",
     "clean": "rm -rf dist",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node dist/test/tests.js"
   },
   "author": "Martyn Tebby",
   "license": "ISC",

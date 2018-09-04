@@ -63,10 +63,15 @@ define("src/jsxrender", ["require", "exports"], function (require, exports) {
             name = 'for';
         else if (name === 'defaultValue')
             name = 'value';
-        else if (name === 'style' && typeof value === 'object') {
-            value = Object.keys(value).map(key => `${key}:${value[key]};`).join('');
-        }
+        else if (name === 'style' && typeof value === 'object')
+            value = doStyle(value);
         return ' ' + name + '="' + value + '"';
+    }
+    function doStyle(style) {
+        return Object.keys(style).map(key => {
+            const key2 = key.replace(/([A-Z])/g, '-$1').toLowerCase();
+            return `${key2}:${style[key]};`;
+        }).join('');
     }
     function doChildren(children) {
         let str = '';
