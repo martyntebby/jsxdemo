@@ -46,8 +46,8 @@ function doProp(name, value) {
 function doStyle(style) {
     return Object.keys(style).map(key => {
         const key2 = key.replace(/([A-Z])/g, '-$1').toLowerCase();
-        return `${key2}:${style[key]};`;
-    }).join('');
+        return `${key2}:${style[key]}`;
+    }).join(';');
 }
 function doChildren(children) {
     let str = '';

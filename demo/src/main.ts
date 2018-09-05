@@ -1,5 +1,5 @@
 import { nodejs } from './nodejs';
-import { link2cmd } from './link2cmd';
+import { State, link2cmd } from './control';
 import { renderMarkup } from './view';
 
 let prepath: string;
@@ -14,7 +14,7 @@ function main() {
 function browser() {
   console.log('browser');
   const path = document.location.pathname;
-  let pos = path.search(/\/d(ist|emo)\//);
+  let pos = path.search(/\/(dist|demo)\//);
   pos = pos > -1 ? pos + 5 : path.lastIndexOf('/');
   prepath = path.substring(0, pos);
   console.log('prepath', prepath);
@@ -31,23 +31,26 @@ function browser() {
   }
 }
 
-function onPopState(e: Event) {
-  clientRequest(document.location.pathname);
+function onPopState(e: PopStateEvent) {
+  clientRequest(document.location.pathname, e.state);
 }
 
 function onClick(e: Event) {
   if (e.target instanceof HTMLAnchorElement && e.target.dataset.cmd != null) {
-    clientRequest(prepath + e.target.pathname, {});
+    clientRequest(prepath + e.target.pathname, null, true);
     e.preventDefault();
   }
 }
 
-async function clientRequest(pathname: string, state?: any) {
-  console.log('clientRequest', pathname);
-  const { cmd, arg, url } = link2cmd(pathname, prepath.length);
+async function clientRequest(path: string, state?: State|null, push?: boolean) {
+  console.log('clientRequest', path, state);
+  const { cmd, arg, url } = link2cmd(path, prepath.length, state);
   const datap = clientFetch(url);
 
-  if (state) window.history.pushState(state, undefined, pathname);
+  if (push) window.history.pushState({ cmd, arg }, undefined);
+
+  const nav = document.getElementsByTagName('nav')[0];
+  nav.className = cmd;
   const elem = document.getElementsByTagName('main')[0];
   const child = elem.firstElementChild;
   if(child) child.className = 'loading';

@@ -1,8 +1,11 @@
 import * as React from '../src/jsxrender';
+import * as ReactDOMServer from '../src/jsxrender';
+//import * as React from 'react';
+//import * as ReactDOMServer from 'react-dom/server';
 
-let errs = 0;
+let numErrs = 0;
 
-tests();
+process.exit(tests());
 
 function tests() {
   compare(<p></p>, '<p></p>');
@@ -13,22 +16,24 @@ function tests() {
   compare(<a href='abc'>link</a>, '<a href="abc">link</a>');
   compare(<script defer/>, '<script defer="true"></script>');
   compare(<script noModule={false}/>, '<script></script>');
-  compare(<div style={{zIndex:1}}/>, '<div style="z-index:1;"></div>');
+  compare(<a data-a={true}/>, '<a data-a="true"></a>');
+  compare(<div style={{zIndex:1}}/>, '<div style="z-index:1"></div>');
   compare(<><div/></>, '<div></div>');
   compare(<></>, '');
   compare(<>{null}</>, '');
   compare(<>{undefined}</>, '');
   compare(<>{false}</>, '');
   compare(<>{true}</>, '');
-  compare(<>{{}}</>, '');
-  compare(<>{{abc:1}}</>, ''); // check this
   compare(<>{0}</>, '0');
   compare(<>abc</>, 'abc');
   compare(<><div/><span/></>, '<div></div><span></span>');
   compare(<Details/>, '<details></details>');
   compare(<Details summary='abc'/>, '<details><summary>abc</summary></details>');
   compare(<Details><div>abc</div></Details>, '<details><div>abc</div></details>');
-  console.log(errs ? errs + ' FAILED' : 'All OK');
+  compare(<Details summary='a'><Details>abc<div/></Details></Details>,
+  '<details><summary>a</summary><details>abc<div></div></details></details>');
+  console.log(numErrs ? numErrs + ' FAILED' : 'All OK');
+  return numErrs;
 }
 
 function Details(props: { summary?: string, children?:any }) {
@@ -37,12 +42,12 @@ function Details(props: { summary?: string, children?:any }) {
       {props.summary && <summary>{props.summary}</summary>}
       {props.children}
     </details>
-  )
+  );
 }
 
 function compare(vnode: JSX.Element, html: string) {
-  const markup = React.renderToStaticMarkup(vnode);
+  const markup = ReactDOMServer.renderToStaticMarkup(vnode);
   const result = markup === html;
-  if(!result) ++errs;
+  if(!result) ++numErrs;
   console.log(result ? 'OK' : 'FAIL: ' + markup, html, vnode);
 }

@@ -23,6 +23,9 @@ nav > a:last-child {
   flex-grow: 1;
   text-align: right;
 }
+.news>.news, .newest>.newest, .show>.show, .ask>.ask, .jobs>.jobs {
+  text-decoration: underline;
+}
 main {
   margin: 0;
   overflow-wrap: break-word;

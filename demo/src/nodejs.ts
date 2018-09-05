@@ -2,7 +2,7 @@ export { nodejs };
 import * as fs from 'fs';
 import * as http from 'http';
 import * as https from 'https';
-import { link2cmd } from './link2cmd';
+import { link2cmd } from './control';
 import { renderMarkup } from './view';
 
 let indexHtmlStr = '';

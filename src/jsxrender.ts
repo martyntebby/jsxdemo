@@ -50,14 +50,15 @@ function doProp(name: string, value: any): string {
   else if(name === 'forHtml') name = 'for'
   else if(name === 'defaultValue') name = 'value'
   else if(name === 'style' && typeof value === 'object') value = doStyle(value);
+//  else if(value === true) value = '';
   return ' ' + name + '="' + value + '"';
 }
 
 function doStyle(style: any): string {
   return Object.keys(style).map(key => {
     const key2 = key.replace(/([A-Z])/g, '-$1').toLowerCase();
-    return `${key2}:${style[key]};`
-  }).join('');
+    return `${key2}:${style[key]}`
+  }).join(';');
 }
 
 function doChildren(children: NodeType[]): string {
