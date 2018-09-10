@@ -4,7 +4,7 @@ A stateless subset of React that just handles rendering.
 No state management, change tracking nor event handlers.
 
 It is small (~100 loc), designed for fast initial page load,
-and also for server side rendering (both demoed).
+and also for server side rendering using renderToStaticMarkup.
 
 It is written in typescript and useable with React @type files.
 The generated javascript (dist/jsxrender.js) can also be used with webpack etc.
@@ -34,4 +34,4 @@ Interactive (regular 3G): 1.8s (1st view), 0.3s (repeat)
 
 Try it
 ------
-[https://cdn.rawgit.com/martyntebby/jsx-hackernews/0.7.2/dist/]
+[https://cdn.rawgit.com/martyntebby/jsxrender/0.8/dist/]

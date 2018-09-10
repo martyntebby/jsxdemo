@@ -1,11 +1,11 @@
 {
-  "name": "jsx-hackernews",
-  "version": "0.7.2",
-  "description": "Sample Hacker News app using jsxrender.",
+  "name": "jsxrender",
+  "version": "0.8.0",
+  "description": "Small stateless subset of React.",
   "main": "dist/main.js",
   "repository": {
     "type": "git",
-    "url": "https://github.com/martyntebby/jsx-hackernews.git"
+    "url": "https://github.com/martyntebby/jsxrender.git"
   },
   "scripts": {
     "build": "rm -rf dist && tsc -b . test demo demo/sw scripts && (cd demo; node ../dist/bundle.js)",
