@@ -50,7 +50,7 @@ function doProp(name: string, value: any): string {
   else if(name === 'forHtml') name = 'for'
   else if(name === 'defaultValue') name = 'value'
   else if(name === 'style' && typeof value === 'object') value = doStyle(value);
-//  else if(value === true) value = '';
+  else if(value === true) value = '';
   return ' ' + name + '="' + value + '"';
 }
 

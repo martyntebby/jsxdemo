@@ -41,6 +41,8 @@ function doProp(name, value) {
         name = 'value';
     else if (name === 'style' && typeof value === 'object')
         value = doStyle(value);
+    else if (value === true)
+        value = '';
     return ' ' + name + '="' + value + '"';
 }
 function doStyle(style) {

@@ -44,13 +44,10 @@ main {
   justify-content: space-evenly;
   box-shadow: 0 -1px 1px rgba(0,0,0,0.1);
 }
-ul {
-  list-style-type: none;
-}
-li {
+.li {
   margin-bottom: 0.5rem;
 }
-details {
+.details {
   margin-top: 0.5rem;
   margin-left: 1rem;
 }

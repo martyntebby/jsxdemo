@@ -14,9 +14,9 @@ function tests() {
   compare(<div key={1} ref='abc'/>, '<div></div>');
   compare(<span className='abc'/>, '<span class="abc"></span>');
   compare(<a href='abc'>link</a>, '<a href="abc">link</a>');
-  compare(<script defer/>, '<script defer="true"></script>');
+  compare(<script defer/>, '<script defer=""></script>');
   compare(<script noModule={false}/>, '<script></script>');
-  compare(<a data-a={true}/>, '<a data-a="true"></a>');
+  compare(<a data-a='true'/>, '<a data-a="true"></a>');
   compare(<div style={{zIndex:1}}/>, '<div style="z-index:1"></div>');
   compare(<><div/></>, '<div></div>');
   compare(<></>, '');

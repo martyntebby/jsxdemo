@@ -19,7 +19,13 @@ function browser() {
   prepath = path.substring(0, pos);
   console.log('prepath', prepath);
 
-  if(!document.getElementsByTagName('main')[0].firstElementChild) {
+  const main = document.getElementsByTagName('main')[0];
+  if(!('fetch' in window)) {
+    main.innerHTML = renderMarkup('', '', 'Requires modern browser.');
+    return;
+  }
+
+  if(!main.firstElementChild) {
     clientRequest(path);
   }
 
@@ -51,12 +57,12 @@ async function clientRequest(path: string, state?: State|null, push?: boolean) {
 
   const nav = document.getElementsByTagName('nav')[0];
   nav.className = cmd;
-  const elem = document.getElementsByTagName('main')[0];
-  const child = elem.firstElementChild;
+  const main = document.getElementsByTagName('main')[0];
+  const child = main.firstElementChild;
   if(child) child.className = 'loading';
 
   const html = renderMarkup(cmd, arg, await datap);
-  elem.innerHTML = html;
+  main.innerHTML = html;
 }
 
 async function clientFetch(url: string) {

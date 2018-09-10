@@ -69,7 +69,8 @@ define("src/jsxrender", ["require", "exports"], function (require, exports) {
             name = 'value';
         else if (name === 'style' && typeof value === 'object')
             value = doStyle(value);
-        //  else if(value === true) value = '';
+        else if (value === true)
+            value = '';
         return ' ' + name + '="' + value + '"';
     }
     function doStyle(style) {
@@ -105,7 +106,7 @@ define("demo/src/view", ["require", "exports", "src/jsxrender"], function (requi
     exports.renderMarkup = renderMarkup;
     function ItemsView(props) {
         return (jsxrender_1.h("div", null,
-            jsxrender_1.h("ol", { start: (props.page - 1) * 30 + 1 }, props.items.map(item => jsxrender_1.h("li", null,
+            jsxrender_1.h("ol", { start: (props.page - 1) * 30 + 1 }, props.items.map(item => jsxrender_1.h("li", { className: 'li' },
                 jsxrender_1.h(ItemView, { item: item })))),
             PagerView(props)));
     }
@@ -151,7 +152,7 @@ define("demo/src/view", ["require", "exports", "src/jsxrender"], function (requi
     }
     function CommentView(props) {
         const c = props.comment;
-        return (jsxrender_1.h("details", { open: true },
+        return (jsxrender_1.h("details", { className: 'details', open: true },
             jsxrender_1.h("summary", null,
                 jsxrender_1.h(UserNameView, { user: c.user }),
                 " ",
@@ -274,7 +275,12 @@ define("demo/src/main", ["require", "exports", "demo/src/nodejs", "demo/src/cont
         pos = pos > -1 ? pos + 5 : path.lastIndexOf('/');
         prepath = path.substring(0, pos);
         console.log('prepath', prepath);
-        if (!document.getElementsByTagName('main')[0].firstElementChild) {
+        const main = document.getElementsByTagName('main')[0];
+        if (!('fetch' in window)) {
+            main.innerHTML = view_2.renderMarkup('', '', 'Requires modern browser.');
+            return;
+        }
+        if (!main.firstElementChild) {
             clientRequest(path);
         }
         window.onpopstate = onPopState;
@@ -300,12 +306,12 @@ define("demo/src/main", ["require", "exports", "demo/src/nodejs", "demo/src/cont
             window.history.pushState({ cmd, arg }, undefined);
         const nav = document.getElementsByTagName('nav')[0];
         nav.className = cmd;
-        const elem = document.getElementsByTagName('main')[0];
-        const child = elem.firstElementChild;
+        const main = document.getElementsByTagName('main')[0];
+        const child = main.firstElementChild;
         if (child)
             child.className = 'loading';
         const html = view_2.renderMarkup(cmd, arg, await datap);
-        elem.innerHTML = html;
+        main.innerHTML = html;
     }
     async function clientFetch(url) {
         try {

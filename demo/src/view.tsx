@@ -13,7 +13,7 @@ function ItemsView(props: { items: HnItem[], cmd: string, page: number }) {
   return (
     <div>
       <ol start={(props.page - 1) * 30 + 1}>
-        {props.items.map(item => <li><ItemView item={item}/></li>)}
+        {props.items.map(item => <li className='li'><ItemView item={item}/></li>)}
       </ol>
       {PagerView(props)}
     </div>
@@ -54,7 +54,7 @@ function CommentsView(props: {comments?: HnComment[]}) {
 function CommentView(props: { comment: HnComment }): JSX.Element {
   const c = props.comment;
   return (
-    <details open>
+    <details className='details' open>
       <summary>
         <UserNameView user={c.user}/> {c.time_ago}
       </summary>
