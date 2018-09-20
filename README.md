@@ -36,4 +36,5 @@ Interactive (regular 3G): 1.8s (1st view), 0.3s (repeat)
 Try it
 ------
 [https://cdn.rawgit.com/martyntebby/jsxrender/0.8.1/dist/]
+
 [https://rawcdn.githack.com/martyntebby/jsxrender/0.8.1/dist/]
