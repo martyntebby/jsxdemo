@@ -2,36 +2,12 @@ body {
   margin: 0;
   overflow-y: scroll;
 }
-nav {
-  position: -webkit-sticky;
-  position: sticky;
-  z-index: 1;
-  top: 0;
-  background: orange;
-  padding: 0 0.5rem;
-  display: flex;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-}
-nav > * {
-  margin: 0.5rem 0.3rem;
-}
-nav > a:first-child {
-  font-weight: bold;
-  color: purple;
-}
-nav > a:last-child {
-  flex-grow: 1;
-  text-align: right;
-}
-.news>.news, .newest>.newest, .show>.show, .ask>.ask, .jobs>.jobs {
-  text-decoration: underline;
-}
-main {
-  margin: 0;
-  overflow-wrap: break-word;
-}
-.inset {
-  padding: 1rem;
+.error {
+  color: red;
+  margin: 0.5rem;
+  padding: 0.5rem;
+  font-size: large;
+  border: 0.1rem solid red;
 }
 .pager {
   position: -webkit-sticky;
@@ -44,6 +20,37 @@ main {
   justify-content: space-evenly;
   box-shadow: 0 -1px 1px rgba(0,0,0,0.1);
 }
+#nav {
+  position: -webkit-sticky;
+  position: sticky;
+  z-index: 1;
+  top: 0;
+  background: orange;
+  padding: 0 0.5rem;
+  display: flex;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+#nav > a {
+  margin: 0.5rem 0.3rem;
+}
+#nav > a:first-child {
+  font-weight: bold;
+  color: purple;
+}
+#nav > a:last-child {
+  flex-grow: 1;
+  text-align: right;
+}
+.news>.news, .newest>.newest, .show>.show, .ask>.ask, .jobs>.jobs {
+  text-decoration: underline;
+}
+#main {
+  margin: 0;
+  overflow-wrap: break-word;
+}
+.inset {
+  padding: 1rem;
+}
 .li {
   margin-bottom: 0.5rem;
 }
@@ -51,11 +58,8 @@ main {
   margin-top: 0.5rem;
   margin-left: 1rem;
 }
-a {
+a[data-cmd], .mainlink {
   color: black;
-}
-a:link {
-  color: #444;
   text-decoration: none;
 }
 a:hover {

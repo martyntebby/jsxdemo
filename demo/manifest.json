@@ -7,9 +7,9 @@
   "background_color": "white",
   "icons": [
     {
-      "src": "https://hnpwa.com/assets/images/favicon.png",
+      "src": "../demo/assets/favicon-256.png",
       "type": "image/png",
-      "sizes": "512x512"
+      "sizes": "256x256"
     }
   ]
 }

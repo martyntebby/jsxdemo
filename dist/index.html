@@ -9,36 +9,12 @@ body {
   margin: 0;
   overflow-y: scroll;
 }
-nav {
-  position: -webkit-sticky;
-  position: sticky;
-  z-index: 1;
-  top: 0;
-  background: orange;
-  padding: 0 0.5rem;
-  display: flex;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-}
-nav > * {
-  margin: 0.5rem 0.3rem;
-}
-nav > a:first-child {
-  font-weight: bold;
-  color: purple;
-}
-nav > a:last-child {
-  flex-grow: 1;
-  text-align: right;
-}
-.news>.news, .newest>.newest, .show>.show, .ask>.ask, .jobs>.jobs {
-  text-decoration: underline;
-}
-main {
-  margin: 0;
-  overflow-wrap: break-word;
-}
-.inset {
-  padding: 1rem;
+.error {
+  color: red;
+  margin: 0.5rem;
+  padding: 0.5rem;
+  font-size: large;
+  border: 0.1rem solid red;
 }
 .pager {
   position: -webkit-sticky;
@@ -51,6 +27,37 @@ main {
   justify-content: space-evenly;
   box-shadow: 0 -1px 1px rgba(0,0,0,0.1);
 }
+#nav {
+  position: -webkit-sticky;
+  position: sticky;
+  z-index: 1;
+  top: 0;
+  background: orange;
+  padding: 0 0.5rem;
+  display: flex;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+#nav > * {
+  margin: 0.5rem 0.3rem;
+}
+#nav > a:first-child {
+  font-weight: bold;
+  color: purple;
+}
+#nav > a:last-child {
+  flex-grow: 1;
+  text-align: right;
+}
+.news>.news, .newest>.newest, .show>.show, .ask>.ask, .jobs>.jobs {
+  text-decoration: underline !important;
+}
+#main {
+  margin: 0;
+  overflow-wrap: break-word;
+}
+.inset {
+  padding: 1rem;
+}
 .li {
   margin-bottom: 0.5rem;
 }
@@ -58,11 +65,8 @@ main {
   margin-top: 0.5rem;
   margin-left: 1rem;
 }
-a {
+a[data-cmd], .mainlink {
   color: black;
-}
-a:link {
-  color: #444;
   text-decoration: none;
 }
 a:hover {
@@ -91,24 +95,27 @@ a:hover {
 }
 </style>
   <link rel="manifest" href="../demo/manifest.json">
-  <link rel="icon" href="https://hnpwa.com/assets/favicon.ico">
+  <link rel="icon" type="image/png" href="../demo/assets/favicon-32.png">
+  <link rel="apple-touch-icon" href="../demo/assets/favicon-256.png">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="description" content="Sample Hacker News app using jsxrender"/>
   <meta name="theme-color" content="orange"/>
-  <base target="_blank"/>
+  <base target="_blank" rel="noopener noreferrer nofollow"/>
 </head>
 <body>
-  <nav>
+  <nav id='nav'>
     <a href='/'                      data-cmd>JSX</a>
     <a href='/news'   class='news'   data-cmd>top</a>
     <a href='/newest' class='newest' data-cmd>new</a>
     <a href='/show'   class='show'   data-cmd>show</a>
     <a href='/ask'    class='ask'    data-cmd>ask</a>
     <a href='/jobs'   class='jobs'   data-cmd>jobs</a>
-    <a href='https://github.com/martyntebby/jsxrender'>about</a>
+    <a href='https://github.com/martyntebby/jsxrender' class='mainlink'>about</a>
   </nav>
-  <noscript>Requires modern browser running javascript.</noscript>
-  <main></main>
+  <noscript><div class="error">
+    Requires modern browser running javascript.
+  </div></noscript>
+  <main id='main'></main>
   <script>
 "use strict";
 define("demo/src/control", ["require", "exports"], function (require, exports) {
@@ -208,14 +215,14 @@ define("src/jsxrender", ["require", "exports"], function (require, exports) {
 define("demo/src/view", ["require", "exports", "src/jsxrender"], function (require, exports, jsxrender_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    function renderMarkup(cmd, arg, data) {
+    function renderToMarkup(cmd, arg, data) {
         const vnode = typeof data === 'string' ? ErrorView(data) :
             cmd === 'user' ? UserView({ user: data }) :
                 cmd === 'item' ? ItemView({ item: data }) :
                     ItemsView({ items: data, cmd: cmd, page: Number.parseInt(arg) });
         return jsxrender_1.renderToStaticMarkup(vnode);
     }
-    exports.renderMarkup = renderMarkup;
+    exports.renderToMarkup = renderToMarkup;
     function ItemsView(props) {
         return (jsxrender_1.h("div", null,
             jsxrender_1.h("ol", { start: (props.page - 1) * 30 + 1 }, props.items.map(item => jsxrender_1.h("li", { className: 'li' },
@@ -242,7 +249,7 @@ define("demo/src/view", ["require", "exports", "src/jsxrender"], function (requi
                     i.comments_count,
                     " comments"));
         return (jsxrender_1.h("article", { className: i.comments && 'inset' },
-            jsxrender_1.h("a", { href: url, "data-cmd": !i.domain }, i.title),
+            jsxrender_1.h("a", { className: 'mainlink', href: url, "data-cmd": !i.domain }, i.title),
             " ",
             domain,
             jsxrender_1.h("div", { className: 'smallgrey' },
@@ -308,7 +315,7 @@ define("demo/src/view", ["require", "exports", "src/jsxrender"], function (requi
             next));
     }
     function ErrorView(err) {
-        return jsxrender_1.h("div", null,
+        return jsxrender_1.h("div", { className: 'error' },
             "Error: ",
             err);
     }
@@ -330,6 +337,7 @@ define("demo/src/nodejs", ["require", "exports", "fs", "http", "https", "demo/sr
         console.log('serverRequest', req.url);
         if (!req.url)
             return;
+        // should handle with nginx
         if (req.url.startsWith('/demo/') || req.url.startsWith('/dist/')) {
             fs.readFile('.' + req.url, 'utf8', (err, data) => {
                 if (err)
@@ -344,7 +352,7 @@ define("demo/src/nodejs", ["require", "exports", "fs", "http", "https", "demo/sr
         res.setHeader('Content-Type', 'text/html');
         res.write(indexHtmlStr.substring(0, mainPos));
         function sendResp(data) {
-            res.write(view_1.renderMarkup(cmd, arg, data));
+            res.write(view_1.renderToMarkup(cmd, arg, data));
             res.end(indexHtmlStr.substring(mainPos));
         }
         https.get(url, res2 => {
@@ -387,9 +395,9 @@ define("demo/src/main", ["require", "exports", "demo/src/nodejs", "demo/src/cont
         pos = pos > -1 ? pos + 5 : path.lastIndexOf('/');
         prepath = path.substring(0, pos);
         console.log('prepath', prepath);
-        const main = document.getElementsByTagName('main')[0];
+        const main = document.getElementById('main');
         if (!('fetch' in window)) {
-            main.innerHTML = view_2.renderMarkup('', '', 'Requires modern browser.');
+            main.innerHTML = view_2.renderToMarkup('', '', 'Requires modern browser.');
             return;
         }
         if (!main.firstElementChild) {
@@ -416,13 +424,13 @@ define("demo/src/main", ["require", "exports", "demo/src/nodejs", "demo/src/cont
         const datap = clientFetch(url);
         if (push)
             window.history.pushState({ cmd, arg }, undefined);
-        const nav = document.getElementsByTagName('nav')[0];
+        const nav = document.getElementById('nav');
         nav.className = cmd;
-        const main = document.getElementsByTagName('main')[0];
+        const main = document.getElementById('main');
         const child = main.firstElementChild;
         if (child)
             child.className = 'loading';
-        const html = view_2.renderMarkup(cmd, arg, await datap);
+        const html = view_2.renderToMarkup(cmd, arg, await datap);
         main.innerHTML = html;
     }
     async function clientFetch(url) {

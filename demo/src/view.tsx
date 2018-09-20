@@ -1,7 +1,7 @@
-export { renderMarkup }
+export { renderToMarkup }
 import { h, renderToStaticMarkup } from '../../src/jsxrender';
 
-function renderMarkup(cmd: string, arg: string, data: any) {
+function renderToMarkup(cmd: string, arg: string, data: any) {
   const vnode = typeof data === 'string' ? ErrorView(data) :
   cmd === 'user' ? UserView({ user: data }) :
   cmd === 'item' ? ItemView({ item: data }) :
@@ -30,7 +30,7 @@ function ItemView(props: { item: HnItem }) {
   <span>| <a href={'/item/' + i.id} data-cmd>{i.comments_count} comments</a></span>;
   return (
     <article className={i.comments && 'inset'}>
-      <a href={url} data-cmd={!i.domain}>{i.title}</a> {domain}
+      <a className='mainlink' href={url} data-cmd={!i.domain}>{i.title}</a> {domain}
       <div className='smallgrey'>
         {points} {user} {i.time_ago} {comments}
       </div>
@@ -101,5 +101,5 @@ function PagerView(props: { cmd: string, page: number }) {
 }
 
 function ErrorView(err: string) {
-  return <div>Error: {err}</div>;
+  return <div className='error'>Error: {err}</div>;
 }

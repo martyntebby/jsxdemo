@@ -1,6 +1,6 @@
 import { nodejs } from './nodejs';
 import { State, link2cmd } from './control';
-import { renderMarkup } from './view';
+import { renderToMarkup } from './view';
 
 let prepath: string;
 
@@ -19,9 +19,9 @@ function browser() {
   prepath = path.substring(0, pos);
   console.log('prepath', prepath);
 
-  const main = document.getElementsByTagName('main')[0];
+  const main = document.getElementById('main')!;
   if(!('fetch' in window)) {
-    main.innerHTML = renderMarkup('', '', 'Requires modern browser.');
+    main.innerHTML = renderToMarkup('', '', 'Requires modern browser.');
     return;
   }
 
@@ -55,13 +55,13 @@ async function clientRequest(path: string, state?: State|null, push?: boolean) {
 
   if (push) window.history.pushState({ cmd, arg }, undefined);
 
-  const nav = document.getElementsByTagName('nav')[0];
+  const nav = document.getElementById('nav')!;
   nav.className = cmd;
-  const main = document.getElementsByTagName('main')[0];
+  const main = document.getElementById('main')!;
   const child = main.firstElementChild;
   if(child) child.className = 'loading';
 
-  const html = renderMarkup(cmd, arg, await datap);
+  const html = renderToMarkup(cmd, arg, await datap);
   main.innerHTML = html;
 }
 

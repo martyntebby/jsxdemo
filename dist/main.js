@@ -96,14 +96,14 @@ define("src/jsxrender", ["require", "exports"], function (require, exports) {
 define("demo/src/view", ["require", "exports", "src/jsxrender"], function (require, exports, jsxrender_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    function renderMarkup(cmd, arg, data) {
+    function renderToMarkup(cmd, arg, data) {
         const vnode = typeof data === 'string' ? ErrorView(data) :
             cmd === 'user' ? UserView({ user: data }) :
                 cmd === 'item' ? ItemView({ item: data }) :
                     ItemsView({ items: data, cmd: cmd, page: Number.parseInt(arg) });
         return jsxrender_1.renderToStaticMarkup(vnode);
     }
-    exports.renderMarkup = renderMarkup;
+    exports.renderToMarkup = renderToMarkup;
     function ItemsView(props) {
         return (jsxrender_1.h("div", null,
             jsxrender_1.h("ol", { start: (props.page - 1) * 30 + 1 }, props.items.map(item => jsxrender_1.h("li", { className: 'li' },
@@ -130,7 +130,7 @@ define("demo/src/view", ["require", "exports", "src/jsxrender"], function (requi
                     i.comments_count,
                     " comments"));
         return (jsxrender_1.h("article", { className: i.comments && 'inset' },
-            jsxrender_1.h("a", { href: url, "data-cmd": !i.domain }, i.title),
+            jsxrender_1.h("a", { className: 'mainlink', href: url, "data-cmd": !i.domain }, i.title),
             " ",
             domain,
             jsxrender_1.h("div", { className: 'smallgrey' },
@@ -196,7 +196,7 @@ define("demo/src/view", ["require", "exports", "src/jsxrender"], function (requi
             next));
     }
     function ErrorView(err) {
-        return jsxrender_1.h("div", null,
+        return jsxrender_1.h("div", { className: 'error' },
             "Error: ",
             err);
     }
@@ -218,6 +218,7 @@ define("demo/src/nodejs", ["require", "exports", "fs", "http", "https", "demo/sr
         console.log('serverRequest', req.url);
         if (!req.url)
             return;
+        // should handle with nginx
         if (req.url.startsWith('/demo/') || req.url.startsWith('/dist/')) {
             fs.readFile('.' + req.url, 'utf8', (err, data) => {
                 if (err)
@@ -232,7 +233,7 @@ define("demo/src/nodejs", ["require", "exports", "fs", "http", "https", "demo/sr
         res.setHeader('Content-Type', 'text/html');
         res.write(indexHtmlStr.substring(0, mainPos));
         function sendResp(data) {
-            res.write(view_1.renderMarkup(cmd, arg, data));
+            res.write(view_1.renderToMarkup(cmd, arg, data));
             res.end(indexHtmlStr.substring(mainPos));
         }
         https.get(url, res2 => {
@@ -275,9 +276,9 @@ define("demo/src/main", ["require", "exports", "demo/src/nodejs", "demo/src/cont
         pos = pos > -1 ? pos + 5 : path.lastIndexOf('/');
         prepath = path.substring(0, pos);
         console.log('prepath', prepath);
-        const main = document.getElementsByTagName('main')[0];
+        const main = document.getElementById('main');
         if (!('fetch' in window)) {
-            main.innerHTML = view_2.renderMarkup('', '', 'Requires modern browser.');
+            main.innerHTML = view_2.renderToMarkup('', '', 'Requires modern browser.');
             return;
         }
         if (!main.firstElementChild) {
@@ -304,13 +305,13 @@ define("demo/src/main", ["require", "exports", "demo/src/nodejs", "demo/src/cont
         const datap = clientFetch(url);
         if (push)
             window.history.pushState({ cmd, arg }, undefined);
-        const nav = document.getElementsByTagName('nav')[0];
+        const nav = document.getElementById('nav');
         nav.className = cmd;
-        const main = document.getElementsByTagName('main')[0];
+        const main = document.getElementById('main');
         const child = main.firstElementChild;
         if (child)
             child.className = 'loading';
-        const html = view_2.renderMarkup(cmd, arg, await datap);
+        const html = view_2.renderToMarkup(cmd, arg, await datap);
         main.innerHTML = html;
     }
     async function clientFetch(url) {

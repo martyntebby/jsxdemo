@@ -6,24 +6,27 @@
   <link rel="preconnect" href="https://api.hnpwa.com"/>
   <link rel="stylesheet" href="../demo/app.css"/>
   <link rel="manifest" href="../demo/manifest.json">
-  <link rel="icon" href="https://hnpwa.com/assets/favicon.ico">
+  <link rel="icon" type="image/png" href="../demo/assets/favicon-32.png">
+  <link rel="apple-touch-icon" href="../demo/assets/favicon-256.png">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="description" content="Sample Hacker News app using jsxrender"/>
   <meta name="theme-color" content="orange"/>
-  <base target="_blank"/>
+  <base target="_blank" rel="noopener noreferrer nofollow"/>
 </head>
 <body>
-  <nav>
+  <nav id='nav'>
     <a href='/'                      data-cmd>JSX</a>
     <a href='/news'   class='news'   data-cmd>top</a>
     <a href='/newest' class='newest' data-cmd>new</a>
     <a href='/show'   class='show'   data-cmd>show</a>
     <a href='/ask'    class='ask'    data-cmd>ask</a>
     <a href='/jobs'   class='jobs'   data-cmd>jobs</a>
-    <a href='https://github.com/martyntebby/jsxrender'>about</a>
+    <a href='https://github.com/martyntebby/jsxrender' class='mainlink'>about</a>
   </nav>
-  <noscript>Requires modern browser running javascript.</noscript>
-  <main></main>
+  <noscript><div class="error">
+    Requires modern browser running javascript.
+  </div></noscript>
+  <main id='main'></main>
   <script src="../dist/main.js"></script>
 </body>
 </html>

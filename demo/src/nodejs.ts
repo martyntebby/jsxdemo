@@ -3,7 +3,7 @@ import * as fs from 'fs';
 import * as http from 'http';
 import * as https from 'https';
 import { link2cmd } from './control';
-import { renderMarkup } from './view';
+import { renderToMarkup } from './view';
 
 let indexHtmlStr = '';
 let mainPos = 0;
@@ -20,6 +20,7 @@ function serverRequest(req: http.IncomingMessage, res: http.ServerResponse) {
   console.log('serverRequest', req.url);
   if(!req.url) return;
 
+  // should handle with nginx
   if(req.url.startsWith('/demo/') || req.url.startsWith('/dist/')) {
     fs.readFile('.' + req.url, 'utf8', (err, data) => {
       if(err) console.log(err.message);
@@ -36,7 +37,7 @@ function serverRequest(req: http.IncomingMessage, res: http.ServerResponse) {
   res.write(indexHtmlStr.substring(0, mainPos));
 
   function sendResp(data: any) {
-    res.write(renderMarkup(cmd, arg, data));
+    res.write(renderToMarkup(cmd, arg, data));
     res.end(indexHtmlStr.substring(mainPos));
   }
 
