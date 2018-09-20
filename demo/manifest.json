@@ -7,9 +7,19 @@
   "background_color": "white",
   "icons": [
     {
+      "src": "../demo/assets/favicon-32.png",
+      "type": "image/png",
+      "sizes": "32x32"
+    },
+    {
       "src": "../demo/assets/favicon-256.png",
       "type": "image/png",
       "sizes": "256x256"
+    },
+    {
+      "src": "../demo/assets/favicon-512.png",
+      "type": "image/png",
+      "sizes": "512x512"
     }
   ]
 }
