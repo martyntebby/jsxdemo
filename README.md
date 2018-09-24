@@ -8,7 +8,7 @@ and also for server side rendering using isomorphic code.
 
 It is written in typescript and useable with the React @type files
 (see package.json).
-The generated file dist/jsxrender.js can also be used regular javascript.
+The generated file dist/jsxrender.js can also be used with regular javascript.
 
 Hacker News Demo
 ----------------
