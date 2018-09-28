@@ -304,7 +304,7 @@ define("demo/src/main", ["require", "exports", "demo/src/nodejs", "demo/src/cont
         const { cmd, arg, url } = control_2.link2cmd(path, prepath.length, state);
         const datap = clientFetch(url);
         if (push)
-            window.history.pushState({ cmd, arg }, undefined);
+            window.history.pushState({ cmd, arg }, '');
         const nav = document.getElementById('nav');
         nav.className = cmd;
         const main = document.getElementById('main');

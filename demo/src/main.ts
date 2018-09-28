@@ -13,7 +13,7 @@ function main() {
 
 function browser() {
   console.log('browser');
-  const path = document.location.pathname;
+  const path = document.location!.pathname;
   let pos = path.search(/\/(dist|demo)\//);
   pos = pos > -1 ? pos + 5 : path.lastIndexOf('/');
   prepath = path.substring(0, pos);
@@ -38,7 +38,7 @@ function browser() {
 }
 
 function onPopState(e: PopStateEvent) {
-  clientRequest(document.location.pathname, e.state);
+  clientRequest(document.location!.pathname, e.state);
 }
 
 function onClick(e: Event) {
@@ -53,7 +53,7 @@ async function clientRequest(path: string, state?: State|null, push?: boolean) {
   const { cmd, arg, url } = link2cmd(path, prepath.length, state);
   const datap = clientFetch(url);
 
-  if (push) window.history.pushState({ cmd, arg }, undefined);
+  if (push) window.history.pushState({ cmd, arg }, '');
 
   const nav = document.getElementById('nav')!;
   nav.className = cmd;

@@ -4,10 +4,30 @@ import * as ReactDOMServer from '../src/jsxrender';
 //import * as ReactDOMServer from 'react-dom/server';
 
 let numErrs = 0;
+let logCompare = true;
 
 process.exit(tests());
 
 function tests() {
+  functest();
+  console.log(numErrs ? numErrs + ' FAILED' : 'All OK');
+  if(numErrs === 0) perftest();
+  return numErrs;
+}
+
+function perftest(iterations = 10000) {
+  logCompare = false;
+  const start = Date.now();
+  for(let i = 0; i < iterations; ++i) {
+    functest(i);
+  }
+  const end = Date.now();
+  const duration = (end - start) / 1000.0;
+  const tps = (iterations / duration).toFixed();
+  console.log('iterations', iterations, ' duration', duration, ' tps', tps);
+}
+
+function functest(offset = 0) {
   compare(<p></p>, '<p></p>');
   compare(<div/>, '<div></div>');
   compare(<a><div/></a>, '<a><div></div></a>');
@@ -32,7 +52,6 @@ function tests() {
   compare(<Details><div>abc</div></Details>, '<details><div>abc</div></details>');
   compare(<Details summary='a'><Details>abc<div/></Details></Details>,
   '<details><summary>a</summary><details>abc<div></div></details></details>');
-  console.log(numErrs ? numErrs + ' FAILED' : 'All OK');
   return numErrs;
 }
 
@@ -49,5 +68,8 @@ function compare(vnode: JSX.Element, html: string) {
   const markup = ReactDOMServer.renderToStaticMarkup(vnode);
   const result = markup === html;
   if(!result) ++numErrs;
-  console.log(result ? 'OK' : 'FAIL: ' + markup, html, vnode);
+  if(logCompare) {
+    console.log(result ? 'OK' : 'FAIL: ' + markup, html, vnode);
+  }
+  return result;
 }
