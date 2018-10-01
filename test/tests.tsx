@@ -37,7 +37,9 @@ function functest(offset = 0) {
   compare(<script defer/>, '<script defer=""></script>');
   compare(<script noModule={false}/>, '<script></script>');
   compare(<a data-a='true'/>, '<a data-a="true"></a>');
-  compare(<div style={{zIndex:1}}/>, '<div style="z-index:1"></div>');
+//  const style = {zIndex:1}; // style object is slow
+  const style: any = 'z-index:1';
+  compare(<div style={style}/>, '<div style="z-index:1"></div>');
   compare(<><div/></>, '<div></div>');
   compare(<></>, '');
   compare(<>{null}</>, '');

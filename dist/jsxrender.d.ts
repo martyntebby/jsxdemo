@@ -1,5 +1,5 @@
 /// <reference types="react" />
-export { render, renderToStaticMarkup, createElement, h, Fragment };
+export { createElement, h, Fragment, render, renderToStaticMarkup };
 declare type Props = {
     [key: string]: any;
 };
@@ -9,8 +9,8 @@ interface VNode {
     props: Props;
     children?: NodeType[];
 }
-declare function render(element: VNode, container: Element): void;
-declare function renderToStaticMarkup(element: VNode | JSX.Element): string;
 declare function createElement(type: string | Function, props: Props | null, ...children: NodeType[]): VNode;
 declare const h: typeof createElement;
 declare function Fragment(props: Props): VNode;
+declare function render(element: VNode, container: Element): void;
+declare function renderToStaticMarkup(element: VNode | JSX.Element): string;

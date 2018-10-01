@@ -41,7 +41,7 @@ function ItemView(props: { item: HnItem }) {
   );
 }
 
-function CommentsView(props: {comments?: HnComment[]}) {
+function CommentsView(props: { comments?: HnComment[] }) {
   return (
     <div>
       {props.comments && <p/>}

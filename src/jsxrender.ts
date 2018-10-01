@@ -1,4 +1,4 @@
-export { render, renderToStaticMarkup, createElement, h, Fragment };
+export { createElement, h, Fragment, render, renderToStaticMarkup };
 
 type Props = { [key: string]: any };
 
@@ -8,6 +8,21 @@ interface VNode {
   type?: string;
   props: Props;
   children?: NodeType[];
+}
+
+function createElement(type: string|Function, props: Props|null, ...children: NodeType[]): VNode {
+  props = props || {};
+  if(typeof type === 'function') {
+    props.children = children;
+    return type(props);
+  }
+  return { type, props, children };
+}
+
+const h = createElement;
+
+function Fragment(props: Props) {
+  return createElement('', null, ...props.children);
 }
 
 function render(element: VNode, container: Element): void {
@@ -29,21 +44,6 @@ function renderToStaticMarkup(element: VNode | JSX.Element): string {
   return str;
 }
 
-function createElement(type: string|Function, props: Props|null, ...children: NodeType[]): VNode {
-  props = props || {};
-  if(typeof type === 'function') {
-    props.children = children;
-    return type(props);
-  }
-  return { type, props, children };
-}
-
-const h = createElement;
-
-function Fragment(props: Props) {
-  return createElement('', null, ...props.children);
-}
-
 function doProp(name: string, value: any): string {
   if(name === 'key' || name === 'ref' || value == null || value === false) return '';
   if(name === 'className') name = 'class'
@@ -52,13 +52,6 @@ function doProp(name: string, value: any): string {
   else if(name === 'style' && typeof value === 'object') value = doStyle(value);
   else if(value === true) value = '';
   return ' ' + name + '="' + value + '"';
-}
-
-function doStyle(style: any): string {
-  return Object.keys(style).map(key => {
-    const key2 = key.replace(/([A-Z])/g, '-$1').toLowerCase();
-    return `${key2}:${style[key]}`
-  }).join(';');
 }
 
 function doChildren(children: NodeType[]): string {
@@ -70,4 +63,11 @@ function doChildren(children: NodeType[]): string {
     else str += child;
   }
   return str;
+}
+
+function doStyle(style: any): string {
+  return Object.keys(style).map(key => {
+    const key2 = key.replace(/([A-Z])/g, '-$1').toLowerCase();
+    return `${key2}:${style[key]}`;
+  }).join(';');
 }
