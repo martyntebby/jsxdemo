@@ -1,5 +1,5 @@
 "use strict";
-const CACHE_NAME = '0.8.2';
+const CACHE_NAME = '0.8.3';
 const PRE_CACHE = ['./', '../demo/manifest.json'];
 const _self = self;
 sw();
