@@ -7,17 +7,17 @@ let prepath: string;
 main();
 
 function main() {
-  console.log('main');
+  mylog('main');
   typeof process === 'object' && process.version ? nodejs() : browser();
 }
 
 function browser() {
-  console.log('browser');
+  mylog('browser');
   const path = document.location!.pathname;
   let pos = path.search(/\/(dist|demo)\//);
   pos = pos > -1 ? pos + 5 : path.lastIndexOf('/');
   prepath = path.substring(0, pos);
-  console.log('prepath', prepath);
+  mylog('prepath', prepath);
 
   const main = document.getElementById('main')!;
   if(!('fetch' in window)) {
@@ -33,7 +33,8 @@ function browser() {
   document.body.onclick = onClick;
 
   if('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('../dist/sw.js');
+    navigator.serviceWorker.register('../dist/sw.js')
+    .then(reg => mylog(reg));
   }
 }
 
@@ -49,7 +50,7 @@ function onClick(e: Event) {
 }
 
 async function clientRequest(path: string, state?: State|null, push?: boolean) {
-  console.log('clientRequest', path, state);
+  mylog('clientRequest', path, state);
   const { cmd, arg, url } = link2cmd(path, prepath.length, state);
   const datap = clientFetch(url);
 
@@ -75,4 +76,8 @@ async function clientFetch(url: string) {
   catch (err) {
     return err.toString();
   }
+}
+
+function mylog(...args: any[]) {
+  console.log(...args);
 }

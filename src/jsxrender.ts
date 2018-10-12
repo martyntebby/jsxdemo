@@ -1,36 +1,39 @@
-export { createElement, h, Fragment, render, renderToStaticMarkup };
+export { h, h as createElement, Fragment, render, renderToStaticMarkup };
 
 type Props = { [key: string]: any };
 
-type NodeType = string | number | boolean | VNode | null | undefined;
+type NodeTypeBase = string | number | boolean | VNode | null | undefined;
+type NodeType = NodeTypeBase | NodeTypeBase[];
 
 interface VNode {
   type?: string;
   props: Props;
   children?: NodeType[];
+  markup?: string;
 }
 
-function createElement(type: string|Function, props: Props|null, ...children: NodeType[]): VNode {
+function h(type: string|Function, props: Props|null, ...children: NodeType[]): VNode {
   props = props || {};
   if(typeof type === 'function') {
     props.children = children;
     return type(props);
   }
-  return { type, props, children };
+  const vnode: VNode = { type, props, children };
+//  vnode.markup = renderToStaticMarkup(vnode);
+  return vnode;
 }
 
-const h = createElement;
-
 function Fragment(props: Props) {
-  return createElement('', null, ...props.children);
+  return h('', null, ...props.children);
 }
 
 function render(element: VNode, container: Element): void {
   container.innerHTML = renderToStaticMarkup(element);
 }
 
-function renderToStaticMarkup(element: VNode | JSX.Element): string {
-  const { type, props, children } = element as VNode;
+function renderToStaticMarkup(element: VNode): string {
+  const { type, props, children, markup } = element;
+  if(markup !== undefined) return markup;
   let str = '';
   if(type) {
     str += '<' + type;
@@ -65,7 +68,7 @@ function doChildren(children: NodeType[]): string {
   return str;
 }
 
-function doStyle(style: any): string {
+function doStyle(style: any): string { // slow
   return Object.keys(style).map(key => {
     const key2 = key.replace(/([A-Z])/g, '-$1').toLowerCase();
     return `${key2}:${style[key]}`;

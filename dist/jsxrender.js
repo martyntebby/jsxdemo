@@ -1,21 +1,23 @@
-export { createElement, h, Fragment, render, renderToStaticMarkup };
-function createElement(type, props, ...children) {
+export { h, h as createElement, Fragment, render, renderToStaticMarkup };
+function h(type, props, ...children) {
     props = props || {};
     if (typeof type === 'function') {
         props.children = children;
         return type(props);
     }
-    return { type, props, children };
+    const vnode = { type, props, children };
+    return vnode;
 }
-const h = createElement;
 function Fragment(props) {
-    return createElement('', null, ...props.children);
+    return h('', null, ...props.children);
 }
 function render(element, container) {
     container.innerHTML = renderToStaticMarkup(element);
 }
 function renderToStaticMarkup(element) {
-    const { type, props, children } = element;
+    const { type, props, children, markup } = element;
+    if (markup !== undefined)
+        return markup;
     let str = '';
     if (type) {
         str += '<' + type;

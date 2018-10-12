@@ -16,7 +16,7 @@ function link2cmd(pathname: string, prePathLen: number, state?: State|null) {
 }
 
 function cmd2url(cmd: string, arg: string) {
-  return false && cmd === 'newest'
+  return cmd === 'newest'
   ? `https://node-hnapi.herokuapp.com/${cmd}?page=${arg}`
   : `https://api.hnpwa.com/v0/${cmd}/${arg}.json`;
 }
