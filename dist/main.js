@@ -317,6 +317,7 @@ define("demo/src/main", ["require", "exports", "demo/src/nodejs", "demo/src/cont
             child.className = 'loading';
         const html = view_2.renderToMarkup(cmd, arg, await datap);
         main.innerHTML = html;
+        window.scroll(0, 0);
     }
     async function clientFetch(url) {
         try {

@@ -64,6 +64,7 @@ async function clientRequest(path: string, state?: State|null, push?: boolean) {
 
   const html = renderToMarkup(cmd, arg, await datap);
   main.innerHTML = html;
+  window.scroll(0, 0);
 }
 
 async function clientFetch(url: string) {
