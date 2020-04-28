@@ -1,5 +1,8 @@
 {
   "compilerOptions": {
+    "plugins": [
+      { "transform": "../dist/tsxc" }
+    ],
     "jsx": "react",
     "outDir": "../dist",
     /* Basic Options */
