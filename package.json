@@ -8,8 +8,8 @@
     "url": "https://github.com/martyntebby/jsxrender.git"
   },
   "scripts": {
-    "build": "rm -rf dist && ttsc -b scripts . test demo demo/sw && (cd demo; node ../dist/bundle.js)",
-    "watch": "ttsc -b scripts demo/sw demo test -w",
+    "build": "rm -rf dist && tsc -b scripts . test demo demo/sw && (cd demo; node ../dist/bundle.js)",
+    "watch": "tsc -b scripts demo/sw demo test -w",
     "clean": "rm -rf dist",
     "test": "node dist/test/tests.js"
   },
@@ -19,8 +19,6 @@
     "@types/node": "12.12.6",
     "@types/react": "^16.9.34",
     "@types/react-dom": "^16.9.6",
-    "csstype": "^2.6.10",
-    "ttypescript": "^1.5.10",
     "typescript": "^3.8.3"
   },
   "dependencies": {}

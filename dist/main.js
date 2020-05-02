@@ -28,14 +28,12 @@ define("src/jsxrender", ["require", "exports"], function (require, exports) {
             props.children = children;
             return type(props);
         }
-        const vnode = { type, props, children };
-        //  vnode.markup = renderToStaticMarkup(vnode);
-        return vnode;
+        return doElement(type, props, children);
     }
     exports.h = h;
     exports.createElement = h;
     function Fragment(props) {
-        return h('', null, ...props.children);
+        return doChildren(props.children);
     }
     exports.Fragment = Fragment;
     function render(element, container) {
@@ -43,26 +41,18 @@ define("src/jsxrender", ["require", "exports"], function (require, exports) {
     }
     exports.render = render;
     function renderToStaticMarkup(element) {
-        const { type, props, children, markup } = element;
-        if (markup !== undefined)
-            return markup;
-        let str = '';
-        if (type) {
-            str += '<' + type;
-            for (const name in props) {
-                str += doProp(name, props[name]);
-            }
-            str += '>';
-        }
-        if (children)
-            str += doChildren(children);
-        if (type)
-            str += '</' + type + '>';
-        return str;
+        return element;
     }
     exports.renderToStaticMarkup = renderToStaticMarkup;
+    function doElement(type, props, children) {
+        let str = '<' + type;
+        for (const name in props)
+            str += doProp(name, props[name]);
+        return str + '>' + doChildren(children) + '</' + type + '>';
+    }
     function doProp(name, value) {
-        if (name === 'key' || name === 'ref' || value == null || value === false)
+        if (name === 'children' || name === 'key' || name === 'ref'
+            || value == null || value === false)
             return '';
         if (name === 'className')
             name = 'class';
@@ -82,8 +72,6 @@ define("src/jsxrender", ["require", "exports"], function (require, exports) {
             if (child == null || typeof child === 'boolean') { }
             else if (Array.isArray(child))
                 str += doChildren(child);
-            else if (typeof child === 'object')
-                str += renderToStaticMarkup(child);
             else
                 str += child;
         }
@@ -109,7 +97,7 @@ define("demo/src/view", ["require", "exports", "src/jsxrender"], function (requi
     exports.renderToMarkup = renderToMarkup;
     function ItemsView(props) {
         return (jsxrender_1.h("div", null,
-            jsxrender_1.h("ol", { start: (props.page - 1) * 30 + 1 }, props.items.map(item => jsxrender_1.h("li", { className: 'li' },
+            jsxrender_1.h("ol", { start: (props.page - 1) * 30 + 1, className: 'ol' }, props.items.map(item => jsxrender_1.h("li", { className: 'li' },
                 jsxrender_1.h(ItemView, { item: item })))),
             PagerView(props)));
     }

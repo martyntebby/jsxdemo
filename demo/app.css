@@ -51,6 +51,9 @@ body {
 .inset {
   padding: 1rem;
 }
+.ol {
+  margin-left: 1rem;
+}
 .li {
   margin-bottom: 0.5rem;
 }

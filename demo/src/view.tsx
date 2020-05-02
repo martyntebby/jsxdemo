@@ -12,7 +12,7 @@ function renderToMarkup(cmd: string, arg: string, data: any) {
 function ItemsView(props: { items: HnItem[], cmd: string, page: number }) {
   return (
     <div>
-      <ol start={(props.page - 1) * 30 + 1}>
+      <ol start={(props.page - 1) * 30 + 1} className='ol'>
         {props.items.map(item => <li className='li'><ItemView item={item}/></li>)}
       </ol>
       {PagerView(props)}
