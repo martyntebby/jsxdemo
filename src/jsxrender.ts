@@ -1,18 +1,19 @@
 export { h, h as createElement, Fragment, render, renderToStaticMarkup };
 
 type Props = { [key: string]: any };
-
 type NodeType = string | number | boolean | NodeType[] | null | undefined;
-
 type ElementType = string;
 
 function h(type: string|Function, props: Props|null, ...children: NodeType[]): ElementType {
-  props = props || {};
-  if(typeof type === 'function') {
-    props.children = children;
-    return type(props);
+  if(typeof type === 'string') {
+    return doElement(type, props, children);
   }
-  return doElement(type, props, children);
+  if(type === Fragment) { // minor optimization
+    return doChildren(children);
+  }
+  props = props || {};
+  props.children = children;
+  return type(props);
 }
 
 function Fragment(props: Props) {
@@ -27,15 +28,15 @@ function renderToStaticMarkup(element: ElementType): string {
   return element;
 }
 
-function doElement(type: string, props: Props, children: NodeType[]): string {
+function doElement(type: string, props: Props|null, children: NodeType[]): string {
   let str = '<' + type;
   for(const name in props) str += doProp(name, props[name]);
   return str + '>' + doChildren(children) + '</' + type + '>';
 }
 
 function doProp(name: string, value: any): string {
-  if(name === 'children' || name === 'key' || name === 'ref'
-      || value == null || value === false) return '';
+  if(name === 'key' || name === 'ref' ||
+      value == null || value === false) return '';
   if(name === 'className') name = 'class'
   else if(name === 'forHtml') name = 'for'
   else if(name === 'defaultValue') name = 'value'

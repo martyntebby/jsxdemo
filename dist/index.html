@@ -147,12 +147,15 @@ define("src/jsxrender", ["require", "exports"], function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     function h(type, props, ...children) {
-        props = props || {};
-        if (typeof type === 'function') {
-            props.children = children;
-            return type(props);
+        if (typeof type === 'string') {
+            return doElement(type, props, children);
         }
-        return doElement(type, props, children);
+        if (type === Fragment) { // minor optimization
+            return doChildren(children);
+        }
+        props = props || {};
+        props.children = children;
+        return type(props);
     }
     exports.h = h;
     exports.createElement = h;
@@ -175,8 +178,8 @@ define("src/jsxrender", ["require", "exports"], function (require, exports) {
         return str + '>' + doChildren(children) + '</' + type + '>';
     }
     function doProp(name, value) {
-        if (name === 'children' || name === 'key' || name === 'ref'
-            || value == null || value === false)
+        if (name === 'key' || name === 'ref' ||
+            value == null || value === false)
             return '';
         if (name === 'className')
             name = 'class';

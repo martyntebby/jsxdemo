@@ -15,7 +15,7 @@ function tests() {
   return numErrs;
 }
 
-function perftest(iterations = 10000) {
+function perftest(iterations = 100000) {
   logCompare = false;
   const start = Date.now();
   for(let i = iterations; i > 0; --i) {
@@ -52,7 +52,7 @@ function functest(offset = 0) {
   compare(<Details summary='abc'/>, '<details><summary>abc</summary></details>');
   compare(<Details><div>abc</div></Details>, '<details><div>abc</div></details>');
   compare(<Details summary='a'><Details>abc<div/></Details></Details>,
-  '<details><summary>a</summary><details>abc<div></div></details></details>');
+    '<details><summary>a</summary><details>abc<div></div></details></details>');
   return numErrs;
 }
 

@@ -1,11 +1,14 @@
 export { h, h as createElement, Fragment, render, renderToStaticMarkup };
 function h(type, props, ...children) {
-    props = props || {};
-    if (typeof type === 'function') {
-        props.children = children;
-        return type(props);
+    if (typeof type === 'string') {
+        return doElement(type, props, children);
     }
-    return doElement(type, props, children);
+    if (type === Fragment) {
+        return doChildren(children);
+    }
+    props = props || {};
+    props.children = children;
+    return type(props);
 }
 function Fragment(props) {
     return doChildren(props.children);
@@ -23,8 +26,8 @@ function doElement(type, props, children) {
     return str + '>' + doChildren(children) + '</' + type + '>';
 }
 function doProp(name, value) {
-    if (name === 'children' || name === 'key' || name === 'ref'
-        || value == null || value === false)
+    if (name === 'key' || name === 'ref' ||
+        value == null || value === false)
         return '';
     if (name === 'className')
         name = 'class';
