@@ -10,7 +10,7 @@
   "scripts": {
     "build": "rm -rf dist && tsc -b scripts . test demo demo/sw && (cd demo; node ../dist/bundle.js)",
     "watch": "tsc -b scripts demo/sw demo test -w",
-    "clean": "rm -rf dist out",
+    "clean": "rm -rf dist",
     "test": "node dist/test/tests.js"
   },
   "author": "Martyn Tebby",

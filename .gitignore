@@ -1,8 +1,5 @@
+dist/
 .vscode/
 node_modules/
 package-lock.json
-dist/src
-dist/test
-dist/tsxc.js
-dist/bundle.js
 
