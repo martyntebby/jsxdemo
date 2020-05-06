@@ -8,7 +8,6 @@ interface State {
 function link2cmd(pathname: string, prePathLen: number, state?: State|null) {
   state = state || {};
   const strs = pathname.substring(prePathLen).split('/');
-  if(strs[1] === 'index.html') strs[1] = '';
   const cmd = state.cmd || strs[1] || 'news';
   const arg = state.arg || strs[2] || '1';
   const url = cmd2url(cmd, arg);

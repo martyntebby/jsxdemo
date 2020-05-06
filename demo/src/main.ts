@@ -11,14 +11,17 @@ function main() {
   typeof process === 'object' && process.version ? nodejs() : browser();
 }
 
+function calcPrepath() {
+  const path = document.location!.pathname;
+  prepath = (path.endsWith('/') || path.endsWith('/index.html'))
+    ? path.substring(0, path.lastIndexOf('/'))
+    : path;
+  mylog('prepath', prepath);
+}
+
 function browser() {
   mylog('browser');
-  const path = document.location!.pathname;
-  // TODO: fix pos search to last / ???
-  let pos = path.search(/\/(dist|demo|public)\//);
-  pos = pos > -1 ? pos + 5 : path.lastIndexOf('/');
-  prepath = path.substring(0, pos);
-  mylog('prepath', prepath);
+  calcPrepath();
 
   const main = document.getElementById('main')!;
   if(!('fetch' in window)) {
@@ -27,7 +30,7 @@ function browser() {
   }
 
   if(!main.firstElementChild) {
-    clientRequest(path);
+    clientRequest(prepath);
   }
 
   window.onpopstate = onPopState;

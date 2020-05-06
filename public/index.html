@@ -129,8 +129,6 @@ define("demo/src/control", ["require", "exports"], function (require, exports) {
     function link2cmd(pathname, prePathLen, state) {
         state = state || {};
         const strs = pathname.substring(prePathLen).split('/');
-        if (strs[1] === 'index.html')
-            strs[1] = '';
         const cmd = state.cmd || strs[1] || 'news';
         const arg = state.arg || strs[2] || '1';
         const url = cmd2url(cmd, arg);
@@ -387,21 +385,23 @@ define("demo/src/main", ["require", "exports", "demo/src/nodejs", "demo/src/cont
         mylog('main');
         typeof process === 'object' && process.version ? nodejs_1.nodejs() : browser();
     }
+    function calcPrepath() {
+        const path = document.location.pathname;
+        prepath = (path.endsWith('/') || path.endsWith('/index.html'))
+            ? path.substring(0, path.lastIndexOf('/'))
+            : path;
+        mylog('prepath', prepath);
+    }
     function browser() {
         mylog('browser');
-        const path = document.location.pathname;
-        // TODO: fix pos search to last / ???
-        let pos = path.search(/\/(dist|demo|public)\//);
-        pos = pos > -1 ? pos + 5 : path.lastIndexOf('/');
-        prepath = path.substring(0, pos);
-        mylog('prepath', prepath);
+        calcPrepath();
         const main = document.getElementById('main');
         if (!('fetch' in window)) {
             main.innerHTML = view_2.renderToMarkup('', '', 'Requires modern browser.');
             return;
         }
         if (!main.firstElementChild) {
-            clientRequest(path);
+            clientRequest(prepath);
         }
         window.onpopstate = onPopState;
         document.body.onclick = onClick;
