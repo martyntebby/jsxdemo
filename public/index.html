@@ -1,3 +1,127 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+  <meta charset="utf-8">
+  <title>JSX Hacker News</title>
+  <link rel="preconnect" href="https://api.hnpwa.com"/>
+  <style>
+body {
+  margin: 0;
+  overflow-y: scroll;
+}
+.error {
+  color: red;
+  margin: 0.5rem;
+  padding: 0.5rem;
+  font-size: large;
+  border: 0.1rem solid red;
+}
+.pager {
+  position: -webkit-sticky;
+  position: sticky;
+  z-index: 1;
+  bottom: 0;
+  background: lightyellow;
+  padding: 0.5rem;
+  display: flex;
+  justify-content: space-evenly;
+  box-shadow: 0 -1px 1px rgba(0,0,0,0.1);
+}
+#nav {
+  position: -webkit-sticky;
+  position: sticky;
+  z-index: 1;
+  top: 0;
+  background: orange;
+  padding: 0 0.5rem;
+  display: flex;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+#nav > a {
+  margin: 0.5rem 0.3rem;
+}
+#nav > a:nth-child(2) {
+  font-weight: bold;
+  color: purple;
+}
+#nav > a:last-child {
+  flex-grow: 1;
+  text-align: right;
+}
+.news>.news, .newest>.newest, .show>.show, .ask>.ask, .jobs>.jobs {
+  text-decoration: underline;
+}
+#main {
+  margin: 0;
+  overflow-wrap: break-word;
+}
+.inset {
+  padding: 1rem;
+}
+.ol {
+  margin-left: 1rem;
+}
+.li {
+  margin-bottom: 0.5rem;
+}
+.details {
+  margin-top: 0.5rem;
+  margin-left: 1rem;
+}
+a[data-cmd], .mainlink {
+  color: black;
+  text-decoration: none;
+}
+a:hover {
+  text-decoration: underline;
+}
+.bold {
+  font-weight: bold;
+}
+.large {
+  font-size: large;
+}
+.grey {
+  color: #666;
+}
+.smallgrey {
+  font-size: small;
+  color: #666;
+}
+.loading {
+  cursor: progress;
+  opacity: 0.1;
+  transition: opacity 1s;
+}
+.nolink {
+  pointer-events: none;
+}
+</style>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/png" href="assets/favicon-32.png">
+  <link rel="apple-touch-icon" href="assets/favicon-256.png">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Sample Hacker News app using jsxrender"/>
+  <meta name="theme-color" content="orange"/>
+  <base target="_blank" rel="noopener noreferrer nofollow"/>
+</head>
+<body>
+  <nav id='nav'>
+    <a href='' class='mainlink'
+      onclick='event.preventDefault(); window.history.back()'>&lArr;</a>
+    <a href='/'                      data-cmd>JSX</a>
+    <a href='/news'   class='news'   data-cmd>top</a>
+    <a href='/newest' class='newest' data-cmd>new</a>
+    <a href='/show'   class='show'   data-cmd>show</a>
+    <a href='/ask'    class='ask'    data-cmd>ask</a>
+    <a href='/jobs'   class='jobs'   data-cmd>jobs</a>
+    <a href='https://github.com/martyntebby/jsxrender' class='mainlink'>about</a>
+  </nav>
+  <noscript><div class="error">
+    Requires modern browser running javascript.
+  </div></noscript>
+  <main id='main'></main>
+  <script>
 "use strict";
 define("demo/src/control", ["require", "exports"], function (require, exports) {
     "use strict";
@@ -266,7 +390,8 @@ define("demo/src/main", ["require", "exports", "demo/src/nodejs", "demo/src/cont
     function browser() {
         mylog('browser');
         const path = document.location.pathname;
-        let pos = path.search(/\/(dist|demo)\//);
+        // TODO: fix pos search to last / ???
+        let pos = path.search(/\/(dist|demo|public)\//);
         pos = pos > -1 ? pos + 5 : path.lastIndexOf('/');
         prepath = path.substring(0, pos);
         mylog('prepath', prepath);
@@ -281,7 +406,7 @@ define("demo/src/main", ["require", "exports", "demo/src/nodejs", "demo/src/cont
         window.onpopstate = onPopState;
         document.body.onclick = onClick;
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('../dist/sw.js')
+            navigator.serviceWorker.register('sw.js')
                 .then(reg => mylog(reg));
         }
     }
@@ -338,3 +463,6 @@ function define(name, params, func) {
     }
     func.apply(null, args);
 }
+</script>
+</body>
+</html>

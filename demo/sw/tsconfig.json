@@ -4,7 +4,7 @@
     "target": "es2017",
     "module": "none",
     "moduleResolution": "node",
-    "outFile": "../../dist/sw.js",
+    "outFile": "../../public/sw.js",
     "lib": ["es2017", "webworker"],
     //"jsx": "preserve",
     /* Basic Options */

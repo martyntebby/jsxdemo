@@ -14,7 +14,8 @@ function main() {
 function browser() {
   mylog('browser');
   const path = document.location!.pathname;
-  let pos = path.search(/\/(dist|demo)\//);
+  // TODO: fix pos search to last / ???
+  let pos = path.search(/\/(dist|demo|public)\//);
   pos = pos > -1 ? pos + 5 : path.lastIndexOf('/');
   prepath = path.substring(0, pos);
   mylog('prepath', prepath);
@@ -33,7 +34,7 @@ function browser() {
   document.body.onclick = onClick;
 
   if('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('../dist/sw.js')
+    navigator.serviceWorker.register('sw.js')
     .then(reg => mylog(reg));
   }
 }

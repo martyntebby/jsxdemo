@@ -8,7 +8,7 @@ main();
 
 function main() {
   const inFile = process.argv[2] || 'index.html';
-  const outFile = process.argv[3] || '../dist/index.html';
+  const outFile = process.argv[3] || '../public/index.html';
   const inStr = fs.readFileSync(inFile, encoding);
   const outStr = inStr.replace(regex, replacer);
   fs.writeFileSync(outFile, outStr, encoding);

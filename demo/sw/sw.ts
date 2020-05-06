@@ -1,8 +1,8 @@
 
 interface Text {} // hack to quiet error
 
-const CACHE_NAME = '0.9.0';
-const PRE_CACHE = [ './', '../demo/manifest.json' ];
+const CACHE_NAME = '0.9.1';
+const PRE_CACHE = [ './', 'manifest.json' ];
 
 const _self = self as any as ServiceWorkerGlobalScope;
 
