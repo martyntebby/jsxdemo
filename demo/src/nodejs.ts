@@ -11,7 +11,7 @@ let mainPos = 0;
 function nodejs() {
   const port = 3000;
   console.log('nodejs', port);
-  indexHtmlStr = fs.readFileSync('dist/index.html', 'utf8');
+  indexHtmlStr = fs.readFileSync('public/index.html', 'utf8');
   mainPos = indexHtmlStr.indexOf('</main>');
   http.createServer(serverRequest).listen(port);
 }
@@ -21,7 +21,7 @@ function serverRequest(req: http.IncomingMessage, res: http.ServerResponse) {
   if(!req.url) return;
 
   // should handle with nginx
-  if(req.url.startsWith('/demo/') || req.url.startsWith('/dist/')) {
+  if(req.url.startsWith('/public/')) {
     fs.readFile('.' + req.url, 'utf8', (err, data) => {
       if(err) console.log(err.message);
       res.statusCode = 200;

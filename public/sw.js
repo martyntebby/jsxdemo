@@ -1,6 +1,9 @@
 "use strict";
-const CACHE_NAME = '0.9.1';
-const PRE_CACHE = ['./', 'manifest.json'];
+const CACHE_NAME = '0.9.2';
+const PRE_CACHE = ['./', 'manifest.json',
+    'assets/favicon-32.png',
+    'assets/favicon-256.png'
+];
 const _self = self;
 sw();
 function sw() {
