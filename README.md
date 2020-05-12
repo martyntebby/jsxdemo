@@ -35,10 +35,10 @@ Interactive (fast 3G): 1.8s (1st view), 0.3s (repeat)
 
 Try it
 ------
-[https://hndemo.westinca.com]
+[https://jsxrender.westinca.com/public/]
 
 [https://martyntebby.github.io/jsxrender/public/]
 
-[https://cdn.rawgit.com/martyntebby/jsxrender/0.9.1/public/]
+[https://cdn.rawgit.com/martyntebby/jsxrender/0.9.2/public/]
 
-[https://rawcdn.githack.com/martyntebby/jsxrender/0.9.1/public/]
+[https://rawcdn.githack.com/martyntebby/jsxrender/0.9.2/public/]

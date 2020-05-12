@@ -1,7 +1,7 @@
 {
   "name": "jsxrender",
   "version": "0.9.2",
-  "description": "Small stateless subset of React.",
+  "description": "Small fast stateless subset of React.",
   "main": "dist/main.js",
   "repository": {
     "type": "git",
@@ -9,7 +9,7 @@
   },
   "scripts": {
     "build": "rm -rf dist && tsc -b scripts . test demo demo/sw && (cd demo; node ../dist/bundle.js)",
-    "watch": "tsc -b scripts demo/sw demo test -w",
+    "watch": "tsc -b demo -w",
     "clean": "rm -rf dist",
     "test": "node dist/test/tests.js"
   },

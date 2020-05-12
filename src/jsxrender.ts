@@ -1,4 +1,4 @@
-export { h, h as createElement, Fragment, render, renderToStaticMarkup };
+export { h, h as createElement, Fragment, renderToStaticMarkup };
 
 type Props = { [key: string]: any };
 type NodeType = string | number | boolean | NodeType[] | null | undefined;
@@ -18,10 +18,6 @@ function h(type: string|Function, props: Props|null, ...children: NodeType[]): E
 
 function Fragment(props: Props) {
   return doChildren(props.children);
-}
-
-function render(element: ElementType, container: Element): void {
-  container.innerHTML = renderToStaticMarkup(element);
 }
 
 function renderToStaticMarkup(element: ElementType): string {

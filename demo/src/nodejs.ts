@@ -2,8 +2,7 @@ export { nodejs };
 import * as fs from 'fs';
 import * as http from 'http';
 import * as https from 'https';
-import { link2cmd } from './control';
-import { renderToMarkup } from './view';
+import { link2cmd, renderToMarkup } from './control';
 
 let indexHtmlStr = '';
 let mainPos = 0;
@@ -20,7 +19,7 @@ function serverRequest(req: http.IncomingMessage, res: http.ServerResponse) {
   console.log('serverRequest', req.url);
   if(!req.url) return;
 
-  // should handle with nginx
+  // hack - should handle with nginx
   if(req.url.startsWith('/public/')) {
     fs.readFile('.' + req.url, 'utf8', (err, data) => {
       if(err) console.log(err.message);
@@ -30,7 +29,7 @@ function serverRequest(req: http.IncomingMessage, res: http.ServerResponse) {
     return;
   }
 
-  const { cmd, arg, url } = link2cmd(req.url, 0);
+  const { cmd, arg, url } = link2cmd(req.url);
 
   res.statusCode = 200;
   res.setHeader('Content-Type', 'text/html');

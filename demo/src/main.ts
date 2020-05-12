@@ -1,88 +1,45 @@
 import { nodejs } from './nodejs';
-import { State, link2cmd } from './control';
-import { renderToMarkup } from './view';
+import { fetchMarkup } from './control';
 
-let prepath: string;
+let useapi = false;
 
 main();
 
 function main() {
-  mylog('main');
+  console.log('main');
   typeof process === 'object' && process.version ? nodejs() : browser();
 }
 
-function calcPrepath() {
-  const path = document.location!.pathname;
-  prepath = (path.endsWith('/') || path.endsWith('/index.html'))
-    ? path.substring(0, path.lastIndexOf('/'))
-    : path;
-  mylog('prepath', prepath);
-}
-
 function browser() {
-  mylog('browser');
-  calcPrepath();
-
+  console.log('browser');
   const main = document.getElementById('main')!;
-  if(!('fetch' in window)) {
-    main.innerHTML = renderToMarkup('', '', 'Requires modern browser.');
-    return;
-  }
-
-  if(!main.firstElementChild) {
-    clientRequest(prepath);
-  }
-
+  if(!main.firstElementChild) clientRequest();
   window.onpopstate = onPopState;
   document.body.onclick = onClick;
-
-  if('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js')
-    .then(reg => mylog(reg));
-  }
+  navigator.serviceWorker.register('sw.js')
+    .then(reg => { console.log(reg); useapi = true; });
 }
 
 function onPopState(e: PopStateEvent) {
-  clientRequest(document.location!.pathname, e.state);
+  clientRequest(e.state);
 }
 
 function onClick(e: Event) {
   if (e.target instanceof HTMLAnchorElement && e.target.dataset.cmd != null) {
-    clientRequest(prepath + e.target.pathname, null, true);
+    clientRequest(e.target.pathname);
     e.preventDefault();
+    window.history.pushState(e.target.pathname, '');
   }
 }
 
-async function clientRequest(path: string, state?: State|null, push?: boolean) {
-  mylog('clientRequest', path, state);
-  const { cmd, arg, url } = link2cmd(path, prepath.length, state);
-  const datap = clientFetch(url);
-
-  if (push) window.history.pushState({ cmd, arg }, '');
-
+async function clientRequest(path?: string) {
+  const datap = fetchMarkup(path, useapi);
   const nav = document.getElementById('nav')!;
-  nav.className = cmd;
   const main = document.getElementById('main')!;
   const child = main.firstElementChild;
   if(child) child.className = 'loading';
-
-  const html = renderToMarkup(cmd, arg, await datap);
+  const { html, cmd, arg } = await datap;
   main.innerHTML = html;
+  nav.className = cmd;
   window.scroll(0, 0);
-}
-
-async function clientFetch(url: string) {
-  try {
-    const resp = await fetch(url);
-    if (!resp.ok) return resp.statusText;
-    const json = await resp.json();
-    return !json ? 'No data' : json.error ? json.error.toString() : json;
-  }
-  catch (err) {
-    return err.toString();
-  }
-}
-
-function mylog(...args: any[]) {
-  console.log(...args);
 }

@@ -1,4 +1,4 @@
-export { h, h as createElement, Fragment, render, renderToStaticMarkup };
+export { h, h as createElement, Fragment, renderToStaticMarkup };
 function h(type, props, ...children) {
     if (typeof type === 'string') {
         return doElement(type, props, children);
@@ -12,9 +12,6 @@ function h(type, props, ...children) {
 }
 function Fragment(props) {
     return doChildren(props.children);
-}
-function render(element, container) {
-    container.innerHTML = renderToStaticMarkup(element);
 }
 function renderToStaticMarkup(element) {
     return element;

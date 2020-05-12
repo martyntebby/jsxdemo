@@ -1,33 +1,33 @@
+import { myapi, fetchMarkup } from '../src/control';
 
-interface Text {} // hack to quiet error
+declare var self: ServiceWorkerGlobalScope;
 
 const CACHE_NAME = '0.9.2';
-const PRE_CACHE = [ './', 'manifest.json'
-,'assets/favicon-32.png'
-,'assets/favicon-256.png'
+const PRE_CACHE = [ './'
+  ,'manifest.json'
+  ,'assets/favicon-32.png'
+  ,'assets/favicon-256.png'
 ];
-
-const _self = self as any as ServiceWorkerGlobalScope;
 
 sw();
 
 function sw() {
   console.log('sw', CACHE_NAME);
-  _self.addEventListener('install', onInstall);
-  _self.addEventListener('activate', onActivate);
-  _self.addEventListener('fetch', onFetch);
+  self.addEventListener('install', onInstall);
+  self.addEventListener('activate', onActivate);
+  self.addEventListener('fetch', onFetch);
 }
 
 function onInstall(e: ExtendableEvent) {
   console.log('onInstall', e);
   console.log('precache', PRE_CACHE);
   e.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(PRE_CACHE))
-  .then(() =>_self.skipWaiting()));
+  .then(() => self.skipWaiting()));
 }
 
 function onActivate(e: ExtendableEvent) {
   console.log('onActivate', e);
-  e.waitUntil(_self.clients.claim()
+  e.waitUntil(self.clients.claim()
   .then(() => caches.keys().then(keys => Promise.all(keys.filter(key =>
   key !== CACHE_NAME).map(name => caches.delete(name))))));
 }
@@ -38,6 +38,11 @@ function onFetch(e: FetchEvent) {
 
 async function cacheFetch(request: Request) {
   console.log('cacheFetch', request.url);
+  const pos = request.url.indexOf(myapi);
+  if(pos >= 0) {
+    const { html } = await fetchMarkup(request.url.substring(pos + 1));
+    return new Response(html);
+  }
   if(request.mode === 'navigate') request = new Request('./');
   const cache = await caches.open(CACHE_NAME);
   let response = await cache.match(request);

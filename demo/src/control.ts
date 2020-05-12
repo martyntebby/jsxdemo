@@ -1,21 +1,43 @@
-export { State, link2cmd };
+export { myapi, fetchMarkup, link2cmd };
+export { renderToMarkup } from './view';
+import { mylog, renderToMarkup } from './view';
 
-interface State {
-  cmd?: string;
-  arg?: string;
+const myapi = '/myapi/';
+
+async function fetchMarkup(path?: string, useapi?: boolean) {
+  mylog('fetchMarkup', path, useapi);
+  const { cmd, arg, url } = link2cmd(path, useapi);
+  const data = await fetchData(url, !useapi);
+  const html: string = useapi ? data : renderToMarkup(cmd, arg, data);
+  return { html, cmd, arg };
 }
 
-function link2cmd(pathname: string, prePathLen: number, state?: State|null) {
-  state = state || {};
-  const strs = pathname.substring(prePathLen).split('/');
-  const cmd = state.cmd || strs[1] || 'news';
-  const arg = state.arg || strs[2] || '1';
-  const url = cmd2url(cmd, arg);
+function link2cmd(path?: string, useapi?: boolean) {
+  path = path || '';
+  const strs = path.split('/');
+  const cmd = strs[1] || 'news';
+  const arg = strs[2] || '1';
+  const url = cmd2url(cmd, arg, useapi);
   return { cmd, arg, url };
 }
 
-function cmd2url(cmd: string, arg: string) {
-  return cmd === 'newest'
+async function fetchData(url: string, json: boolean) {
+  mylog('fetchData', url);
+  try {
+    const resp = await fetch(url);
+    if (!resp.ok) return resp.statusText;
+    const datap = json ? resp.json() : resp.text();
+    const data = await datap;
+    return !data ? 'No data' : data.error ? data.error.toString() : data;
+  }
+  catch (err) {
+    return err.toString();
+  }
+}
+
+function cmd2url(cmd: string, arg: string, useapi?: boolean) {
+  return useapi ? `${myapi}${cmd}/${arg}`
+  : cmd === 'newest'
   ? `https://node-hnapi.herokuapp.com/${cmd}?page=${arg}`
   : `https://api.hnpwa.com/v0/${cmd}/${arg}.json`;
 }

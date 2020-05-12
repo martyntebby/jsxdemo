@@ -1,11 +1,13 @@
 {
-  "files": [ "sw.ts" ],
+  "files": [ "sw.ts", "../src/modulehack.ts" ],
   "compilerOptions": {
     "target": "es2017",
-    "module": "none",
+    "module": "amd",
     "moduleResolution": "node",
     "outFile": "../../public/sw.js",
     "lib": ["es2017", "webworker"],
+    "jsx": "react",
+    "jsxFactory": "h",
     //"jsx": "preserve",
     /* Basic Options */
     //"target": "es5",                          /* Specify ECMAScript target version: 'ES3' (default), 'ES5', 'ES2015', 'ES2016', 'ES2017','ES2018' or 'ESNEXT'. */

@@ -1,7 +1,16 @@
-export { renderToMarkup }
+export { mylog, renderToMarkup }
 import { h, renderToStaticMarkup } from '../../src/jsxrender';
+import type { HnUser, HnComment, HnItem } from './model';
+
+let logs: string[] = [];
+
+function mylog(...args: any[]) {
+  console.log(...args);
+//  logs.push(Date.now() + '  ' + args.join('  '));
+}
 
 function renderToMarkup(cmd: string, arg: string, data: any) {
+  mylog('renderToMarkup', cmd, arg);
   const vnode = typeof data === 'string' ? ErrorView(data) :
   cmd === 'user' ? UserView({ user: data }) :
   cmd === 'item' ? ItemView({ item: data }) :
@@ -12,6 +21,7 @@ function renderToMarkup(cmd: string, arg: string, data: any) {
 function ItemsView(props: { items: HnItem[], cmd: string, page: number }) {
   return (
     <div>
+      <LogsView/>
       <ol start={(props.page - 1) * 30 + 1} className='ol'>
         {props.items.map(item => <li className='li'><ItemView item={item}/></li>)}
       </ol>
@@ -42,10 +52,10 @@ function ItemView(props: { item: HnItem }) {
 }
 
 function CommentsView(props: { comments?: HnComment[] }) {
-  return (
+  return !props.comments ? null : (
     <div>
-      {props.comments && <p/>}
-      {props.comments && props.comments.map(comment =>
+      <p/>
+      {props.comments.map(comment =>
       <CommentView comment={comment}/>)}
     </div>
   );
@@ -85,6 +95,16 @@ function UserView(props: { user: HnUser }) {
         <a href={Y_URL + 'threads?id=' + u.id}>comments</a>
       </p>
     </div>
+  );
+}
+
+function LogsView() {
+  return logs.length === 0 ? null : (
+    <details open>
+      <summary>Logs</summary>
+      <pre>{logs.join('\n')}</pre>
+      {logs = []}
+    </details>
   );
 }
 

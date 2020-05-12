@@ -1,3 +1,4 @@
+export type { HnUser, HnContent, HnComment, HnItem }
 
 interface HnUser {
   id: string;
