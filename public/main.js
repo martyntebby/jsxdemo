@@ -2,11 +2,12 @@
 define("src/jsxrender", ["require", "exports"], function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
+    exports.renderToStaticMarkup = exports.Fragment = exports.createElement = exports.h = void 0;
     function h(type, props, ...children) {
         if (typeof type === 'string') {
             return doElement(type, props, children);
         }
-        if (type === Fragment) { // minor optimization
+        if (type === Fragment) {
             return doChildren(children);
         }
         props = props || {};
@@ -70,10 +71,10 @@ define("demo/src/model", ["require", "exports"], function (require, exports) {
 define("demo/src/view", ["require", "exports", "src/jsxrender"], function (require, exports, jsxrender_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
+    exports.renderToMarkup = exports.mylog = void 0;
     let logs = [];
     function mylog(...args) {
         console.log(...args);
-        //  logs.push(Date.now() + '  ' + args.join('  '));
     }
     exports.mylog = mylog;
     function renderToMarkup(cmd, arg, data) {
@@ -192,13 +193,14 @@ define("demo/src/view", ["require", "exports", "src/jsxrender"], function (requi
 define("demo/src/control", ["require", "exports", "demo/src/view", "demo/src/view"], function (require, exports, view_1, view_2) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.renderToMarkup = view_1.renderToMarkup;
+    exports.myapi = exports.link2cmd = exports.fetchMarkup = exports.fetchData = void 0;
+    Object.defineProperty(exports, "renderToMarkup", { enumerable: true, get: function () { return view_1.renderToMarkup; } });
     const myapi = '/myapi/';
     exports.myapi = myapi;
-    async function fetchMarkup(path, useapi) {
+    async function fetchMarkup(path, init, useapi) {
         view_2.mylog('fetchMarkup', path, useapi);
         const { cmd, arg, url } = link2cmd(path, useapi);
-        const data = await fetchData(url, !useapi);
+        const data = await fetchData(url, init, !useapi);
         const html = useapi ? data : view_2.renderToMarkup(cmd, arg, data);
         return { html, cmd, arg };
     }
@@ -212,10 +214,10 @@ define("demo/src/control", ["require", "exports", "demo/src/view", "demo/src/vie
         return { cmd, arg, url };
     }
     exports.link2cmd = link2cmd;
-    async function fetchData(url, json) {
+    async function fetchData(url, init, json) {
         view_2.mylog('fetchData', url);
         try {
-            const resp = await fetch(url);
+            const resp = await fetch(url, init);
             if (!resp.ok)
                 return resp.statusText;
             const datap = json ? resp.json() : resp.text();
@@ -226,6 +228,7 @@ define("demo/src/control", ["require", "exports", "demo/src/view", "demo/src/vie
             return err.toString();
         }
     }
+    exports.fetchData = fetchData;
     function cmd2url(cmd, arg, useapi) {
         return useapi ? `${myapi}${cmd}/${arg}`
             : cmd === 'newest'
@@ -233,22 +236,155 @@ define("demo/src/control", ["require", "exports", "demo/src/view", "demo/src/vie
                 : `https://api.hnpwa.com/v0/${cmd}/${arg}.json`;
     }
 });
-define("demo/sw/sw", ["require", "exports", "demo/src/control"], function (require, exports, control_1) {
+define("demo/src/browser", ["require", "exports", "demo/src/control"], function (require, exports, control_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
+    exports.browser = void 0;
+    let useapi = false;
+    function browser() {
+        console.log('browser');
+        const main = document.getElementById('main');
+        if (!main.firstElementChild)
+            clientRequest();
+        window.onpopstate = onPopState;
+        document.body.onclick = onClick;
+        navigator.serviceWorker.register('main.js')
+            .then(reg => { console.log(reg); useapi = true; });
+    }
+    exports.browser = browser;
+    function onPopState(e) {
+        clientRequest(e.state);
+    }
+    function onClick(e) {
+        if (e.target instanceof HTMLAnchorElement && e.target.dataset.cmd != null) {
+            clientRequest(e.target.pathname);
+            e.preventDefault();
+            window.history.pushState(e.target.pathname, '');
+        }
+    }
+    async function clientRequest(path) {
+        const datap = control_1.fetchMarkup(path, undefined, useapi);
+        const nav = document.getElementById('nav');
+        const main = document.getElementById('main');
+        const child = main.firstElementChild;
+        if (child)
+            child.className = 'loading';
+        const { html, cmd, arg } = await datap;
+        main.innerHTML = html;
+        nav.className = cmd;
+        window.scroll(0, 0);
+    }
+});
+define("demo/src/cfworker", ["require", "exports", "demo/src/control"], function (require, exports, control_2) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.cfworker = void 0;
+    const ttl = 1800;
+    function cfworker() {
+        console.log('cfworker');
+        self.addEventListener('fetch', e => e.respondWith(handleRequest(e)));
+    }
+    exports.cfworker = cfworker;
+    async function handleRequest(e) {
+        const request = e.request;
+        const cache = caches.default;
+        let response = await cache.match(request);
+        if (response)
+            return response;
+        const init = { cf: { cacheTtl: ttl } };
+        const indexp = control_2.fetchData('https://jsxrender.westinca.com/public/index.html', init);
+        const { html } = await control_2.fetchMarkup('/news/1', init);
+        const index = await indexp;
+        const pos = index.indexOf('</main>');
+        if (pos < 0)
+            return new Response(index);
+        const headers = [
+            ['Content-Type', 'text/html'],
+            ['Cache-Control', 'max-age=' + ttl]
+        ];
+        const str = index.substring(0, pos) + html + index.substring(pos);
+        response = new Response(str, { headers: headers });
+        e.waitUntil(cache.put(request, response.clone()));
+        return response;
+    }
+});
+define("demo/src/nodejs", ["require", "exports", "fs", "http", "https", "demo/src/control"], function (require, exports, fs, http, https, control_3) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.nodejs = void 0;
+    let indexHtmlStr = '';
+    let mainPos = 0;
+    function nodejs() {
+        const port = 3000;
+        console.log('nodejs', port);
+        indexHtmlStr = fs.readFileSync('public/index.html', 'utf8');
+        mainPos = indexHtmlStr.indexOf('</main>');
+        http.createServer(serverRequest).listen(port);
+    }
+    exports.nodejs = nodejs;
+    function serverRequest(req, res) {
+        console.log('serverRequest', req.url);
+        if (!req.url)
+            return;
+        if (req.url.startsWith('/public/')) {
+            fs.readFile('.' + req.url, 'utf8', (err, data) => {
+                if (err)
+                    console.log(err.message);
+                res.statusCode = 200;
+                res.end(data);
+            });
+            return;
+        }
+        const { cmd, arg, url } = control_3.link2cmd(req.url);
+        res.statusCode = 200;
+        res.setHeader('Content-Type', 'text/html');
+        res.write(indexHtmlStr.substring(0, mainPos));
+        https.get(url, clientRequest)
+            .on('error', err => sendResp(err.message));
+        function sendResp(data) {
+            res.write(control_3.renderToMarkup(cmd, arg, data));
+            res.end(indexHtmlStr.substring(mainPos));
+        }
+        function clientRequest(res2) {
+            if (res2.statusCode !== 200) {
+                res2.resume();
+                sendResp(res2.statusCode + ': ' + res2.statusMessage);
+            }
+            else {
+                let data = '';
+                res2.on('data', chunk => data += chunk);
+                res2.on('end', () => {
+                    try {
+                        const json = JSON.parse(data);
+                        data = !json ? 'No data' : json.error ? json.error.toString() : json;
+                    }
+                    catch (err) {
+                        data = err.toString();
+                    }
+                    sendResp(data);
+                });
+            }
+        }
+    }
+});
+define("demo/src/sw", ["require", "exports", "demo/src/control"], function (require, exports, control_4) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.sw = void 0;
     const CACHE_NAME = '0.9.2';
     const PRE_CACHE = ['./',
+        'main.js',
         'manifest.json',
         'assets/favicon-32.png',
         'assets/favicon-256.png'
     ];
-    sw();
     function sw() {
         console.log('sw', CACHE_NAME);
         self.addEventListener('install', onInstall);
         self.addEventListener('activate', onActivate);
         self.addEventListener('fetch', onFetch);
     }
+    exports.sw = sw;
     function onInstall(e) {
         console.log('onInstall', e);
         console.log('precache', PRE_CACHE);
@@ -265,9 +401,9 @@ define("demo/sw/sw", ["require", "exports", "demo/src/control"], function (requi
     }
     async function cacheFetch(request) {
         console.log('cacheFetch', request.url);
-        const pos = request.url.indexOf(control_1.myapi);
+        const pos = request.url.indexOf(control_4.myapi);
         if (pos >= 0) {
-            const { html } = await control_1.fetchMarkup(request.url.substring(pos + 1));
+            const { html } = await control_4.fetchMarkup(request.url.substring(pos + 1));
             return new Response(html);
         }
         if (request.mode === 'navigate')
@@ -287,10 +423,26 @@ define("demo/sw/sw", ["require", "exports", "demo/src/control"], function (requi
         return response;
     }
 });
-// hacked fake requirejs - use AMD modules with single output file
+define("demo/src/main", ["require", "exports", "demo/src/nodejs", "demo/src/browser", "demo/src/sw", "demo/src/cfworker"], function (require, exports, nodejs_1, browser_1, sw_1, cfworker_1) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    main();
+    function main() {
+        console.log('main');
+        if ('window' in globalThis)
+            browser_1.browser();
+        else if ('serviceWorker' in globalThis)
+            sw_1.sw();
+        else if (typeof process === 'object' && process.version)
+            nodejs_1.nodejs();
+        else if ('caches' in globalThis && 'default' in globalThis.caches)
+            cfworker_1.cfworker();
+        else
+            console.error('unknown environment', globalThis);
+    }
+});
 function define(name, params, func) {
-    // @ts-ignore: Window | Global not assignable to MySelf
-    const _self = typeof self === 'object' ? self : global;
+    const _self = globalThis;
     _self.myexports = _self.myexports || {};
     const req = typeof require === 'undefined' ? undefined : require;
     const args = [req, _self.myexports[name] = {}];

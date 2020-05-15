@@ -1,15 +1,17 @@
+//// <reference lib="webworker" />
+export { sw };
 import { myapi, fetchMarkup } from '../src/control';
 
+// @ts-ignore
 declare var self: ServiceWorkerGlobalScope;
 
 const CACHE_NAME = '0.9.2';
 const PRE_CACHE = [ './'
+  ,'main.js'
   ,'manifest.json'
   ,'assets/favicon-32.png'
   ,'assets/favicon-256.png'
 ];
-
-sw();
 
 function sw() {
   console.log('sw', CACHE_NAME);
@@ -18,6 +20,7 @@ function sw() {
   self.addEventListener('fetch', onFetch);
 }
 
+// @ts-ignore
 function onInstall(e: ExtendableEvent) {
   console.log('onInstall', e);
   console.log('precache', PRE_CACHE);
@@ -25,6 +28,7 @@ function onInstall(e: ExtendableEvent) {
   .then(() => self.skipWaiting()));
 }
 
+// @ts-ignore
 function onActivate(e: ExtendableEvent) {
   console.log('onActivate', e);
   e.waitUntil(self.clients.claim()
@@ -32,6 +36,7 @@ function onActivate(e: ExtendableEvent) {
   key !== CACHE_NAME).map(name => caches.delete(name))))));
 }
 
+// @ts-ignore
 function onFetch(e: FetchEvent) {
   e.respondWith(cacheFetch(e.request));
 }

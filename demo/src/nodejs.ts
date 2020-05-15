@@ -35,12 +35,15 @@ function serverRequest(req: http.IncomingMessage, res: http.ServerResponse) {
   res.setHeader('Content-Type', 'text/html');
   res.write(indexHtmlStr.substring(0, mainPos));
 
+  https.get(url, clientRequest)
+    .on('error', err => sendResp(err.message))
+
   function sendResp(data: any) {
     res.write(renderToMarkup(cmd, arg, data));
     res.end(indexHtmlStr.substring(mainPos));
   }
 
-  https.get(url, res2 => {
+  function clientRequest(res2: http.IncomingMessage) {
     if(res2.statusCode !== 200) {
       res2.resume();
       sendResp(res2.statusCode + ': ' + res2.statusMessage);
@@ -59,7 +62,5 @@ function serverRequest(req: http.IncomingMessage, res: http.ServerResponse) {
         sendResp(data);
       });
     }
-  }).on('error', err => {
-    sendResp(err.message);
-  })
+  }
 }
