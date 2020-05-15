@@ -2,11 +2,11 @@
 export { sw };
 import { myapi, fetchMarkup } from '../src/control';
 
-// @ts-ignore
+/// @ts-ignore
 declare var self: ServiceWorkerGlobalScope;
 
-const CACHE_NAME = '0.9.2';
-const PRE_CACHE = [ './'
+const CACHE_NAME = '0.9.3';
+const PRE_CACHE = [ 'index.html'
   ,'main.js'
   ,'manifest.json'
   ,'assets/favicon-32.png'
@@ -20,15 +20,21 @@ function sw() {
   self.addEventListener('fetch', onFetch);
 }
 
-// @ts-ignore
+/// @ts-ignore
 function onInstall(e: ExtendableEvent) {
   console.log('onInstall', e);
-  console.log('precache', PRE_CACHE);
-  e.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(PRE_CACHE))
-  .then(() => self.skipWaiting()));
+  e.waitUntil(precache().then(() => self.skipWaiting()));
 }
 
-// @ts-ignore
+async function precache() {
+  console.log('precache', PRE_CACHE);
+  const cache = await caches.open(CACHE_NAME);
+  await cache.addAll(PRE_CACHE);
+  const idx = await cache.match('index.html');
+  cache.put('./', idx!);
+}
+
+/// @ts-ignore
 function onActivate(e: ExtendableEvent) {
   console.log('onActivate', e);
   e.waitUntil(self.clients.claim()
@@ -36,7 +42,7 @@ function onActivate(e: ExtendableEvent) {
   key !== CACHE_NAME).map(name => caches.delete(name))))));
 }
 
-// @ts-ignore
+/// @ts-ignore
 function onFetch(e: FetchEvent) {
   e.respondWith(cacheFetch(e.request));
 }

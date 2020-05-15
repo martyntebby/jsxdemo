@@ -371,8 +371,8 @@ define("demo/src/sw", ["require", "exports", "demo/src/control"], function (requ
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.sw = void 0;
-    const CACHE_NAME = '0.9.2';
-    const PRE_CACHE = ['./',
+    const CACHE_NAME = '0.9.3';
+    const PRE_CACHE = ['index.html',
         'main.js',
         'manifest.json',
         'assets/favicon-32.png',
@@ -387,9 +387,14 @@ define("demo/src/sw", ["require", "exports", "demo/src/control"], function (requ
     exports.sw = sw;
     function onInstall(e) {
         console.log('onInstall', e);
+        e.waitUntil(precache().then(() => self.skipWaiting()));
+    }
+    async function precache() {
         console.log('precache', PRE_CACHE);
-        e.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(PRE_CACHE))
-            .then(() => self.skipWaiting()));
+        const cache = await caches.open(CACHE_NAME);
+        await cache.addAll(PRE_CACHE);
+        const idx = await cache.match('index.html');
+        cache.put('./', idx);
     }
     function onActivate(e) {
         console.log('onActivate', e);
