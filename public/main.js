@@ -75,6 +75,7 @@ define("demo/src/view", ["require", "exports", "src/jsxrender"], function (requi
     let logs = [];
     function mylog(...args) {
         console.log(...args);
+        logs.push(Date.now() + '  ' + args.join('  '));
     }
     exports.mylog = mylog;
     function renderToMarkup(cmd, arg, data) {
@@ -190,11 +191,37 @@ define("demo/src/view", ["require", "exports", "src/jsxrender"], function (requi
             err);
     }
 });
-define("demo/src/control", ["require", "exports", "demo/src/view", "demo/src/view"], function (require, exports, view_1, view_2) {
+define("package", [], {
+    "name": "jsxrender",
+    "version": "0.9.2a",
+    "description": "Small fast stateless subset of React.",
+    "main": "public/main.js",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/martyntebby/jsxrender.git"
+    },
+    "scripts": {
+        "build": "rm -rf dist public/main.js && tsc -b scripts . test demo && (cd demo; node ../dist/bundle.js)",
+        "watch": "tsc -b demo -w",
+        "clean": "rm -rf dist",
+        "test": "node dist/test/tests.js"
+    },
+    "author": "Martyn Tebby",
+    "license": "ISC",
+    "devDependencies": {
+        "@types/node": "12.12.6",
+        "@types/react": "^16.9.35",
+        "@types/react-dom": "^16.9.8",
+        "typescript": "^3.9.2"
+    },
+    "dependencies": {}
+});
+define("demo/src/control", ["require", "exports", "demo/src/view", "package", "demo/src/view"], function (require, exports, view_1, package_json_1, view_2) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.myapi = exports.link2cmd = exports.fetchMarkup = exports.fetchData = void 0;
     Object.defineProperty(exports, "renderToMarkup", { enumerable: true, get: function () { return view_1.renderToMarkup; } });
+    Object.defineProperty(exports, "version", { enumerable: true, get: function () { return package_json_1.version; } });
     const myapi = '/myapi/';
     exports.myapi = myapi;
     async function fetchMarkup(path, init, useapi) {
@@ -248,7 +275,7 @@ define("demo/src/browser", ["require", "exports", "demo/src/control"], function 
             clientRequest();
         window.onpopstate = onPopState;
         document.body.onclick = onClick;
-        navigator.serviceWorker.register('main.js')
+        navigator.serviceWorker.register('sw.js')
             .then(reg => { console.log(reg); useapi = true; });
     }
     exports.browser = browser;
@@ -371,8 +398,8 @@ define("demo/src/sw", ["require", "exports", "demo/src/control"], function (requ
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.sw = void 0;
-    const CACHE_NAME = '0.9.2';
-    const PRE_CACHE = ['./',
+    const CACHE_NAME = control_4.version;
+    const PRE_CACHE = ['index.html',
         'main.js',
         'manifest.json',
         'assets/favicon-32.png',
@@ -387,9 +414,16 @@ define("demo/src/sw", ["require", "exports", "demo/src/control"], function (requ
     exports.sw = sw;
     function onInstall(e) {
         console.log('onInstall', e);
+        e.waitUntil(precache());
+    }
+    async function precache() {
         console.log('precache', PRE_CACHE);
-        e.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(PRE_CACHE))
-            .then(() => self.skipWaiting()));
+        const cache = await caches.open(CACHE_NAME);
+        await cache.addAll(PRE_CACHE);
+        const resp = await cache.match('index.html');
+        if (resp)
+            await cache.put('./', resp);
+        self.skipWaiting();
     }
     function onActivate(e) {
         console.log('onActivate', e);
@@ -423,27 +457,33 @@ define("demo/src/sw", ["require", "exports", "demo/src/control"], function (requ
         return response;
     }
 });
-define("demo/src/main", ["require", "exports", "demo/src/nodejs", "demo/src/browser", "demo/src/sw", "demo/src/cfworker"], function (require, exports, nodejs_1, browser_1, sw_1, cfworker_1) {
+define("demo/src/main", ["require", "exports", "demo/src/control", "demo/src/nodejs", "demo/src/browser", "demo/src/sw", "demo/src/cfworker"], function (require, exports, control_5, nodejs_1, browser_1, sw_1, cfworker_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     main();
     function main() {
-        console.log('main');
+        console.log('main', control_5.version);
         if ('window' in globalThis)
             browser_1.browser();
-        else if ('serviceWorker' in globalThis)
-            sw_1.sw();
         else if (typeof process === 'object' && process.version)
             nodejs_1.nodejs();
         else if ('caches' in globalThis && 'default' in globalThis.caches)
             cfworker_1.cfworker();
-        else
-            console.error('unknown environment', globalThis);
+        else if ('clients' in globalThis && 'skipWaiting' in globalThis)
+            sw_1.sw();
+        else {
+            console.error('unknown environment', globalThis, Object.keys(globalThis));
+            throw 'unknown environment ' + globalThis + Object.keys(globalThis);
+        }
     }
 });
 function define(name, params, func) {
     const _self = globalThis;
     _self.myexports = _self.myexports || {};
+    if (typeof func !== 'function') {
+        _self.myexports[name] = func;
+        return;
+    }
     const req = typeof require === 'undefined' ? undefined : require;
     const args = [req, _self.myexports[name] = {}];
     for (let i = 2; i < params.length; ++i) {

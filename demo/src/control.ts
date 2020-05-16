@@ -1,5 +1,6 @@
 export { fetchData, fetchMarkup, link2cmd, myapi };
 export { renderToMarkup } from './view';
+export { version } from '../../package.json';
 import { mylog, renderToMarkup } from './view';
 
 const myapi = '/myapi/';

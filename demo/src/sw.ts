@@ -1,17 +1,27 @@
 //// <reference lib="webworker" />
 export { sw };
-import { myapi, fetchMarkup } from '../src/control';
+import { version, myapi, fetchMarkup } from '../src/control';
 
-// @ts-ignore
+/// @ts-ignore
 declare var self: ServiceWorkerGlobalScope;
 
-const CACHE_NAME = '0.9.2';
-const PRE_CACHE = [ './'
+const CACHE_NAME = version;
+const PRE_CACHE = [ 'index.html'
   ,'main.js'
   ,'manifest.json'
   ,'assets/favicon-32.png'
   ,'assets/favicon-256.png'
 ];
+
+// hack events to get to compile
+interface ExtendableEvent {
+  waitUntil(f: any): void
+}
+
+interface FetchEvent extends ExtendableEvent {
+  respondWith(r: Response | Promise<Response>): void
+  readonly request: Request
+}
 
 function sw() {
   console.log('sw', CACHE_NAME);
@@ -20,15 +30,20 @@ function sw() {
   self.addEventListener('fetch', onFetch);
 }
 
-// @ts-ignore
 function onInstall(e: ExtendableEvent) {
   console.log('onInstall', e);
-  console.log('precache', PRE_CACHE);
-  e.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(PRE_CACHE))
-  .then(() => self.skipWaiting()));
+  e.waitUntil(precache());
 }
 
-// @ts-ignore
+async function precache() {
+  console.log('precache', PRE_CACHE);
+  const cache = await caches.open(CACHE_NAME);
+  await cache.addAll(PRE_CACHE);
+  const resp = await cache.match('index.html');
+  if(resp) await cache.put('./', resp);
+  self.skipWaiting();
+}
+
 function onActivate(e: ExtendableEvent) {
   console.log('onActivate', e);
   e.waitUntil(self.clients.claim()
@@ -36,7 +51,6 @@ function onActivate(e: ExtendableEvent) {
   key !== CACHE_NAME).map(name => caches.delete(name))))));
 }
 
-// @ts-ignore
 function onFetch(e: FetchEvent) {
   e.respondWith(cacheFetch(e.request));
 }

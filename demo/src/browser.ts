@@ -9,7 +9,7 @@ function browser() {
   if(!main.firstElementChild) clientRequest();
   window.onpopstate = onPopState;
   document.body.onclick = onClick;
-  navigator.serviceWorker.register('main.js')
+  navigator.serviceWorker.register('sw.js')
     .then(reg => { console.log(reg); useapi = true; });
 }
 
