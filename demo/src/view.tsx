@@ -6,7 +6,7 @@ let logs: string[] = [];
 
 function mylog(...args: any[]) {
   console.log(...args);
-  logs.push(Date.now() + '  ' + args.join('  '));
+//  logs.push(Date.now() + '  ' + args.join('  '));
 }
 
 function renderToMarkup(cmd: string, arg: string, data: any) {

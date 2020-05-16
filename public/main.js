@@ -75,7 +75,6 @@ define("demo/src/view", ["require", "exports", "src/jsxrender"], function (requi
     let logs = [];
     function mylog(...args) {
         console.log(...args);
-        logs.push(Date.now() + '  ' + args.join('  '));
     }
     exports.mylog = mylog;
     function renderToMarkup(cmd, arg, data) {
@@ -193,7 +192,7 @@ define("demo/src/view", ["require", "exports", "src/jsxrender"], function (requi
 });
 define("package", [], {
     "name": "jsxrender",
-    "version": "0.9.2a",
+    "version": "0.9.3",
     "description": "Small fast stateless subset of React.",
     "main": "public/main.js",
     "repository": {

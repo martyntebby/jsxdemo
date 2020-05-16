@@ -39,6 +39,6 @@ Try it
 
 [https://martyntebby.github.io/jsxrender/public/]
 
-[https://cdn.rawgit.com/martyntebby/jsxrender/0.9.2/public/]
+[https://cdn.rawgit.com/martyntebby/jsxrender/0.9.3/public/]
 
-[https://rawcdn.githack.com/martyntebby/jsxrender/0.9.2/public/]
+[https://rawcdn.githack.com/martyntebby/jsxrender/0.9.3/public/]
