@@ -71,10 +71,14 @@ define("demo/src/model", ["require", "exports"], function (require, exports) {
 define("demo/src/view", ["require", "exports", "src/jsxrender"], function (require, exports, jsxrender_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.renderToMarkup = exports.mylog = void 0;
+    exports.renderToMarkup = exports.mylog = exports.dolog = void 0;
     let logs = [];
+    let dolog = false;
+    exports.dolog = dolog;
     function mylog(...args) {
         console.log(...args);
+        if (dolog)
+            logs.push(Date.now() + '  ' + args.join('  '));
     }
     exports.mylog = mylog;
     function renderToMarkup(cmd, arg, data) {
@@ -219,6 +223,7 @@ define("demo/src/control", ["require", "exports", "demo/src/view", "package", "d
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.myapi = exports.link2cmd = exports.fetchMarkup = exports.fetchData = void 0;
+    Object.defineProperty(exports, "dolog", { enumerable: true, get: function () { return view_1.dolog; } });
     Object.defineProperty(exports, "renderToMarkup", { enumerable: true, get: function () { return view_1.renderToMarkup; } });
     Object.defineProperty(exports, "version", { enumerable: true, get: function () { return package_json_1.version; } });
     const myapi = '/myapi/';
@@ -325,6 +330,7 @@ define("demo/src/cfworker", ["require", "exports", "demo/src/control"], function
         if (pos < 0)
             return new Response(index);
         const headers = [
+            ['Link', '</public/main.js>; rel=preload; as=script, </public/app.css>; rel=preload; as=style'],
             ['Content-Type', 'text/html'],
             ['Cache-Control', 'max-age=' + ttl]
         ];

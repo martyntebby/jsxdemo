@@ -27,6 +27,7 @@ async function handleRequest(e: FetchEvent) {
   if(pos < 0) return new Response(index); // error
 
   const headers = [
+    ['Link', '</public/main.js>; rel=preload; as=script, </public/app.css>; rel=preload; as=style'],
     ['Content-Type', 'text/html'],
     ['Cache-Control', 'max-age=' + ttl]
   ];

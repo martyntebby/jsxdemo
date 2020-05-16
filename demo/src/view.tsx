@@ -1,12 +1,13 @@
-export { mylog, renderToMarkup }
+export { dolog, mylog, renderToMarkup }
 import { h, renderToStaticMarkup } from '../../src/jsxrender';
 import type { HnUser, HnComment, HnItem } from './model';
 
 let logs: string[] = [];
+let dolog = false;
 
 function mylog(...args: any[]) {
   console.log(...args);
-//  logs.push(Date.now() + '  ' + args.join('  '));
+  if(dolog) logs.push(Date.now() + '  ' + args.join('  '));
 }
 
 function renderToMarkup(cmd: string, arg: string, data: any) {
