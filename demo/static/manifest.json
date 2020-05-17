@@ -1,23 +1,23 @@
 {
   "name": "JSX Hacker News",
   "short_name": "Hacker News",
-  "start_url": "./",
+  "start_url": "../",
   "display": "standalone",
   "theme_color": "orange",
   "background_color": "white",
   "icons": [
     {
-      "src": "assets/favicon-32.png",
+      "src": "favicon-32.png",
       "type": "image/png",
       "sizes": "32x32"
     },
     {
-      "src": "assets/favicon-256.png",
+      "src": "favicon-256.png",
       "type": "image/png",
       "sizes": "256x256"
     },
     {
-      "src": "assets/favicon-512.png",
+      "src": "favicon-512.png",
       "type": "image/png",
       "sizes": "512x512"
     }

@@ -16,20 +16,25 @@ function nodejs() {
 }
 
 function serverRequest(req: http.IncomingMessage, res: http.ServerResponse) {
-  console.log('serverRequest', req.url);
-  if(!req.url) return;
+  let url = req.url;
+  console.log('serverRequest', url);
+  if(!url) return;
 
   // hack - should handle with nginx
-  if(req.url.startsWith('/public/')) {
-    fs.readFile('.' + req.url, 'utf8', (err, data) => {
+  if(url.startsWith('/static/')) url = '/public' + url;
+  if(url.startsWith('/public/')) {
+    fs.readFile('.' + url, null, (err, data) => {
       if(err) console.log(err.message);
       res.statusCode = 200;
       res.end(data);
     });
     return;
   }
+  serveNews(url, res);
+}
 
-  const { cmd, arg, url } = link2cmd(req.url);
+function serveNews(url1: string, res: http.ServerResponse) {
+  const { cmd, arg, url } = link2cmd(url1);
 
   res.statusCode = 200;
   res.setHeader('Content-Type', 'text/html');

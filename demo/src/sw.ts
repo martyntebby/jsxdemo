@@ -8,9 +8,9 @@ declare var self: ServiceWorkerGlobalScope;
 const CACHE_NAME = version;
 const PRE_CACHE = [ 'index.html'
   ,'main.js'
-  ,'manifest.json'
-  ,'assets/favicon-32.png'
-  ,'assets/favicon-256.png'
+  ,'static/manifest.json'
+  ,'static/favicon-32.png'
+  ,'static/favicon-256.png'
 ];
 
 // hack events to get to compile

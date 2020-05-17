@@ -330,7 +330,7 @@ define("demo/src/cfworker", ["require", "exports", "demo/src/control"], function
         if (pos < 0)
             return new Response(index);
         const headers = [
-            ['Link', '</public/main.js>; rel=preload; as=script, </public/app.css>; rel=preload; as=style'],
+            ['Link', '</public/main.js>; rel=preload; as=script'],
             ['Content-Type', 'text/html'],
             ['Cache-Control', 'max-age=' + ttl]
         ];
@@ -355,11 +355,14 @@ define("demo/src/nodejs", ["require", "exports", "fs", "http", "https", "demo/sr
     }
     exports.nodejs = nodejs;
     function serverRequest(req, res) {
-        console.log('serverRequest', req.url);
-        if (!req.url)
+        let url = req.url;
+        console.log('serverRequest', url);
+        if (!url)
             return;
-        if (req.url.startsWith('/public/')) {
-            fs.readFile('.' + req.url, 'utf8', (err, data) => {
+        if (url.startsWith('/static/'))
+            url = '/public' + url;
+        if (url.startsWith('/public/')) {
+            fs.readFile('.' + url, null, (err, data) => {
                 if (err)
                     console.log(err.message);
                 res.statusCode = 200;
@@ -367,7 +370,10 @@ define("demo/src/nodejs", ["require", "exports", "fs", "http", "https", "demo/sr
             });
             return;
         }
-        const { cmd, arg, url } = control_3.link2cmd(req.url);
+        serveNews(url, res);
+    }
+    function serveNews(url1, res) {
+        const { cmd, arg, url } = control_3.link2cmd(url1);
         res.statusCode = 200;
         res.setHeader('Content-Type', 'text/html');
         res.write(indexHtmlStr.substring(0, mainPos));
@@ -406,9 +412,9 @@ define("demo/src/sw", ["require", "exports", "demo/src/control"], function (requ
     const CACHE_NAME = control_4.version;
     const PRE_CACHE = ['index.html',
         'main.js',
-        'manifest.json',
-        'assets/favicon-32.png',
-        'assets/favicon-256.png'
+        'static/manifest.json',
+        'static/favicon-32.png',
+        'static/favicon-256.png'
     ];
     function sw() {
         console.log('sw', CACHE_NAME);
