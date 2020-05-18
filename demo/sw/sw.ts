@@ -1,5 +1,5 @@
 const CACHE_NAME = '0.9.3a';
-const PRE_CACHE = [ './'
+const PRE_CACHE = [ 'index.html'
   ,'static/manifest.json'
   ,'static/favicon-32.png'
   ,'static/favicon-256.png'
@@ -18,9 +18,16 @@ function sw() {
 
 function onInstall(e: ExtendableEvent) {
   console.log('onInstall', e);
+  e.waitUntil(precache());
+}
+
+async function precache() {
   console.log('precache', PRE_CACHE);
-  e.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(PRE_CACHE))
-  .then(() => _self.skipWaiting()));
+  const cache = await caches.open(CACHE_NAME);
+  await cache.addAll(PRE_CACHE);
+  const resp = await cache.match('index.html');
+  if(resp) cache.put('./', resp);
+  _self.skipWaiting();
 }
 
 function onActivate(e: ExtendableEvent) {
