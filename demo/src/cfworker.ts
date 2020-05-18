@@ -1,13 +1,22 @@
 //// <reference lib="webworker" />
 export { cfworker };
-import { fetchData, fetchMarkup } from '../src/control';
+import { fetchData, fetchMarkup, mylog, config } from '../src/control';
 
-const ttl = 1800; // cache for 30 minutes
+/// @ts-ignore
+declare var self: ServiceWorkerGlobalScope;
 
 function cfworker() {
-  console.log('cfworker');
-/// @ts-ignore
-(<ServiceWorkerGlobalScope><unknown>self).addEventListener('fetch', e => e.respondWith(handleRequest(e)));
+  mylog('cfworker');
+  updateConfig();
+  /// @ts-ignore
+  self.addEventListener('fetch', e => e.respondWith(handleRequest(e)));
+}
+
+function updateConfig() {
+  Object.keys(config).forEach(key => {
+    const value = self[key.toUpperCase()];
+    if(value != null) (<any>config)[key] = value;
+  });
 }
 
 /// @ts-ignore
@@ -19,7 +28,7 @@ async function handleRequest(e: FetchEvent) {
   if(response) return response;
 
   // get index.html and news and combine them
-  const init: any = { cf: { cacheTtl: ttl } };
+  const init: any = { cf: { cacheTtl: config.cfttl } };
   const indexp = fetchData('https://jsxrender.westinca.com/public/index.html', init);
   const { html } = await fetchMarkup('/news/1', init);
   const index: string = await indexp;
@@ -27,9 +36,9 @@ async function handleRequest(e: FetchEvent) {
   if(pos < 0) return new Response(index); // error
 
   const headers = [
-    ['Link', '</public/main.js>; rel=preload; as=script'], //, </public/app.css>; rel=preload; as=style'],
+  //['Link', '</public/main.js>; rel=preload; as=script'], //, </public/app.css>; rel=preload; as=style'],
     ['Content-Type', 'text/html'],
-    ['Cache-Control', 'max-age=' + ttl]
+    ['Cache-Control', 'max-age=' + config.cfttl]
   ];
   const str = index.substring(0, pos) + html + index.substring(pos);
   response = new Response(str, { headers: headers });

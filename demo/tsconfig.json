@@ -1,15 +1,10 @@
 {
-  "include": [ "src/*.ts", "../src/*.ts" ],
+  "extends": "../tsbase",
+  "include": [ "src/*.ts", "../src/*.ts", "../package.json" ],
   "compilerOptions": {
-    "target": "es2017",
     "module": "amd",
-    "moduleResolution": "node",
     "outFile": "../public/main.js",
-    "jsx": "react",
-    "jsxFactory": "h",
-    "removeComments": true,
     "resolveJsonModule": true,
-    "strict": true,
-    "esModuleInterop": false
+    "jsxFactory": "h",
   }
 }

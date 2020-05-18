@@ -2,29 +2,31 @@ export { nodejs };
 import * as fs from 'fs';
 import * as http from 'http';
 import * as https from 'https';
-import { link2cmd, renderToMarkup } from './control';
+import { link2cmd, renderToMarkup, mylog, updateConfig, config } from './control';
 
 let indexHtmlStr = '';
 let mainPos = 0;
 
 function nodejs() {
-  const port = 3000;
-  console.log('nodejs', port);
+  mylog('nodejs');
+  updateConfig(process.argv.slice(2));
   indexHtmlStr = fs.readFileSync('public/index.html', 'utf8');
   mainPos = indexHtmlStr.indexOf('</main>');
-  http.createServer(serverRequest).listen(port);
+  http.createServer(serverRequest).listen(config.port);
 }
 
 function serverRequest(req: http.IncomingMessage, res: http.ServerResponse) {
   let url = req.url;
-  console.log('serverRequest', url);
+  mylog('serverRequest', url);
   if(!url) return;
+  const pos = url.indexOf('?');
+  if(pos > 0) url = url.substring(0, pos);
 
   // hack - should handle with nginx
   if(url.startsWith('/static/')) url = '/public' + url;
   if(url.startsWith('/public/')) {
     fs.readFile('.' + url, null, (err, data) => {
-      if(err) console.log(err.message);
+      if(err) mylog(err.message);
       res.statusCode = 200;
       res.end(data);
     });

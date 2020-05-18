@@ -1,16 +1,18 @@
 export { browser };
-import { fetchMarkup } from './control';
+import { fetchMarkup, mylog, updateConfig, config } from './control';
 
 let useapi = false;
 
 function browser() {
-  console.log('browser');
+  mylog('browser');
+  const query = window.location.search;
+  if(query) updateConfig(query.substring(1).split('&'));
   const main = document.getElementById('main')!;
   if(!main.firstElementChild) clientRequest();
   window.onpopstate = onPopState;
   document.body.onclick = onClick;
-  navigator.serviceWorker.register('sw.js')
-    .then(reg => { console.log(reg); useapi = true; });
+  navigator.serviceWorker.register('../public/sw.js')
+    .then(reg => { mylog(reg); useapi = config.useapi; });
 }
 
 function onPopState(e: PopStateEvent) {

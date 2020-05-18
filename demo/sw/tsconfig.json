@@ -1,0 +1,8 @@
+{
+  "extends": "../../tsbase",
+  "file": [ "sw.ts" ],
+  "compilerOptions": {
+    "lib": [ "es2017", "webworker" ],
+    "outDir": "../../public",
+  }
+}

@@ -64,20 +64,49 @@ define("src/jsxrender", ["require", "exports"], function (require, exports) {
         }).join(';');
     }
 });
+define("package", [], {
+    "name": "jsxrender",
+    "version": "0.9.3a",
+    "description": "Small fast stateless subset of React.",
+    "main": "public/main.js",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/martyntebby/jsxrender.git"
+    },
+    "config": {
+        "port": 3000,
+        "cfttl": 1800,
+        "dolog": false,
+        "useapi": false
+    },
+    "scripts": {
+        "build": "rm -rf dist out public/main.js && tsc -b . --force && (cd demo; node ../dist/bundle.js)",
+        "watch": "tsc -b . -w",
+        "clean": "rm -rf dist",
+        "test": "node dist/test/tests.js"
+    },
+    "author": "Martyn Tebby",
+    "license": "ISC",
+    "devDependencies": {
+        "@types/node": "12.12.6",
+        "@types/react": "^16.9.35",
+        "@types/react-dom": "^16.9.8",
+        "typescript": "^3.9.2"
+    },
+    "dependencies": {}
+});
 define("demo/src/model", ["require", "exports"], function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
 });
-define("demo/src/view", ["require", "exports", "src/jsxrender"], function (require, exports, jsxrender_1) {
+define("demo/src/view", ["require", "exports", "src/jsxrender", "package"], function (require, exports, jsxrender_1, package_json_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.renderToMarkup = exports.mylog = exports.dolog = void 0;
+    exports.renderToMarkup = exports.mylog = void 0;
     let logs = [];
-    let dolog = false;
-    exports.dolog = dolog;
     function mylog(...args) {
         console.log(...args);
-        if (dolog)
+        if (package_json_1.config.dolog)
             logs.push(Date.now() + '  ' + args.join('  '));
     }
     exports.mylog = mylog;
@@ -194,40 +223,22 @@ define("demo/src/view", ["require", "exports", "src/jsxrender"], function (requi
             err);
     }
 });
-define("package", [], {
-    "name": "jsxrender",
-    "version": "0.9.3",
-    "description": "Small fast stateless subset of React.",
-    "main": "public/main.js",
-    "repository": {
-        "type": "git",
-        "url": "https://github.com/martyntebby/jsxrender.git"
-    },
-    "scripts": {
-        "build": "rm -rf dist public/main.js && tsc -b scripts . test demo && (cd demo; node ../dist/bundle.js)",
-        "watch": "tsc -b demo -w",
-        "clean": "rm -rf dist",
-        "test": "node dist/test/tests.js"
-    },
-    "author": "Martyn Tebby",
-    "license": "ISC",
-    "devDependencies": {
-        "@types/node": "12.12.6",
-        "@types/react": "^16.9.35",
-        "@types/react-dom": "^16.9.8",
-        "typescript": "^3.9.2"
-    },
-    "dependencies": {}
-});
-define("demo/src/control", ["require", "exports", "demo/src/view", "package", "demo/src/view"], function (require, exports, view_1, package_json_1, view_2) {
+define("demo/src/control", ["require", "exports", "demo/src/view", "package", "demo/src/view", "package"], function (require, exports, view_1, package_json_2, view_2, package_json_3) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.myapi = exports.link2cmd = exports.fetchMarkup = exports.fetchData = void 0;
-    Object.defineProperty(exports, "dolog", { enumerable: true, get: function () { return view_1.dolog; } });
+    exports.updateConfig = exports.link2cmd = exports.fetchMarkup = exports.fetchData = void 0;
     Object.defineProperty(exports, "renderToMarkup", { enumerable: true, get: function () { return view_1.renderToMarkup; } });
-    Object.defineProperty(exports, "version", { enumerable: true, get: function () { return package_json_1.version; } });
-    const myapi = '/myapi/';
-    exports.myapi = myapi;
+    Object.defineProperty(exports, "mylog", { enumerable: true, get: function () { return view_1.mylog; } });
+    Object.defineProperty(exports, "version", { enumerable: true, get: function () { return package_json_2.version; } });
+    Object.defineProperty(exports, "config", { enumerable: true, get: function () { return package_json_2.config; } });
+    function updateConfig(args) {
+        args.forEach(arg => {
+            const [key, value] = arg.split('=');
+            if (key in package_json_3.config)
+                package_json_3.config[key] = value || true;
+        });
+    }
+    exports.updateConfig = updateConfig;
     async function fetchMarkup(path, init, useapi) {
         view_2.mylog('fetchMarkup', path, useapi);
         const { cmd, arg, url } = link2cmd(path, useapi);
@@ -261,7 +272,7 @@ define("demo/src/control", ["require", "exports", "demo/src/view", "package", "d
     }
     exports.fetchData = fetchData;
     function cmd2url(cmd, arg, useapi) {
-        return useapi ? `${myapi}${cmd}/${arg}`
+        return useapi ? `/myapi/${cmd}/${arg}`
             : cmd === 'newest'
                 ? `https://node-hnapi.herokuapp.com/${cmd}?page=${arg}`
                 : `https://api.hnpwa.com/v0/${cmd}/${arg}.json`;
@@ -273,14 +284,17 @@ define("demo/src/browser", ["require", "exports", "demo/src/control"], function 
     exports.browser = void 0;
     let useapi = false;
     function browser() {
-        console.log('browser');
+        control_1.mylog('browser');
+        const query = window.location.search;
+        if (query)
+            control_1.updateConfig(query.substring(1).split('&'));
         const main = document.getElementById('main');
         if (!main.firstElementChild)
             clientRequest();
         window.onpopstate = onPopState;
         document.body.onclick = onClick;
-        navigator.serviceWorker.register('sw.js')
-            .then(reg => { console.log(reg); useapi = true; });
+        navigator.serviceWorker.register('../public/sw.js')
+            .then(reg => { control_1.mylog(reg); useapi = control_1.config.useapi; });
     }
     exports.browser = browser;
     function onPopState(e) {
@@ -310,19 +324,26 @@ define("demo/src/cfworker", ["require", "exports", "demo/src/control"], function
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.cfworker = void 0;
-    const ttl = 1800;
     function cfworker() {
-        console.log('cfworker');
+        control_2.mylog('cfworker');
+        updateConfig();
         self.addEventListener('fetch', e => e.respondWith(handleRequest(e)));
     }
     exports.cfworker = cfworker;
+    function updateConfig() {
+        Object.keys(control_2.config).forEach(key => {
+            const value = self[key.toUpperCase()];
+            if (value != null)
+                control_2.config[key] = value;
+        });
+    }
     async function handleRequest(e) {
         const request = e.request;
         const cache = caches.default;
         let response = await cache.match(request);
         if (response)
             return response;
-        const init = { cf: { cacheTtl: ttl } };
+        const init = { cf: { cacheTtl: control_2.config.cfttl } };
         const indexp = control_2.fetchData('https://jsxrender.westinca.com/public/index.html', init);
         const { html } = await control_2.fetchMarkup('/news/1', init);
         const index = await indexp;
@@ -330,9 +351,8 @@ define("demo/src/cfworker", ["require", "exports", "demo/src/control"], function
         if (pos < 0)
             return new Response(index);
         const headers = [
-            ['Link', '</public/main.js>; rel=preload; as=script'],
             ['Content-Type', 'text/html'],
-            ['Cache-Control', 'max-age=' + ttl]
+            ['Cache-Control', 'max-age=' + control_2.config.cfttl]
         ];
         const str = index.substring(0, pos) + html + index.substring(pos);
         response = new Response(str, { headers: headers });
@@ -347,24 +367,27 @@ define("demo/src/nodejs", ["require", "exports", "fs", "http", "https", "demo/sr
     let indexHtmlStr = '';
     let mainPos = 0;
     function nodejs() {
-        const port = 3000;
-        console.log('nodejs', port);
+        control_3.mylog('nodejs');
+        control_3.updateConfig(process.argv.slice(2));
         indexHtmlStr = fs.readFileSync('public/index.html', 'utf8');
         mainPos = indexHtmlStr.indexOf('</main>');
-        http.createServer(serverRequest).listen(port);
+        http.createServer(serverRequest).listen(control_3.config.port);
     }
     exports.nodejs = nodejs;
     function serverRequest(req, res) {
         let url = req.url;
-        console.log('serverRequest', url);
+        control_3.mylog('serverRequest', url);
         if (!url)
             return;
+        const pos = url.indexOf('?');
+        if (pos > 0)
+            url = url.substring(0, pos);
         if (url.startsWith('/static/'))
             url = '/public' + url;
         if (url.startsWith('/public/')) {
             fs.readFile('.' + url, null, (err, data) => {
                 if (err)
-                    console.log(err.message);
+                    control_3.mylog(err.message);
                 res.statusCode = 200;
                 res.end(data);
             });
@@ -405,75 +428,12 @@ define("demo/src/nodejs", ["require", "exports", "fs", "http", "https", "demo/sr
         }
     }
 });
-define("demo/src/sw", ["require", "exports", "demo/src/control"], function (require, exports, control_4) {
-    "use strict";
-    Object.defineProperty(exports, "__esModule", { value: true });
-    exports.sw = void 0;
-    const CACHE_NAME = control_4.version;
-    const PRE_CACHE = ['index.html',
-        'main.js',
-        'static/manifest.json',
-        'static/favicon-32.png',
-        'static/favicon-256.png'
-    ];
-    function sw() {
-        console.log('sw', CACHE_NAME);
-        self.addEventListener('install', onInstall);
-        self.addEventListener('activate', onActivate);
-        self.addEventListener('fetch', onFetch);
-    }
-    exports.sw = sw;
-    function onInstall(e) {
-        console.log('onInstall', e);
-        e.waitUntil(precache());
-    }
-    async function precache() {
-        console.log('precache', PRE_CACHE);
-        const cache = await caches.open(CACHE_NAME);
-        await cache.addAll(PRE_CACHE);
-        const resp = await cache.match('index.html');
-        if (resp)
-            await cache.put('./', resp);
-        self.skipWaiting();
-    }
-    function onActivate(e) {
-        console.log('onActivate', e);
-        e.waitUntil(self.clients.claim()
-            .then(() => caches.keys().then(keys => Promise.all(keys.filter(key => key !== CACHE_NAME).map(name => caches.delete(name))))));
-    }
-    function onFetch(e) {
-        e.respondWith(cacheFetch(e.request));
-    }
-    async function cacheFetch(request) {
-        console.log('cacheFetch', request.url);
-        const pos = request.url.indexOf(control_4.myapi);
-        if (pos >= 0) {
-            const { html } = await control_4.fetchMarkup(request.url.substring(pos + 1));
-            return new Response(html);
-        }
-        if (request.mode === 'navigate')
-            request = new Request('./');
-        const cache = await caches.open(CACHE_NAME);
-        let response = await cache.match(request);
-        if (!response) {
-            response = await fetch(request);
-            if (response && response.ok && response.type === 'basic') {
-                console.log('cache', response);
-                cache.put(request, response.clone());
-            }
-        }
-        else {
-            console.log('from cache', response.url);
-        }
-        return response;
-    }
-});
-define("demo/src/main", ["require", "exports", "demo/src/control", "demo/src/nodejs", "demo/src/browser", "demo/src/sw", "demo/src/cfworker"], function (require, exports, control_5, nodejs_1, browser_1, sw_1, cfworker_1) {
+define("demo/src/main", ["require", "exports", "demo/src/control", "demo/src/nodejs", "demo/src/browser", "demo/src/cfworker", "demo/src/view"], function (require, exports, control_4, nodejs_1, browser_1, cfworker_1, view_3) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     main();
     function main() {
-        console.log('main', control_5.version);
+        view_3.mylog('main', control_4.version);
         if ('window' in globalThis)
             browser_1.browser();
         else if (typeof process === 'object' && process.version)
@@ -481,11 +441,12 @@ define("demo/src/main", ["require", "exports", "demo/src/control", "demo/src/nod
         else if ('caches' in globalThis && 'default' in globalThis.caches)
             cfworker_1.cfworker();
         else if ('clients' in globalThis && 'skipWaiting' in globalThis)
-            sw_1.sw();
+            view_3.mylog('service worker');
         else {
-            console.error('unknown environment', globalThis, Object.keys(globalThis));
-            throw 'unknown environment ' + globalThis + Object.keys(globalThis);
+            console.error('unknown environment', globalThis);
+            throw 'unknown environment ' + globalThis;
         }
+        view_3.mylog('config', control_4.config);
     }
 });
 function define(name, params, func) {

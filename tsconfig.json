@@ -1,13 +1,10 @@
 {
-  "include": [ "src/*.ts" ],
-  "compilerOptions": {
-    "target": "es6",
-    "module": "es6",
-    "moduleResolution": "node",
-    "outDir": "out",
-    "removeComments": true,
-    "declaration": true,
-    "strict": true,
-    "esModuleInterop": true
-  }
+  "files": [],
+  "references": [
+    { "path": "src" },
+    { "path": "test" },
+    { "path": "demo" },
+    { "path": "demo/sw" },
+    { "path": "scripts" },
+  ],
 }

@@ -1,9 +1,15 @@
-export { fetchData, fetchMarkup, link2cmd, myapi };
-export { dolog, renderToMarkup } from './view';
-export { version } from '../../package.json';
+export { fetchData, fetchMarkup, link2cmd, updateConfig };
+export { renderToMarkup, mylog } from './view';
+export { version, config } from '../../package.json';
 import { mylog, renderToMarkup } from './view';
+import { config } from '../../package.json';
 
-const myapi = '/myapi/';
+function updateConfig(args: string[]) {
+  args.forEach(arg => {
+    const [key, value] = arg.split('=');
+    if(key in config) (<any>config)[key] = value || true;
+  });
+}
 
 async function fetchMarkup(path?: string, init?: RequestInit, useapi?: boolean) {
   mylog('fetchMarkup', path, useapi);
@@ -37,7 +43,7 @@ async function fetchData(url: string, init?: RequestInit, json?: boolean) {
 }
 
 function cmd2url(cmd: string, arg: string, useapi?: boolean) {
-  return useapi ? `${myapi}${cmd}/${arg}`
+  return useapi ? `/myapi/${cmd}/${arg}`
   : cmd === 'newest'
   ? `https://node-hnapi.herokuapp.com/${cmd}?page=${arg}`
   : `https://api.hnpwa.com/v0/${cmd}/${arg}.json`;
