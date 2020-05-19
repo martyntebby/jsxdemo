@@ -121,7 +121,6 @@ define("demo/src/view", ["require", "exports", "src/jsxrender", "package"], func
     exports.renderToMarkup = renderToMarkup;
     function ItemsView(props) {
         return (jsxrender_1.h("div", null,
-            jsxrender_1.h(LogsView, null),
             jsxrender_1.h("ol", { start: (props.page - 1) * 30 + 1, className: 'ol' }, props.items.map(item => jsxrender_1.h("li", { className: 'li' },
                 jsxrender_1.h(ItemView, { item: item })))),
             PagerView(props)));
@@ -199,7 +198,7 @@ define("demo/src/view", ["require", "exports", "src/jsxrender", "package"], func
                 jsxrender_1.h("a", { href: Y_URL + 'threads?id=' + u.id }, "comments"))));
     }
     function LogsView() {
-        return logs.length === 0 ? null : (jsxrender_1.h("details", { open: true },
+        return logs.length === 0 ? null : (jsxrender_1.h("details", null,
             jsxrender_1.h("summary", null, "Logs"),
             jsxrender_1.h("pre", null, logs.join('\n')),
             logs = []));
@@ -215,7 +214,9 @@ define("demo/src/view", ["require", "exports", "src/jsxrender", "package"], func
                 "page ",
                 props.page),
             " ",
-            next));
+            next,
+            " ",
+            jsxrender_1.h(LogsView, null)));
     }
     function ErrorView(err) {
         return jsxrender_1.h("div", { className: 'error' },

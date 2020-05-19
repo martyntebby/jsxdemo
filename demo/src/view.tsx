@@ -22,7 +22,6 @@ function renderToMarkup(cmd: string, arg: string, data: any) {
 function ItemsView(props: { items: HnItem[], cmd: string, page: number }) {
   return (
     <div>
-      <LogsView/>
       <ol start={(props.page - 1) * 30 + 1} className='ol'>
         {props.items.map(item => <li className='li'><ItemView item={item}/></li>)}
       </ol>
@@ -101,7 +100,7 @@ function UserView(props: { user: HnUser }) {
 
 function LogsView() {
   return logs.length === 0 ? null : (
-    <details open>
+    <details>
       <summary>Logs</summary>
       <pre>{logs.join('\n')}</pre>
       {logs = []}
@@ -116,7 +115,7 @@ function PagerView(props: { cmd: string, page: number }) {
   const next = <a href={`/${props.cmd}/${props.page + 1}`} data-cmd>next &rarr;</a>;
   return (
     <div className='pager'>
-      {prev} <span>page {props.page}</span> {next}
+      {prev} <span>page {props.page}</span> {next} <LogsView/>
     </div>
   );
 }
