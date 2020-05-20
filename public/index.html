@@ -190,7 +190,7 @@ define("src/jsxrender", ["require", "exports"], function (require, exports) {
 });
 define("package", [], {
     "name": "jsxrender",
-    "version": "0.9.3b",
+    "version": "0.9.4",
     "description": "Small fast stateless subset of React.",
     "main": "public/main.js",
     "repository": {
@@ -466,11 +466,8 @@ define("demo/src/cfworker", ["require", "exports", "demo/src/control"], function
         const request = e.request;
         const cache = caches.default;
         let response = await cache.match(request);
-        if (response) {
-            response = new Response(response.body, response);
-            response.headers.set('mycache', 'HIT ' + new Date());
+        if (response)
             return response;
-        }
         const init = { cf: { cacheTtl: control_2.config.cfttl } };
         const indexp = control_2.fetchData('https://jsxrender.westinca.com/public/index.html', init);
         const { markup } = await control_2.fetchMarkup('/news/1', init);
@@ -479,7 +476,6 @@ define("demo/src/cfworker", ["require", "exports", "demo/src/control"], function
         if (pos < 0)
             return new Response(index);
         const headers = [
-            ['mycache', 'MISS ' + new Date()],
             ['Content-Type', 'text/html'],
             ['Cache-Control', 'max-age=' + control_2.config.cfttl]
         ];

@@ -4,7 +4,7 @@
   deletes old caches and
   passes through requests for other files.
 */
-const CACHE_NAME = '0.9.3b';
+const CACHE_NAME = '0.9.4';
 const PRE_CACHE = [ 'index.html'
   ,'static/manifest.json'
   ,'static/favicon-32.png'

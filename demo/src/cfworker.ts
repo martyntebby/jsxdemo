@@ -3,7 +3,6 @@
   Intercepts call to base url. Returns cached response
   or fills in index.html with current news data and caches.
   Can initiate http/2 server push using link header.
-  TODO: is it possible to bypass worker once data is cached?
 */
 //// <reference lib="webworker" />
 export { cfworker };
@@ -32,11 +31,7 @@ async function handleRequest(e: FetchEvent) {
   const request = e.request;
   const cache: Cache = (<any>caches).default;
   let response = await cache.match(request);
-  if(response) {
-    response = new Response(response.body, response);
-    response.headers.set('mycache', 'HIT ' + new Date());
-    return response;
-  }
+  if(response) return response;
 
   // get index.html and news and combine them
   const init: any = { cf: { cacheTtl: config.cfttl } };
@@ -48,7 +43,6 @@ async function handleRequest(e: FetchEvent) {
 
   const headers = [
   //['Link', '</public/main.js>; rel=preload; as=script'], //, </public/app.css>; rel=preload; as=style'],
-    ['mycache', 'MISS ' + new Date()],
     ['Content-Type', 'text/html'],
     ['Cache-Control', 'max-age=' + config.cfttl]
   ];
