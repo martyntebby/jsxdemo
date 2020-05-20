@@ -1,5 +1,6 @@
-// hacked fake requirejs - use AMD modules with single output file
-
+/*
+  Hacked fake requirejs - use AMD modules with single output file.
+*/
 function define(name: string, params: string[], func: Function | Object): void {
   const _self = globalThis as unknown as { myexports: any }
   _self.myexports = _self.myexports || {};

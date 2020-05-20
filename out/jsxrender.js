@@ -22,6 +22,17 @@ function doElement(type, props, children) {
         str += doProp(name, props[name]);
     return str + '>' + doChildren(children) + '</' + type + '>';
 }
+function doChildren(children) {
+    let str = '';
+    for (const child of children) {
+        if (child == null || typeof child === 'boolean') { }
+        else if (Array.isArray(child))
+            str += doChildren(child);
+        else
+            str += child;
+    }
+    return str;
+}
 function doProp(name, value) {
     if (name === 'key' || name === 'ref' ||
         value == null || value === false)
@@ -37,17 +48,6 @@ function doProp(name, value) {
     else if (value === true)
         value = '';
     return ' ' + name + '="' + value + '"';
-}
-function doChildren(children) {
-    let str = '';
-    for (const child of children) {
-        if (child == null || typeof child === 'boolean') { }
-        else if (Array.isArray(child))
-            str += doChildren(child);
-        else
-            str += child;
-    }
-    return str;
 }
 function doStyle(style) {
     return Object.keys(style).map(key => {

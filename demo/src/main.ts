@@ -1,8 +1,11 @@
-import { version, config } from './control';
+/*
+  Main entry point.
+  Determines environment type and dispatchs to appropriate function.
+*/
+import { mylog, version, config } from './control';
 import { nodejs } from './nodejs';
 import { browser } from './browser';
 import { cfworker } from './cfworker';
-import { mylog } from './view';
 
 main();
 
@@ -16,5 +19,5 @@ function main() {
     console.error('unknown environment', globalThis);
     throw 'unknown environment ' + globalThis;
   }
-  mylog('config', config);
+  mylog('config', JSON.stringify(config));
 }

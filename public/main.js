@@ -30,6 +30,17 @@ define("src/jsxrender", ["require", "exports"], function (require, exports) {
             str += doProp(name, props[name]);
         return str + '>' + doChildren(children) + '</' + type + '>';
     }
+    function doChildren(children) {
+        let str = '';
+        for (const child of children) {
+            if (child == null || typeof child === 'boolean') { }
+            else if (Array.isArray(child))
+                str += doChildren(child);
+            else
+                str += child;
+        }
+        return str;
+    }
     function doProp(name, value) {
         if (name === 'key' || name === 'ref' ||
             value == null || value === false)
@@ -46,17 +57,6 @@ define("src/jsxrender", ["require", "exports"], function (require, exports) {
             value = '';
         return ' ' + name + '="' + value + '"';
     }
-    function doChildren(children) {
-        let str = '';
-        for (const child of children) {
-            if (child == null || typeof child === 'boolean') { }
-            else if (Array.isArray(child))
-                str += doChildren(child);
-            else
-                str += child;
-        }
-        return str;
-    }
     function doStyle(style) {
         return Object.keys(style).map(key => {
             const key2 = key.replace(/([A-Z])/g, '-$1').toLowerCase();
@@ -66,7 +66,7 @@ define("src/jsxrender", ["require", "exports"], function (require, exports) {
 });
 define("package", [], {
     "name": "jsxrender",
-    "version": "0.9.3a",
+    "version": "0.9.3b",
     "description": "Small fast stateless subset of React.",
     "main": "public/main.js",
     "repository": {
@@ -80,8 +80,8 @@ define("package", [], {
         "useapi": false
     },
     "scripts": {
-        "build": "rm -rf dist out public/main.js && tsc -b . --force && (cd demo; node ../dist/bundle.js)",
-        "watch": "tsc -b . -w",
+        "build": "rm -rf dist out public/sw.js && tsc -b . --force && (cd demo; node ../dist/bundle.js)",
+        "watch": "tsc -b . -w --listEmittedFiles",
         "clean": "rm -rf dist",
         "test": "node dist/test/tests.js"
     },
@@ -197,12 +197,6 @@ define("demo/src/view", ["require", "exports", "src/jsxrender", "package"], func
                 jsxrender_1.h("span", null, " | "),
                 jsxrender_1.h("a", { href: Y_URL + 'threads?id=' + u.id }, "comments"))));
     }
-    function LogsView() {
-        return logs.length === 0 ? null : (jsxrender_1.h("details", null,
-            jsxrender_1.h("summary", null, "Logs"),
-            jsxrender_1.h("pre", null, logs.join('\n')),
-            logs = []));
-    }
     function PagerView(props) {
         const nolink = props.page > 1 ? undefined : 'nolink';
         const prev = jsxrender_1.h("a", { href: `/${props.cmd}/${props.page - 1}`, "data-cmd": true, className: nolink }, "\u2190 prev");
@@ -218,45 +212,34 @@ define("demo/src/view", ["require", "exports", "src/jsxrender", "package"], func
             " ",
             jsxrender_1.h(LogsView, null)));
     }
+    function LogsView() {
+        return logs.length === 0 ? null : (jsxrender_1.h("details", null,
+            jsxrender_1.h("summary", null, "Logs"),
+            jsxrender_1.h("pre", null, logs.join('\n')),
+            logs = []));
+    }
     function ErrorView(err) {
         return jsxrender_1.h("div", { className: 'error' },
             "Error: ",
             err);
     }
 });
-define("demo/src/control", ["require", "exports", "demo/src/view", "package", "demo/src/view", "package"], function (require, exports, view_1, package_json_2, view_2, package_json_3) {
+define("demo/src/control", ["require", "exports", "demo/src/view", "demo/src/view", "package", "package"], function (require, exports, view_1, view_2, package_json_2, package_json_3) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.updateConfig = exports.link2cmd = exports.fetchMarkup = exports.fetchData = void 0;
-    Object.defineProperty(exports, "renderToMarkup", { enumerable: true, get: function () { return view_1.renderToMarkup; } });
+    exports.updateConfig = exports.link2cmd = exports.fetchData = exports.fetchMarkup = void 0;
     Object.defineProperty(exports, "mylog", { enumerable: true, get: function () { return view_1.mylog; } });
-    Object.defineProperty(exports, "version", { enumerable: true, get: function () { return package_json_2.version; } });
+    Object.defineProperty(exports, "renderToMarkup", { enumerable: true, get: function () { return view_1.renderToMarkup; } });
     Object.defineProperty(exports, "config", { enumerable: true, get: function () { return package_json_2.config; } });
-    function updateConfig(args) {
-        args.forEach(arg => {
-            const [key, value] = arg.split('=');
-            if (key in package_json_3.config)
-                package_json_3.config[key] = value || true;
-        });
-    }
-    exports.updateConfig = updateConfig;
+    Object.defineProperty(exports, "version", { enumerable: true, get: function () { return package_json_2.version; } });
     async function fetchMarkup(path, init, useapi) {
         view_2.mylog('fetchMarkup', path, useapi);
         const { cmd, arg, url } = link2cmd(path, useapi);
         const data = await fetchData(url, init, !useapi);
-        const html = useapi ? data : view_2.renderToMarkup(cmd, arg, data);
-        return { html, cmd, arg };
+        const markup = useapi ? data : view_2.renderToMarkup(cmd, arg, data);
+        return { markup, cmd, arg };
     }
     exports.fetchMarkup = fetchMarkup;
-    function link2cmd(path, useapi) {
-        path = path || '';
-        const strs = path.split('/');
-        const cmd = strs[1] || 'news';
-        const arg = strs[2] || '1';
-        const url = cmd2url(cmd, arg, useapi);
-        return { cmd, arg, url };
-    }
-    exports.link2cmd = link2cmd;
     async function fetchData(url, init, json) {
         view_2.mylog('fetchData', url);
         try {
@@ -272,12 +255,29 @@ define("demo/src/control", ["require", "exports", "demo/src/view", "package", "d
         }
     }
     exports.fetchData = fetchData;
+    function link2cmd(path, useapi) {
+        path = path || '';
+        const strs = path.split('/');
+        const cmd = strs[1] || 'news';
+        const arg = strs[2] || '1';
+        const url = cmd2url(cmd, arg, useapi);
+        return { cmd, arg, url };
+    }
+    exports.link2cmd = link2cmd;
     function cmd2url(cmd, arg, useapi) {
         return useapi ? `/myapi/${cmd}/${arg}`
             : cmd === 'newest'
                 ? `https://node-hnapi.herokuapp.com/${cmd}?page=${arg}`
                 : `https://api.hnpwa.com/v0/${cmd}/${arg}.json`;
     }
+    function updateConfig(args) {
+        args.forEach(arg => {
+            const [key, value] = arg.split('=');
+            if (key in package_json_3.config)
+                package_json_3.config[key] = value || true;
+        });
+    }
+    exports.updateConfig = updateConfig;
 });
 define("demo/src/browser", ["require", "exports", "demo/src/control"], function (require, exports, control_1) {
     "use strict";
@@ -315,8 +315,8 @@ define("demo/src/browser", ["require", "exports", "demo/src/control"], function 
         const child = main.firstElementChild;
         if (child)
             child.className = 'loading';
-        const { html, cmd, arg } = await datap;
-        main.innerHTML = html;
+        const { markup, cmd, arg } = await datap;
+        main.innerHTML = markup;
         nav.className = cmd;
         window.scroll(0, 0);
     }
@@ -335,27 +335,31 @@ define("demo/src/cfworker", ["require", "exports", "demo/src/control"], function
         Object.keys(control_2.config).forEach(key => {
             const value = self[key.toUpperCase()];
             if (value != null)
-                control_2.config[key] = value;
+                control_2.config[key] = value || true;
         });
     }
     async function handleRequest(e) {
         const request = e.request;
         const cache = caches.default;
         let response = await cache.match(request);
-        if (response)
+        if (response) {
+            response = new Response(response.body, response);
+            response.headers.set('mycache', 'HIT ' + new Date());
             return response;
+        }
         const init = { cf: { cacheTtl: control_2.config.cfttl } };
         const indexp = control_2.fetchData('https://jsxrender.westinca.com/public/index.html', init);
-        const { html } = await control_2.fetchMarkup('/news/1', init);
+        const { markup } = await control_2.fetchMarkup('/news/1', init);
         const index = await indexp;
         const pos = index.indexOf('</main>');
         if (pos < 0)
             return new Response(index);
         const headers = [
+            ['mycache', 'MISS ' + new Date()],
             ['Content-Type', 'text/html'],
             ['Cache-Control', 'max-age=' + control_2.config.cfttl]
         ];
-        const str = index.substring(0, pos) + html + index.substring(pos);
+        const str = index.substring(0, pos) + markup + index.substring(pos);
         response = new Response(str, { headers: headers });
         e.waitUntil(cache.put(request, response.clone()));
         return response;
@@ -396,8 +400,8 @@ define("demo/src/nodejs", ["require", "exports", "fs", "http", "https", "demo/sr
         }
         serveNews(url, res);
     }
-    function serveNews(url1, res) {
-        const { cmd, arg, url } = control_3.link2cmd(url1);
+    function serveNews(path, res) {
+        const { cmd, arg, url } = control_3.link2cmd(path);
         res.statusCode = 200;
         res.setHeader('Content-Type', 'text/html');
         res.write(indexHtmlStr.substring(0, mainPos));
@@ -429,12 +433,12 @@ define("demo/src/nodejs", ["require", "exports", "fs", "http", "https", "demo/sr
         }
     }
 });
-define("demo/src/main", ["require", "exports", "demo/src/control", "demo/src/nodejs", "demo/src/browser", "demo/src/cfworker", "demo/src/view"], function (require, exports, control_4, nodejs_1, browser_1, cfworker_1, view_3) {
+define("demo/src/main", ["require", "exports", "demo/src/control", "demo/src/nodejs", "demo/src/browser", "demo/src/cfworker"], function (require, exports, control_4, nodejs_1, browser_1, cfworker_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     main();
     function main() {
-        view_3.mylog('main', control_4.version);
+        control_4.mylog('main', control_4.version);
         if ('window' in globalThis)
             browser_1.browser();
         else if (typeof process === 'object' && process.version)
@@ -442,12 +446,12 @@ define("demo/src/main", ["require", "exports", "demo/src/control", "demo/src/nod
         else if ('caches' in globalThis && 'default' in globalThis.caches)
             cfworker_1.cfworker();
         else if ('clients' in globalThis && 'skipWaiting' in globalThis)
-            view_3.mylog('service worker');
+            control_4.mylog('service worker');
         else {
             console.error('unknown environment', globalThis);
             throw 'unknown environment ' + globalThis;
         }
-        view_3.mylog('config', control_4.config);
+        control_4.mylog('config', JSON.stringify(control_4.config));
     }
 });
 function define(name, params, func) {

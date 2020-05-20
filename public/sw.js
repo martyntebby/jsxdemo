@@ -1,5 +1,5 @@
 "use strict";
-const CACHE_NAME = '0.9.3a';
+const CACHE_NAME = '0.9.3b';
 const PRE_CACHE = ['index.html',
     'static/manifest.json',
     'static/favicon-32.png',
@@ -23,7 +23,7 @@ async function precache() {
     await cache.addAll(PRE_CACHE);
     const resp = await cache.match('index.html');
     if (resp)
-        cache.put('./', resp);
+        await cache.put('./', resp);
     _self.skipWaiting();
 }
 function onActivate(e) {
@@ -32,10 +32,11 @@ function onActivate(e) {
         .then(() => caches.keys().then(keys => Promise.all(keys.filter(key => key !== CACHE_NAME).map(name => caches.delete(name))))));
 }
 function onFetch(e) {
-    e.respondWith(cacheFetch(e.request));
+    e.respondWith(cacheFetch(e));
 }
-async function cacheFetch(request) {
-    console.log('cacheFetch', request.url);
+async function cacheFetch(e) {
+    console.log('cacheFetch', e.request.url);
+    let request = e.request;
     if (request.mode === 'navigate')
         request = new Request('./');
     const cache = await caches.open(CACHE_NAME);
@@ -44,11 +45,8 @@ async function cacheFetch(request) {
         response = await fetch(request);
         if (response && response.ok && response.type === 'basic') {
             console.log('cache', response);
-            cache.put(request, response.clone());
+            e.waitUntil(cache.put(request, response.clone()));
         }
-    }
-    else {
-        console.log('from cache', response.url);
     }
     return response;
 }

@@ -13,7 +13,7 @@ The generated file out/jsxrender.js can be used with regular javascript.
 Hacker News Demo
 ----------------
 A simple Hacker News demo app using jsxrender.
-It is based on [https://hnpwa.com], using a service worker and app shell.
+It is based on [hnpwa.com](https://hnpwa.com), using a service worker and app shell.
 
 Build
 -----
@@ -35,10 +35,10 @@ Interactive (fast 3G): 1.8s (1st view), 0.3s (repeat)
 
 Try it
 ------
-[https://jsxrender.westinca.com/public/]
+[jsxrender.westinca.com](https://jsxrender.westinca.com/public/)
 
-[https://martyntebby.github.io/jsxrender/public/]
+[github pages](https://martyntebby.github.io/jsxrender/public/)
 
-[https://cdn.rawgit.com/martyntebby/jsxrender/0.9.3/public/]
+[rawgit](https://cdn.rawgit.com/martyntebby/jsxrender/0.9.3/public/)
 
-[https://rawcdn.githack.com/martyntebby/jsxrender/0.9.3/public/]
+[githack](https://rawcdn.githack.com/martyntebby/jsxrender/0.9.3/public/)

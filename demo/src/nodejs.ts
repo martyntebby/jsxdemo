@@ -1,3 +1,6 @@
+/*
+  Simple nodejs program to serve static and dynamic demo content.
+*/
 export { nodejs };
 import * as fs from 'fs';
 import * as http from 'http';
@@ -35,8 +38,8 @@ function serverRequest(req: http.IncomingMessage, res: http.ServerResponse) {
   serveNews(url, res);
 }
 
-function serveNews(url1: string, res: http.ServerResponse) {
-  const { cmd, arg, url } = link2cmd(url1);
+function serveNews(path: string, res: http.ServerResponse) {
+  const { cmd, arg, url } = link2cmd(path);
 
   res.statusCode = 200;
   res.setHeader('Content-Type', 'text/html');

@@ -1,3 +1,6 @@
+/*
+  JSX to render the dynamic part of the UI.
+*/
 export { mylog, renderToMarkup }
 import { h, renderToStaticMarkup } from '../../src/jsxrender';
 import { config } from '../../package.json';
@@ -98,16 +101,6 @@ function UserView(props: { user: HnUser }) {
   );
 }
 
-function LogsView() {
-  return logs.length === 0 ? null : (
-    <details>
-      <summary>Logs</summary>
-      <pre>{logs.join('\n')}</pre>
-      {logs = []}
-    </details>
-  );
-}
-
 function PagerView(props: { cmd: string, page: number }) {
   const nolink = props.page > 1 ? undefined : 'nolink';
   const prev = <a href={`/${props.cmd}/${props.page - 1}`} data-cmd
@@ -117,6 +110,16 @@ function PagerView(props: { cmd: string, page: number }) {
     <div className='pager'>
       {prev} <span>page {props.page}</span> {next} <LogsView/>
     </div>
+  );
+}
+
+function LogsView() {
+  return logs.length === 0 ? null : (
+    <details>
+      <summary>Logs</summary>
+      <pre>{logs.join('\n')}</pre>
+      {logs = []}
+    </details>
   );
 }
 

@@ -1,3 +1,6 @@
+/*
+  Model of json output from https://api.hnpwa.com/v0/{cmd}/{arg}.json
+*/
 export type { HnUser, HnContent, HnComment, HnItem }
 
 interface HnUser {

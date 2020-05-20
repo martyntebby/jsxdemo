@@ -70,7 +70,7 @@ function compare(vnode: JSX.Element, html: string) {
   const result = markup === html;
   if(!result) ++numErrs;
   if(logCompare) {
-    console.log(result ? 'OK' : 'FAIL: ' + markup, html, result ? '' : vnode);
+    console.log(result ? 'OK' : 'FAIL', html, result ? '' : markup);
   }
   return result;
 }

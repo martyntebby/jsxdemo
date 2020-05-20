@@ -1,3 +1,6 @@
+/*
+  Creates public/index.html with stylesheet and script replaced with file contents.
+*/
 import * as fs from 'fs';
 import * as process from 'process';
 

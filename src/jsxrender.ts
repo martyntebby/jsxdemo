@@ -1,3 +1,6 @@
+/*
+  Implements React.createElement to return string instead of JSX.Element.
+*/
 export { h, h as createElement, Fragment, renderToStaticMarkup };
 
 type Props = { [key: string]: any };
@@ -8,7 +11,7 @@ function h(type: string|Function, props: Props|null, ...children: NodeType[]): E
   if(typeof type === 'string') {
     return doElement(type, props, children);
   }
-  if(type === Fragment) { // minor optimization
+  if(type === Fragment) {
     return doChildren(children);
   }
   props = props || {};
@@ -16,7 +19,7 @@ function h(type: string|Function, props: Props|null, ...children: NodeType[]): E
   return type(props);
 }
 
-function Fragment(props: Props) {
+function Fragment(props: Props): ElementType {
   return doChildren(props.children);
 }
 
@@ -30,6 +33,16 @@ function doElement(type: string, props: Props|null, children: NodeType[]): strin
   return str + '>' + doChildren(children) + '</' + type + '>';
 }
 
+function doChildren(children: NodeType[]): string {
+  let str = '';
+  for(const child of children) {
+    if(child == null || typeof child === 'boolean') {}
+    else if(Array.isArray(child)) str += doChildren(child);
+    else str += child;
+  }
+  return str;
+}
+
 function doProp(name: string, value: any): string {
   if(name === 'key' || name === 'ref' ||
       value == null || value === false) return '';
@@ -39,16 +52,6 @@ function doProp(name: string, value: any): string {
   else if(name === 'style' && typeof value === 'object') value = doStyle(value);
   else if(value === true) value = '';
   return ' ' + name + '="' + value + '"';
-}
-
-function doChildren(children: NodeType[]): string {
-  let str = '';
-  for(const child of children) {
-    if(child == null || typeof child === 'boolean') {}
-    else if(Array.isArray(child)) str += doChildren(child);
-    else str += child;
-  }
-  return str;
 }
 
 function doStyle(style: any): string { // slow

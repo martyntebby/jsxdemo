@@ -1,3 +1,10 @@
+/*
+  Runs when page is loaded:
+  updates config info from query params
+  gets news data if main element is empty
+  installs event listeners to fetch further data
+  registers service worker
+*/
 export { browser };
 import { fetchMarkup, mylog, updateConfig, config } from './control';
 
@@ -33,8 +40,8 @@ async function clientRequest(path?: string) {
   const main = document.getElementById('main')!;
   const child = main.firstElementChild;
   if(child) child.className = 'loading';
-  const { html, cmd, arg } = await datap;
-  main.innerHTML = html;
+  const { markup, cmd, arg } = await datap;
+  main.innerHTML = markup;
   nav.className = cmd;
   window.scroll(0, 0);
 }
