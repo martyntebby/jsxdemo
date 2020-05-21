@@ -49,6 +49,6 @@ function cmd2url(cmd: string, arg: string, useapi?: boolean) {
 function updateConfig(args: string[]) {
   args.forEach(arg => {
     const [key, value] = arg.split('=');
-    if(key in config) (<any>config)[key] = value || true;
+    if(key in config) (<any>config)[key] = value ?? true;
   });
 }

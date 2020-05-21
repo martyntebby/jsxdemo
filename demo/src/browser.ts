@@ -18,7 +18,7 @@ function browser() {
   if(!main.firstElementChild) clientRequest();
   window.onpopstate = onPopState;
   document.body.onclick = onClick;
-  navigator.serviceWorker.register('../public/sw.js')
+  navigator.serviceWorker?.register('../public/sw.js')
     .then(reg => { mylog(reg); useapi = config.useapi; });
 }
 

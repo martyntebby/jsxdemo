@@ -21,7 +21,7 @@ function cfworker() {
 function updateConfig() {
   Object.keys(config).forEach(key => {
     const value = (<any>self)[key.toUpperCase()];
-    if(value != null) (<any>config)[key] = value || true;
+    if(value != null) (<any>config)[key] = value ?? true;
   });
 }
 

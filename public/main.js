@@ -274,7 +274,7 @@ define("demo/src/control", ["require", "exports", "demo/src/view", "demo/src/vie
         args.forEach(arg => {
             const [key, value] = arg.split('=');
             if (key in package_json_3.config)
-                package_json_3.config[key] = value || true;
+                package_json_3.config[key] = value !== null && value !== void 0 ? value : true;
         });
     }
     exports.updateConfig = updateConfig;
@@ -285,6 +285,7 @@ define("demo/src/browser", ["require", "exports", "demo/src/control"], function 
     exports.browser = void 0;
     let useapi = false;
     function browser() {
+        var _a;
         control_1.mylog('browser');
         const query = window.location.search;
         if (query)
@@ -294,8 +295,7 @@ define("demo/src/browser", ["require", "exports", "demo/src/control"], function 
             clientRequest();
         window.onpopstate = onPopState;
         document.body.onclick = onClick;
-        navigator.serviceWorker.register('../public/sw.js')
-            .then(reg => { control_1.mylog(reg); useapi = control_1.config.useapi; });
+        (_a = navigator.serviceWorker) === null || _a === void 0 ? void 0 : _a.register('../public/sw.js').then(reg => { control_1.mylog(reg); useapi = control_1.config.useapi; });
     }
     exports.browser = browser;
     function onPopState(e) {
@@ -335,7 +335,7 @@ define("demo/src/cfworker", ["require", "exports", "demo/src/control"], function
         Object.keys(control_2.config).forEach(key => {
             const value = self[key.toUpperCase()];
             if (value != null)
-                control_2.config[key] = value || true;
+                control_2.config[key] = value !== null && value !== void 0 ? value : true;
         });
     }
     async function handleRequest(e) {

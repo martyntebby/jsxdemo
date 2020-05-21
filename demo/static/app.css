@@ -87,5 +87,6 @@ a:hover {
   transition: opacity 1s;
 }
 .nolink {
+  color: #666 !important;
   pointer-events: none;
 }
