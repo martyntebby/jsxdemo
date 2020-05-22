@@ -30,7 +30,9 @@ Taken from webpagetest.org on a Moto 4G.
 Lighthouse: 100/100
 
 Interactive (LTE): 1.1s
+
 Interactive (fast 3G): 1.4s
+
 Interactive (slow 3G): 2.4s
 
 Try it
