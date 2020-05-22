@@ -25,7 +25,7 @@ npm test
 
 Performance
 -----------
-Taken from webpagetest.org on a Moto 4G.
+Taken from webpagetest.org on a Moto G4.
 
 Lighthouse: 100/100
 
