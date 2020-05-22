@@ -33,20 +33,24 @@ async function handleRequest(e: FetchEvent) {
   let response = await cache.match(request);
   if(response) return response;
 
-  // get index.html and news and combine them
+  // get optional index.html and news and combine them
   const init: any = { cf: { cacheTtl: config.cfttl } };
-  const indexp = fetchData('https://jsxrender.westinca.com/public/index.html', init);
-  const { markup } = await fetchMarkup('/news/1', init);
-  const index: string = await indexp;
-  const pos = index.indexOf('</main>');
-  if(pos < 0) return new Response(index); // error
-
+  const path = new URL(request.url).pathname;
+  const markupp = fetchMarkup(path.substring(1), init);
+  let index = '';
+  let pos = -1;
+  if(path === '/public/') {
+    index = await fetchData('https://jsxrender.westinca.com/public/index.html', init);
+    pos = index.indexOf('</main>');
+    if(pos < 0) return new Response(index); // error
+  }
+  const { markup } = await markupp;
+  const str = index ? index.substring(0, pos) + markup + index.substring(pos) : markup;
   const headers = [
   //['Link', '</public/main.js>; rel=preload; as=script'], //, </public/app.css>; rel=preload; as=style'],
     ['Content-Type', 'text/html'],
     ['Cache-Control', 'max-age=' + config.cfttl]
   ];
-  const str = index.substring(0, pos) + markup + index.substring(pos);
   response = new Response(str, { headers: headers });
   e.waitUntil(cache.put(request, response.clone()));
   return response;

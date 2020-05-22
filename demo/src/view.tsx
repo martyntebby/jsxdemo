@@ -14,7 +14,7 @@ function mylog(...args: any[]) {
 }
 
 function renderToMarkup(cmd: string, arg: string, data: any) {
-  mylog('renderToMarkup', cmd, arg);
+//  mylog('renderToMarkup', cmd, arg);
   const vnode = typeof data === 'string' ? ErrorView(data) :
   cmd === 'user' ? UserView({ user: data }) :
   cmd === 'item' ? ItemView({ item: data }) :

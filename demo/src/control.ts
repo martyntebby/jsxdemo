@@ -9,7 +9,7 @@ export { config, version } from '../../package.json';
 import { config } from '../../package.json';
 
 async function fetchMarkup(path?: string, init?: RequestInit, useapi?: boolean) {
-  mylog('fetchMarkup', path, useapi);
+//  mylog('fetchMarkup', path, useapi);
   const { cmd, arg, url } = link2cmd(path, useapi);
   const data = await fetchData(url, init, !useapi);
   const markup: string = useapi ? data : renderToMarkup(cmd, arg, data);

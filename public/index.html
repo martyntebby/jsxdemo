@@ -236,7 +236,6 @@ define("demo/src/view", ["require", "exports", "src/jsxrender", "package"], func
     }
     exports.mylog = mylog;
     function renderToMarkup(cmd, arg, data) {
-        mylog('renderToMarkup', cmd, arg);
         const vnode = typeof data === 'string' ? ErrorView(data) :
             cmd === 'user' ? UserView({ user: data }) :
                 cmd === 'item' ? ItemView({ item: data }) :
@@ -358,7 +357,6 @@ define("demo/src/control", ["require", "exports", "demo/src/view", "demo/src/vie
     Object.defineProperty(exports, "config", { enumerable: true, get: function () { return package_json_2.config; } });
     Object.defineProperty(exports, "version", { enumerable: true, get: function () { return package_json_2.version; } });
     async function fetchMarkup(path, init, useapi) {
-        view_2.mylog('fetchMarkup', path, useapi);
         const { cmd, arg, url } = link2cmd(path, useapi);
         const data = await fetchData(url, init, !useapi);
         const markup = useapi ? data : view_2.renderToMarkup(cmd, arg, data);
@@ -470,17 +468,22 @@ define("demo/src/cfworker", ["require", "exports", "demo/src/control"], function
         if (response)
             return response;
         const init = { cf: { cacheTtl: control_2.config.cfttl } };
-        const indexp = control_2.fetchData('https://jsxrender.westinca.com/public/index.html', init);
-        const { markup } = await control_2.fetchMarkup('/news/1', init);
-        const index = await indexp;
-        const pos = index.indexOf('</main>');
-        if (pos < 0)
-            return new Response(index);
+        const path = new URL(request.url).pathname;
+        const markupp = control_2.fetchMarkup(path.substring(1), init);
+        let index = '';
+        let pos = -1;
+        if (path === '/public/') {
+            index = await control_2.fetchData('https://jsxrender.westinca.com/public/index.html', init);
+            pos = index.indexOf('</main>');
+            if (pos < 0)
+                return new Response(index);
+        }
+        const { markup } = await markupp;
+        const str = index ? index.substring(0, pos) + markup + index.substring(pos) : markup;
         const headers = [
             ['Content-Type', 'text/html'],
             ['Cache-Control', 'max-age=' + control_2.config.cfttl]
         ];
-        const str = index.substring(0, pos) + markup + index.substring(pos);
         response = new Response(str, { headers: headers });
         e.waitUntil(cache.put(request, response.clone()));
         return response;

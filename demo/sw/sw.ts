@@ -48,7 +48,7 @@ function onFetch(e: FetchEvent) {
 }
 
 async function cacheFetch(e: FetchEvent) {
-  console.log('cacheFetch', e.request.url);
+//  console.log('cacheFetch', e.request.url);
   let request = e.request;
   /*
   const pos = request.url.indexOf(config.myapi);
@@ -63,7 +63,7 @@ async function cacheFetch(e: FetchEvent) {
   if(!response) {
     response = await fetch(request);
     if(response && response.ok && response.type === 'basic') {
-      console.log('cache', response);
+//      console.log('cache', response);
       e.waitUntil(cache.put(request, response.clone()));
     }
   }

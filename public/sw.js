@@ -35,7 +35,6 @@ function onFetch(e) {
     e.respondWith(cacheFetch(e));
 }
 async function cacheFetch(e) {
-    console.log('cacheFetch', e.request.url);
     let request = e.request;
     if (request.mode === 'navigate')
         request = new Request('./');
@@ -44,7 +43,6 @@ async function cacheFetch(e) {
     if (!response) {
         response = await fetch(request);
         if (response && response.ok && response.type === 'basic') {
-            console.log('cache', response);
             e.waitUntil(cache.put(request, response.clone()));
         }
     }
