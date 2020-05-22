@@ -1,6 +1,6 @@
 /*
   Fetches data from hnapi or elsewhere and supplies as json or formatted html.
-  Re exports some view methods and handles config info from packet.json.
+  Re exports some view methods and handles config info from package.json.
 */
 export { fetchMarkup, fetchData, link2cmd, updateConfig };
 export { mylog, renderToMarkup } from './view';

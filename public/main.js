@@ -335,7 +335,7 @@ define("demo/src/cfworker", ["require", "exports", "demo/src/control"], function
         Object.keys(control_2.config).forEach(key => {
             const value = self[key.toUpperCase()];
             if (value != null)
-                control_2.config[key] = value !== null && value !== void 0 ? value : true;
+                control_2.config[key] = value;
         });
     }
     async function handleRequest(e) {

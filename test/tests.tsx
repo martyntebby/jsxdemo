@@ -56,7 +56,7 @@ function functest(offset = 0) {
   return numErrs;
 }
 
-function Details(props: { summary?: string, children?:any }) {
+function Details(props: { summary?: string, children?: any }) {
   return (
     <details>
       {props.summary && <summary>{props.summary}</summary>}

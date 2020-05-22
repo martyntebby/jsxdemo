@@ -3,7 +3,7 @@ JSX Render
 A stateless subset of React that just handles rendering.
 No state management, change tracking nor event handlers.
 
-It is small (~100 loc), designed for fast initial page load,
+It is small (~50 loc), designed for fast initial page load,
 and also for server side rendering using isomorphic code.
 
 It is written in typescript and useable with the React @type files
@@ -29,9 +29,9 @@ Taken from webpagetest.org on a Moto 4G.
 
 Lighthouse: 100/100
 
-Interactive (slow 3G): 2.3s (1st view), 0.3s (repeat)
-
-Interactive (fast 3G): 1.8s (1st view), 0.3s (repeat)
+Interactive (LTE): 1.1s
+Interactive (fast 3G): 1.4s
+Interactive (slow 3G): 2.4s
 
 Try it
 ------
