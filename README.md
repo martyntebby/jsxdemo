@@ -3,7 +3,7 @@ JSX Render
 A stateless subset of React that just handles rendering.
 No state management, change tracking nor event handlers.
 
-It is small (~50 loc), designed for fast initial page load,
+It is small (~100 loc), designed for fast initial page load,
 and also for server side rendering using isomorphic code.
 
 It is written in typescript and useable with the React @type files
@@ -41,8 +41,8 @@ Try it
 
 Alternatives
 ------------
-[rawgit](https://cdn.rawgit.com/martyntebby/jsxrender/0.9.4/public/)
+[rawgit](https://cdn.rawgit.com/martyntebby/jsxrender/0.9.5/public/)
 
-[githack](https://rawcdn.githack.com/martyntebby/jsxrender/0.9.4/public/)
+[githack](https://rawcdn.githack.com/martyntebby/jsxrender/0.9.5/public/)
 
 [github pages](http://martyntebby.github.io/jsxrender/public/)
