@@ -1,7 +1,7 @@
 /*
   Implements React.createElement to return string instead of JSX.Element.
 */
-export { h, h as createElement, Fragment, renderToStaticMarkup };
+export { h, h as createElement, jsx, jsx as jsxs, Fragment, renderToStaticMarkup };
 
 type Props = { [key: string]: any };
 type NodeType = string | number | boolean | NodeType[] | null | undefined;
@@ -27,24 +27,28 @@ function renderToStaticMarkup(element: ElementType): string {
   return element;
 }
 
-function doElement(type: string, props: Props|null, children: NodeType[]): string {
+function doElement(type: string, props: Props|null, children: NodeType): string {
   let str = '<' + type;
   for(const name in props) str += doProp(name, props[name]);
   return str + '>' + doChildren(children) + '</' + type + '>';
 }
 
-function doChildren(children: NodeType[]): string {
+function doChildren(children: NodeType): string {
+  if(!Array.isArray(children)) return doChild(children);
   let str = '';
-  for(const child of children) {
-    if(child == null || typeof child === 'boolean') {}
-    else if(Array.isArray(child)) str += doChildren(child);
-    else str += child;
-  }
+  for(const child of children) str += doChild(child);
   return str;
 }
 
+function doChild(child: NodeType): string {
+  if(child == null || typeof child === 'boolean') return '';
+  if(Array.isArray(child)) return doChildren(child);
+  if(typeof child === 'string') return child;
+  return child.toString();
+}
+
 function doProp(name: string, value: any): string {
-  if(name === 'key' || name === 'ref' ||
+  if(name === 'children' || name === 'key' || name === 'ref' ||
       value == null || value === false) return '';
   if(name === 'className') name = 'class'
   else if(name === 'forHtml') name = 'for'
@@ -59,4 +63,12 @@ function doStyle(style: any): string { // slow
     const key2 = key.replace(/([A-Z])/g, '-$1').toLowerCase();
     return `${key2}:${style[key]}`;
   }).join(';');
+}
+
+// https://github.com/reactjs/rfcs/blob/createlement-rfc/text/0000-create-element-changes.md
+// https://babeljs.io/blog/2020/03/16/7.9.0
+// experimental
+function jsx(type: string|Function, props: Props): ElementType {
+  return typeof type === 'function' ? type(props)
+    : doElement(type, props, props.children);
 }

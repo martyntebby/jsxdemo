@@ -1,4 +1,4 @@
-export { h, h as createElement, Fragment, renderToStaticMarkup };
+export { h, h as createElement, jsx, jsx as jsxs, Fragment, renderToStaticMarkup };
 function h(type, props, ...children) {
     if (typeof type === 'string') {
         return doElement(type, props, children);
@@ -23,18 +23,24 @@ function doElement(type, props, children) {
     return str + '>' + doChildren(children) + '</' + type + '>';
 }
 function doChildren(children) {
+    if (!Array.isArray(children))
+        return doChild(children);
     let str = '';
-    for (const child of children) {
-        if (child == null || typeof child === 'boolean') { }
-        else if (Array.isArray(child))
-            str += doChildren(child);
-        else
-            str += child;
-    }
+    for (const child of children)
+        str += doChild(child);
     return str;
 }
+function doChild(child) {
+    if (child == null || typeof child === 'boolean')
+        return '';
+    if (Array.isArray(child))
+        return doChildren(child);
+    if (typeof child === 'string')
+        return child;
+    return child.toString();
+}
 function doProp(name, value) {
-    if (name === 'key' || name === 'ref' ||
+    if (name === 'children' || name === 'key' || name === 'ref' ||
         value == null || value === false)
         return '';
     if (name === 'className')
@@ -54,4 +60,8 @@ function doStyle(style) {
         const key2 = key.replace(/([A-Z])/g, '-$1').toLowerCase();
         return `${key2}:${style[key]}`;
     }).join(';');
+}
+function jsx(type, props) {
+    return typeof type === 'function' ? type(props)
+        : doElement(type, props, props.children);
 }
