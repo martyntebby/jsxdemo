@@ -16,6 +16,15 @@ define("src/jsxrender", ["require", "exports"], function (require, exports) {
     }
     exports.h = h;
     exports.createElement = h;
+    function jsx(type, props, key) {
+        if (type === Fragment)
+            return doChildren(props.children);
+        if (typeof type === 'function')
+            return type(props);
+        return doElement(type, props, props.children);
+    }
+    exports.jsx = jsx;
+    exports.jsxs = jsx;
     function Fragment(props) {
         return doChildren(props.children);
     }
@@ -69,16 +78,10 @@ define("src/jsxrender", ["require", "exports"], function (require, exports) {
             return `${key2}:${style[key]}`;
         }).join(';');
     }
-    function jsx(type, props) {
-        return typeof type === 'function' ? type(props)
-            : doElement(type, props, props.children);
-    }
-    exports.jsx = jsx;
-    exports.jsxs = jsx;
 });
 define("package", [], {
     "name": "jsxrender",
-    "version": "0.9.5",
+    "version": "0.9.6",
     "description": "Small fast stateless subset of React.",
     "main": "public/main.js",
     "repository": {
@@ -103,7 +106,7 @@ define("package", [], {
         "@types/node": "12.12.6",
         "@types/react": "^16.9.35",
         "@types/react-dom": "^16.9.8",
-        "typescript": "^3.9.2"
+        "typescript": "^3.9.3"
     },
     "dependencies": {}
 });

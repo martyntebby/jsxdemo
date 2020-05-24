@@ -1,5 +1,5 @@
 "use strict";
-const CACHE_NAME = '0.9.5';
+const CACHE_NAME = '0.9.6';
 const PRE_CACHE = ['index.html',
     'static/manifest.json',
     'static/favicon-32.png',

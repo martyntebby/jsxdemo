@@ -10,6 +10,13 @@ function h(type, props, ...children) {
     props.children = children;
     return type(props);
 }
+function jsx(type, props, key) {
+    if (type === Fragment)
+        return doChildren(props.children);
+    if (typeof type === 'function')
+        return type(props);
+    return doElement(type, props, props.children);
+}
 function Fragment(props) {
     return doChildren(props.children);
 }
@@ -60,8 +67,4 @@ function doStyle(style) {
         const key2 = key.replace(/([A-Z])/g, '-$1').toLowerCase();
         return `${key2}:${style[key]}`;
     }).join(';');
-}
-function jsx(type, props) {
-    return typeof type === 'function' ? type(props)
-        : doElement(type, props, props.children);
 }

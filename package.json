@@ -1,6 +1,6 @@
 {
   "name": "jsxrender",
-  "version": "0.9.5",
+  "version": "0.9.6",
   "description": "Small fast stateless subset of React.",
   "main": "public/main.js",
   "repository": {
@@ -25,7 +25,7 @@
     "@types/node": "12.12.6",
     "@types/react": "^16.9.35",
     "@types/react-dom": "^16.9.8",
-    "typescript": "^3.9.2"
+    "typescript": "^3.9.3"
   },
   "dependencies": {}
 }

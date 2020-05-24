@@ -41,8 +41,8 @@ Try it
 
 Alternatives
 ------------
-[rawgit](https://cdn.rawgit.com/martyntebby/jsxrender/0.9.5/public/)
+[rawgit](https://cdn.rawgit.com/martyntebby/jsxrender/0.9.6/public/)
 
-[githack](https://rawcdn.githack.com/martyntebby/jsxrender/0.9.5/public/)
+[githack](https://rawcdn.githack.com/martyntebby/jsxrender/0.9.6/public/)
 
 [github pages](http://martyntebby.github.io/jsxrender/public/)

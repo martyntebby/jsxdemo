@@ -1,5 +1,6 @@
 import * as React from '../src/jsxrender';
 import * as ReactDOMServer from '../src/jsxrender';
+import { jsx as _jsx, jsxs as _jsxs, Fragment as _Fragment } from '../src/jsxrender';
 //import * as React from 'react';
 //import * as ReactDOMServer from 'react-dom/server';
 
@@ -28,6 +29,20 @@ function perftest(iterations = 100000) {
 }
 
 function functest(offset = 0) {
+  return functest1(offset) + functest2(offset);
+}
+
+function compare(vnode: JSX.Element|any, html: string) {
+  const markup = ReactDOMServer.renderToStaticMarkup(vnode as any);
+  const result = markup === html;
+  if(!result) ++numErrs;
+  if(logCompare) {
+    console.log(result ? 'OK' : 'FAIL', html, result ? '' : markup);
+  }
+  return result;
+}
+
+function functest1(offset = 0) {
   compare(<p></p>, '<p></p>');
   compare(<div/>, '<div></div>');
   compare(<a><div/></a>, '<a><div></div></a>');
@@ -51,7 +66,8 @@ function functest(offset = 0) {
   compare(<Details/>, '<details></details>');
   compare(<Details summary='abc'/>, '<details><summary>abc</summary></details>');
   compare(<Details><div>abc</div></Details>, '<details><div>abc</div></details>');
-  compare(<Details summary='a'><Details>abc<div/></Details></Details>,
+  const a = { summary: 'a', abc: 2 }
+  compare(<Details {...a}><Details>abc<div/></Details></Details>,
     '<details><summary>a</summary><details>abc<div></div></details></details>');
   return numErrs;
 }
@@ -65,12 +81,80 @@ function Details(props: { summary?: string, children?: any }) {
   );
 }
 
-function compare(vnode: JSX.Element, html: string) {
-  const markup = ReactDOMServer.renderToStaticMarkup(vnode as any);
-  const result = markup === html;
-  if(!result) ++numErrs;
-  if(logCompare) {
-    console.log(result ? 'OK' : 'FAIL', html, result ? '' : markup);
-  }
-  return result;
+// generated with babel 7.9 for experimental react compiler functions
+function functest2(offset = 0) {
+  compare( /*#__PURE__*/_jsx("p", {}), '<p></p>');
+  compare( /*#__PURE__*/_jsx("div", {}), '<div></div>');
+  compare( /*#__PURE__*/_jsx("a", {
+    children: /*#__PURE__*/_jsx("div", {})
+  }), '<a><div></div></a>');
+  compare( /*#__PURE__*/_jsx("div", {
+    ref: "abc"
+  }, 1), '<div></div>');
+  compare( /*#__PURE__*/_jsx("span", {
+    className: "abc"
+  }), '<span class="abc"></span>');
+  compare( /*#__PURE__*/_jsx("a", {
+    href: "abc",
+    children: "link"
+  }), '<a href="abc">link</a>');
+  compare( /*#__PURE__*/_jsx("script", {
+    defer: true
+  }), '<script defer=""></script>');
+  compare( /*#__PURE__*/_jsx("script", {
+    noModule: false
+  }), '<script></script>');
+  compare( /*#__PURE__*/_jsx("a", {
+    "data-a": "true"
+  }), '<a data-a="true"></a>');
+  const style = offset ? 'z-index:1' : {
+    zIndex: 1
+  };
+  compare( /*#__PURE__*/_jsx("div", {
+    style: style
+  }), '<div style="z-index:1"></div>');
+  compare( /*#__PURE__*/_jsx(_Fragment, {
+    children: /*#__PURE__*/_jsx("div", {})
+  }), '<div></div>');
+  compare( /*#__PURE__*/_jsx(_Fragment, {}), '');
+  compare( /*#__PURE__*/_jsx(_Fragment, {
+    children: null
+  }), '');
+  compare( /*#__PURE__*/_jsx(_Fragment, {
+    children: undefined
+  }), '');
+  compare( /*#__PURE__*/_jsx(_Fragment, {
+    children: false
+  }), '');
+  compare( /*#__PURE__*/_jsx(_Fragment, {
+    children: true
+  }), '');
+  compare( /*#__PURE__*/_jsx(_Fragment, {
+    children: 0
+  }), '0');
+  compare( /*#__PURE__*/_jsx(_Fragment, {
+    children: "abc"
+  }), 'abc');
+  compare( /*#__PURE__*/_jsxs(_Fragment, {
+    children: [/*#__PURE__*/_jsx("div", {}), /*#__PURE__*/_jsx("span", {})]
+  }), '<div></div><span></span>');
+  compare( /*#__PURE__*/_jsx(Details, {}), '<details></details>');
+  compare( /*#__PURE__*/_jsx(Details, {
+    summary: "abc"
+  }), '<details><summary>abc</summary></details>');
+  compare( /*#__PURE__*/_jsx(Details, {
+    children: /*#__PURE__*/_jsx("div", {
+      children: "abc"
+    })
+  }), '<details><div>abc</div></details>');
+  const a = {
+    summary: 'a',
+    abc: 2
+  };
+  compare( /*#__PURE__*/_jsx(Details, { ...a,
+    children: /*#__PURE__*/_jsxs(Details, {
+      children: ["abc", /*#__PURE__*/_jsx("div", {})]
+    })
+  }), '<details><summary>a</summary><details>abc<div></div></details></details>');
+  return numErrs;
 }

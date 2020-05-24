@@ -1,5 +1,6 @@
 /*
-  Implements React.createElement to return string instead of JSX.Element.
+  Implements React.createElement (and experimental jsx/jsxs)
+  to return string instead of JSX.Element.
 */
 export { h, h as createElement, jsx, jsx as jsxs, Fragment, renderToStaticMarkup };
 
@@ -17,6 +18,15 @@ function h(type: string|Function, props: Props|null, ...children: NodeType[]): E
   props = props || {};
   props.children = children;
   return type(props);
+}
+
+// https://github.com/reactjs/rfcs/blob/createlement-rfc/text/0000-create-element-changes.md
+// https://babeljs.io/blog/2020/03/16/7.9.0
+// experimental
+function jsx(type: string|Function, props: Props, key?: any): ElementType {
+  if(type === Fragment) return doChildren(props.children);
+  if(typeof type === 'function') return type(props);
+  return doElement(type, props, props.children);
 }
 
 function Fragment(props: Props): ElementType {
@@ -63,12 +73,4 @@ function doStyle(style: any): string { // slow
     const key2 = key.replace(/([A-Z])/g, '-$1').toLowerCase();
     return `${key2}:${style[key]}`;
   }).join(';');
-}
-
-// https://github.com/reactjs/rfcs/blob/createlement-rfc/text/0000-create-element-changes.md
-// https://babeljs.io/blog/2020/03/16/7.9.0
-// experimental
-function jsx(type: string|Function, props: Props): ElementType {
-  return typeof type === 'function' ? type(props)
-    : doElement(type, props, props.children);
 }
