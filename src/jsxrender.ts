@@ -22,7 +22,7 @@ function h(type: string|Function, props: Props|null, ...children: NodeType[]): E
 
 // https://github.com/reactjs/rfcs/blob/createlement-rfc/text/0000-create-element-changes.md
 // https://babeljs.io/blog/2020/03/16/7.9.0
-// experimental
+
 function jsx(type: string|Function, props: Props, key?: any): ElementType {
   if(type === Fragment) return doChildren(props.children);
   if(typeof type === 'function') return type(props);
@@ -44,17 +44,12 @@ function doElement(type: string, props: Props|null, children: NodeType): string 
 }
 
 function doChildren(children: NodeType): string {
-  if(!Array.isArray(children)) return doChild(children);
+  if(children == null || typeof children === 'boolean') return '';
+  if(typeof children === 'number') return children.toString();
+  if(typeof children === 'string') return children;
   let str = '';
-  for(const child of children) str += doChild(child);
+  for(const child of children) str += doChildren(child);
   return str;
-}
-
-function doChild(child: NodeType): string {
-  if(child == null || typeof child === 'boolean') return '';
-  if(Array.isArray(child)) return doChildren(child);
-  if(typeof child === 'string') return child;
-  return child.toString();
 }
 
 function doProp(name: string, value: any): string {
