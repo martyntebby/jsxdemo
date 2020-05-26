@@ -1,6 +1,6 @@
 {
   "name": "jsxrender",
-  "version": "0.9.6",
+  "version": "0.9.6a",
   "description": "Small fast stateless subset of React.",
   "main": "public/main.js",
   "repository": {
@@ -17,7 +17,7 @@
     "build": "rm -rf dist out public/sw.js && tsc -b . --force && (cd demo; node ../dist/bundle.js)",
     "watch": "tsc -b . -w --listEmittedFiles",
     "clean": "rm -rf dist",
-    "test": "node dist/test/tests.js"
+    "test": "node dist/tests.js"
   },
   "author": "Martyn Tebby",
   "license": "ISC",

@@ -7,7 +7,8 @@ import { jsx as _jsx, jsxs as _jsxs, Fragment as _Fragment } from '../src/jsxren
 let numErrs = 0;
 let logCompare = true;
 
-process.exit(tests());
+const res = tests();
+if('process' in globalThis) process.exit(res);
 
 function tests() {
   functest();
@@ -28,18 +29,18 @@ function perftest(iterations = 100000) {
   console.log('iterations', iterations, ' duration', duration, ' tps', tps);
 }
 
-function functest(offset = 0) {
-  return functest1(offset) + functest2(offset);
+function functest(offset = 0): void {
+  functest1(offset);
+  functest2(offset);
 }
 
-function compare(vnode: JSX.Element|any, html: string) {
+function compare(vnode: JSX.Element|any, html: string): void {
   const markup = ReactDOMServer.renderToStaticMarkup(vnode as any);
   const result = markup === html;
   if(!result) ++numErrs;
   if(logCompare) {
     console.log(result ? 'OK' : 'FAIL', html, result ? '' : markup);
   }
-  return result;
 }
 
 function functest1(offset = 0) {
@@ -69,7 +70,6 @@ function functest1(offset = 0) {
   const a = { summary: 'a', abc: 2 }
   compare(<Details {...a}><Details>abc<div/></Details></Details>,
     '<details><summary>a</summary><details>abc<div></div></details></details>');
-  return numErrs;
 }
 
 function Details(props: { summary?: string, children?: any }) {
@@ -156,5 +156,4 @@ function functest2(offset = 0) {
       children: ["abc", /*#__PURE__*/_jsx("div", {})]
     })
   }), '<details><summary>a</summary><details>abc<div></div></details></details>');
-  return numErrs;
 }

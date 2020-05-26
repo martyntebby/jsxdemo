@@ -129,12 +129,10 @@ define("src/jsxrender", ["require", "exports"], function (require, exports) {
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.renderToStaticMarkup = exports.Fragment = exports.jsxs = exports.jsx = exports.createElement = exports.h = void 0;
     function h(type, props, ...children) {
-        if (typeof type === 'string') {
+        if (typeof type === 'string')
             return doElement(type, props, children);
-        }
-        if (type === Fragment) {
+        if (type === Fragment)
             return doChildren(children);
-        }
         props = props || {};
         props.children = children;
         return type(props);
@@ -142,11 +140,11 @@ define("src/jsxrender", ["require", "exports"], function (require, exports) {
     exports.h = h;
     exports.createElement = h;
     function jsx(type, props, key) {
+        if (typeof type === 'string')
+            return doElement(type, props, props.children);
         if (type === Fragment)
             return doChildren(props.children);
-        if (typeof type === 'function')
-            return type(props);
-        return doElement(type, props, props.children);
+        return type(props);
     }
     exports.jsx = jsx;
     exports.jsxs = jsx;
@@ -165,12 +163,12 @@ define("src/jsxrender", ["require", "exports"], function (require, exports) {
         return str + '>' + doChildren(children) + '</' + type + '>';
     }
     function doChildren(children) {
-        if (children == null || typeof children === 'boolean')
-            return '';
-        if (typeof children === 'number')
-            return children.toString();
         if (typeof children === 'string')
             return children;
+        if (typeof children === 'number')
+            return children.toString();
+        if (typeof children === 'boolean' || children === null || children === undefined)
+            return '';
         let str = '';
         for (const child of children)
             str += doChildren(child);
@@ -178,7 +176,7 @@ define("src/jsxrender", ["require", "exports"], function (require, exports) {
     }
     function doProp(name, value) {
         if (name === 'children' || name === 'key' || name === 'ref' ||
-            value == null || value === false)
+            value === null || value === undefined || value === false)
             return '';
         if (name === 'className')
             name = 'class';
@@ -192,16 +190,17 @@ define("src/jsxrender", ["require", "exports"], function (require, exports) {
             value = '';
         return ' ' + name + '="' + value + '"';
     }
+    const styleRegex = /([A-Z])/g;
     function doStyle(style) {
         return Object.keys(style).map(key => {
-            const key2 = key.replace(/([A-Z])/g, '-$1').toLowerCase();
-            return `${key2}:${style[key]}`;
+            const key2 = key.replace(styleRegex, '-$1');
+            return key2.toLowerCase() + ':' + style[key];
         }).join(';');
     }
 });
 define("package", [], {
     "name": "jsxrender",
-    "version": "0.9.6",
+    "version": "0.9.6a",
     "description": "Small fast stateless subset of React.",
     "main": "public/main.js",
     "repository": {
@@ -218,7 +217,7 @@ define("package", [], {
         "build": "rm -rf dist out public/sw.js && tsc -b . --force && (cd demo; node ../dist/bundle.js)",
         "watch": "tsc -b . -w --listEmittedFiles",
         "clean": "rm -rf dist",
-        "test": "node dist/test/tests.js"
+        "test": "node dist/tests.js"
     },
     "author": "Martyn Tebby",
     "license": "ISC",

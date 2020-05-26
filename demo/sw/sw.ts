@@ -4,7 +4,7 @@
   deletes old caches and
   passes through requests for other files.
 */
-const CACHE_NAME = '0.9.6';
+const CACHE_NAME = '0.9.6a';
 const PRE_CACHE = [ 'index.html'
   ,'static/manifest.json'
   ,'static/favicon-32.png'
@@ -48,25 +48,15 @@ function onFetch(e: FetchEvent) {
 }
 
 async function cacheFetch(e: FetchEvent) {
-//  console.log('cacheFetch', e.request.url);
   let request = e.request;
-  /*
-  const pos = request.url.indexOf(config.myapi);
-  if(pos >= 0) {
-    const { html } = await fetchMarkup(request.url.substring(pos + 1));
-    return new Response(html);
-  }
-  */
   if(request.mode === 'navigate') request = new Request('./');
   const cache = await caches.open(CACHE_NAME);
   let response = await cache.match(request);
   if(!response) {
     response = await fetch(request);
     if(response && response.ok && response.type === 'basic') {
-//      console.log('cache', response);
       e.waitUntil(cache.put(request, response.clone()));
     }
   }
-//  else console.log('from cache', response.url);
   return response;
 }

@@ -1,21 +1,19 @@
 export { h, h as createElement, jsx, jsx as jsxs, Fragment, renderToStaticMarkup };
 function h(type, props, ...children) {
-    if (typeof type === 'string') {
+    if (typeof type === 'string')
         return doElement(type, props, children);
-    }
-    if (type === Fragment) {
+    if (type === Fragment)
         return doChildren(children);
-    }
     props = props || {};
     props.children = children;
     return type(props);
 }
 function jsx(type, props, key) {
+    if (typeof type === 'string')
+        return doElement(type, props, props.children);
     if (type === Fragment)
         return doChildren(props.children);
-    if (typeof type === 'function')
-        return type(props);
-    return doElement(type, props, props.children);
+    return type(props);
 }
 function Fragment(props) {
     return doChildren(props.children);
@@ -30,12 +28,12 @@ function doElement(type, props, children) {
     return str + '>' + doChildren(children) + '</' + type + '>';
 }
 function doChildren(children) {
-    if (children == null || typeof children === 'boolean')
-        return '';
-    if (typeof children === 'number')
-        return children.toString();
     if (typeof children === 'string')
         return children;
+    if (typeof children === 'number')
+        return children.toString();
+    if (typeof children === 'boolean' || children === null || children === undefined)
+        return '';
     let str = '';
     for (const child of children)
         str += doChildren(child);
@@ -43,7 +41,7 @@ function doChildren(children) {
 }
 function doProp(name, value) {
     if (name === 'children' || name === 'key' || name === 'ref' ||
-        value == null || value === false)
+        value === null || value === undefined || value === false)
         return '';
     if (name === 'className')
         name = 'class';
@@ -57,9 +55,10 @@ function doProp(name, value) {
         value = '';
     return ' ' + name + '="' + value + '"';
 }
+const styleRegex = /([A-Z])/g;
 function doStyle(style) {
     return Object.keys(style).map(key => {
-        const key2 = key.replace(/([A-Z])/g, '-$1').toLowerCase();
-        return `${key2}:${style[key]}`;
+        const key2 = key.replace(styleRegex, '-$1');
+        return key2.toLowerCase() + ':' + style[key];
     }).join(';');
 }

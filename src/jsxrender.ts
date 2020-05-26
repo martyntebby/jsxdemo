@@ -9,12 +9,8 @@ type NodeType = string | number | boolean | NodeType[] | null | undefined;
 type ElementType = string;
 
 function h(type: string|Function, props: Props|null, ...children: NodeType[]): ElementType {
-  if(typeof type === 'string') {
-    return doElement(type, props, children);
-  }
-  if(type === Fragment) {
-    return doChildren(children);
-  }
+  if(typeof type === 'string') return doElement(type, props, children);
+  if(type === Fragment) return doChildren(children);
   props = props || {};
   props.children = children;
   return type(props);
@@ -24,9 +20,9 @@ function h(type: string|Function, props: Props|null, ...children: NodeType[]): E
 // https://babeljs.io/blog/2020/03/16/7.9.0
 
 function jsx(type: string|Function, props: Props, key?: any): ElementType {
+  if(typeof type === 'string') return doElement(type, props, props.children);
   if(type === Fragment) return doChildren(props.children);
-  if(typeof type === 'function') return type(props);
-  return doElement(type, props, props.children);
+  return type(props);
 }
 
 function Fragment(props: Props): ElementType {
@@ -44,9 +40,9 @@ function doElement(type: string, props: Props|null, children: NodeType): string 
 }
 
 function doChildren(children: NodeType): string {
-  if(children == null || typeof children === 'boolean') return '';
-  if(typeof children === 'number') return children.toString();
   if(typeof children === 'string') return children;
+  if(typeof children === 'number') return children.toString();
+  if(typeof children === 'boolean' || children === null || children === undefined) return '';
   let str = '';
   for(const child of children) str += doChildren(child);
   return str;
@@ -54,7 +50,7 @@ function doChildren(children: NodeType): string {
 
 function doProp(name: string, value: any): string {
   if(name === 'children' || name === 'key' || name === 'ref' ||
-      value == null || value === false) return '';
+      value === null || value === undefined || value === false) return '';
   if(name === 'className') name = 'class'
   else if(name === 'forHtml') name = 'for'
   else if(name === 'defaultValue') name = 'value'
@@ -63,9 +59,11 @@ function doProp(name: string, value: any): string {
   return ' ' + name + '="' + value + '"';
 }
 
-function doStyle(style: any): string { // slow
+const styleRegex = /([A-Z])/g;
+
+function doStyle(style: any): string {
   return Object.keys(style).map(key => {
-    const key2 = key.replace(/([A-Z])/g, '-$1').toLowerCase();
-    return `${key2}:${style[key]}`;
+    const key2 = key.replace(styleRegex, '-$1'); // slow
+    return key2.toLowerCase() + ':' + style[key];
   }).join(';');
 }
