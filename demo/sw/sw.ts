@@ -4,7 +4,7 @@
   deletes old caches and
   passes through requests for other files.
 */
-const CACHE_NAME = '0.9.6b';
+const CACHE_NAME = '0.9.6c';
 const PRE_CACHE = [ 'index.html'
   ,'main.js'
   ,'static/app.css'
@@ -34,24 +34,30 @@ async function precache() {
   const cache = await caches.open(CACHE_NAME);
   await cache.addAll(PRE_CACHE);
   const resp = await cache.match('index.html');
-  if(resp) await cache.put('./', await clearMain(resp));
+  if(resp) {
+    const { missing, resp2 } = await clearMain(resp);
+    await cache.put('intro', new Response(missing));
+    await cache.put('./', resp2);
+  }
   _self.skipWaiting();
 }
 
 async function clearMain(resp: Response) {
   const text = await resp.text();
   const main = '<main id="main">';
-  const pos1 = text.indexOf(main);
+  const pos1 = text.indexOf(main) + main.length;
   const pos2 = text.indexOf('</main>', pos1);
-  if(pos1 < 0 || pos2 < 0) {
+  if(pos1 < main.length || pos2 < 0) {
     console.error('index.html is missing main section');
-    return resp;
+    return { missing:'', resp2:resp };
   }
-  const body = text.substring(0, pos1 + main.length) + text.substring(pos2);
+  const body = text.substring(0, pos1) + text.substring(pos2);
+  const missing = text.substring(pos1, pos2);
   const headers = [
     ['Content-Type', 'text/html; charset=UTF-8'],
   ];
-  return new Response(body, { headers: headers });
+  const resp2 = new Response(body, { headers: headers });
+  return { missing, resp2 };
 }
 
 function onActivate(e: ExtendableEvent) {

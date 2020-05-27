@@ -45,14 +45,15 @@ function onPopState(e: PopStateEvent) {
 
 function onClick(e: Event) {
   if (e.target instanceof HTMLAnchorElement && e.target.dataset.cmd != null) {
-    clientRequest(e.target.pathname);
+    const direct = e.target.dataset.cmd === 'direct';
+    clientRequest(e.target.pathname, direct);
     e.preventDefault();
-    window.history.pushState(e.target.pathname, '');
+    if(!direct) window.history.pushState(e.target.pathname, '');
   }
 }
 
-async function clientRequest(path?: string) {
-  const datap = fetchMarkup(path, undefined, useapi);
+async function clientRequest(path?: string, direct?: boolean) {
+  const datap = fetchMarkup(path, undefined, useapi, direct);
   const nav = document.getElementById('nav')!;
   const main = document.getElementById('main')!;
   const child = main.firstElementChild;

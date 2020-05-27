@@ -75,7 +75,7 @@ define("src/jsxrender", ["require", "exports"], function (require, exports) {
 });
 define("package", [], {
     "name": "jsxrender",
-    "version": "0.9.6b",
+    "version": "0.9.6c",
     "description": "Small fast stateless subset of React.",
     "main": "public/main.js",
     "repository": {
@@ -240,10 +240,11 @@ define("demo/src/control", ["require", "exports", "demo/src/view", "demo/src/vie
     Object.defineProperty(exports, "renderToMarkup", { enumerable: true, get: function () { return view_1.renderToMarkup; } });
     Object.defineProperty(exports, "config", { enumerable: true, get: function () { return package_json_2.config; } });
     Object.defineProperty(exports, "version", { enumerable: true, get: function () { return package_json_2.version; } });
-    async function fetchMarkup(path, init, useapi) {
-        const { cmd, arg, url } = link2cmd(path, useapi);
-        const data = await fetchData(url, init, !useapi);
-        const markup = useapi ? data : view_2.renderToMarkup(cmd, arg, data);
+    async function fetchMarkup(path, init, useapi, direct) {
+        const { cmd, arg, url } = direct ? { cmd: '', arg: '', url: path } : link2cmd(path, useapi);
+        const asJson = !useapi && !direct;
+        const data = await fetchData(url, init, asJson);
+        const markup = !asJson ? data : view_2.renderToMarkup(cmd, arg, data);
         return { markup, cmd, arg };
     }
     exports.fetchMarkup = fetchMarkup;
@@ -323,13 +324,15 @@ define("demo/src/browser", ["require", "exports", "demo/src/control"], function 
     }
     function onClick(e) {
         if (e.target instanceof HTMLAnchorElement && e.target.dataset.cmd != null) {
-            clientRequest(e.target.pathname);
+            const direct = e.target.dataset.cmd === 'direct';
+            clientRequest(e.target.pathname, direct);
             e.preventDefault();
-            window.history.pushState(e.target.pathname, '');
+            if (!direct)
+                window.history.pushState(e.target.pathname, '');
         }
     }
-    async function clientRequest(path) {
-        const datap = control_1.fetchMarkup(path, undefined, useapi);
+    async function clientRequest(path, direct) {
+        const datap = control_1.fetchMarkup(path, undefined, useapi, direct);
         const nav = document.getElementById('nav');
         const main = document.getElementById('main');
         const child = main.firstElementChild;

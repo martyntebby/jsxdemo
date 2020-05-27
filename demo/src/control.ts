@@ -8,11 +8,11 @@ import { mylog, renderToMarkup } from './view';
 export { config, version } from '../../package.json';
 import { config } from '../../package.json';
 
-async function fetchMarkup(path?: string, init?: RequestInit, useapi?: boolean) {
-//  mylog('fetchMarkup', path, useapi);
-  const { cmd, arg, url } = link2cmd(path, useapi);
-  const data = await fetchData(url, init, !useapi);
-  const markup: string = useapi ? data : renderToMarkup(cmd, arg, data);
+async function fetchMarkup(path?: string, init?: RequestInit, useapi?: boolean, direct?: boolean) {
+  const { cmd, arg, url } = direct ? { cmd:'', arg:'', url:path! } : link2cmd(path, useapi);
+  const asJson = !useapi && !direct;
+  const data = await fetchData(url, init, asJson);
+  const markup: string = !asJson ? data : renderToMarkup(cmd, arg, data);
   return { markup, cmd, arg };
 }
 
