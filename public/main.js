@@ -75,7 +75,7 @@ define("src/jsxrender", ["require", "exports"], function (require, exports) {
 });
 define("package", [], {
     "name": "jsxrender",
-    "version": "0.9.6a",
+    "version": "0.9.6b",
     "description": "Small fast stateless subset of React.",
     "main": "public/main.js",
     "repository": {
@@ -292,7 +292,6 @@ define("demo/src/browser", ["require", "exports", "demo/src/control"], function 
     exports.browser = void 0;
     let useapi = false;
     function browser() {
-        var _a;
         control_1.mylog('browser');
         const query = window.location.search;
         if (query)
@@ -302,9 +301,23 @@ define("demo/src/browser", ["require", "exports", "demo/src/control"], function 
             clientRequest();
         window.onpopstate = onPopState;
         document.body.onclick = onClick;
-        (_a = navigator.serviceWorker) === null || _a === void 0 ? void 0 : _a.register('../public/sw.js').then(reg => { control_1.mylog(reg); useapi = control_1.config.useapi; });
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('../public/sw.js')
+                .then(reg => { control_1.mylog(reg); useapi = control_1.config.useapi; }, reason => swfail(reason));
+        }
+        else {
+            swfail('Not supported.');
+        }
     }
     exports.browser = browser;
+    function swfail(reason) {
+        control_1.mylog('sw failed:', reason);
+        const error = document.getElementById('error');
+        error.outerHTML = control_1.renderToMarkup('', '', 'ServiceWorker failed: ' + reason +
+            '<br><br>Ensure cookies are enabled, the connection is secure,' +
+            ' the browser is not in private mode and is supported' +
+            ' (Chrome on Android, Safari on iOS).');
+    }
     function onPopState(e) {
         clientRequest(e.state);
     }

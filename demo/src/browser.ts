@@ -6,7 +6,7 @@
   registers service worker
 */
 export { browser };
-import { fetchMarkup, mylog, updateConfig, config } from './control';
+import { fetchMarkup, mylog, updateConfig, config, renderToMarkup } from './control';
 
 let useapi = false;
 
@@ -16,10 +16,27 @@ function browser() {
   if(query) updateConfig(query.substring(1).split('&'));
   const main = document.getElementById('main')!;
   if(!main.firstElementChild) clientRequest();
+
   window.onpopstate = onPopState;
   document.body.onclick = onClick;
-  navigator.serviceWorker?.register('../public/sw.js')
-    .then(reg => { mylog(reg); useapi = config.useapi; });
+
+  if('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('../public/sw.js')
+    .then(reg => { mylog(reg); useapi = config.useapi; },
+      reason => swfail(reason));
+  }
+  else {
+    swfail('Not supported.');
+  }
+}
+
+function swfail(reason: string) {
+  mylog('sw failed:', reason);
+  const error = document.getElementById('error')!;
+  error.outerHTML = renderToMarkup('', '', 'ServiceWorker failed: ' + reason +
+    '<br><br>Ensure cookies are enabled, the connection is secure,' +
+    ' the browser is not in private mode and is supported' +
+    ' (Chrome on Android, Safari on iOS).');
 }
 
 function onPopState(e: PopStateEvent) {

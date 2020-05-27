@@ -1,6 +1,8 @@
 "use strict";
-const CACHE_NAME = '0.9.6a';
+const CACHE_NAME = '0.9.6b';
 const PRE_CACHE = ['index.html',
+    'main.js',
+    'static/app.css',
     'static/manifest.json',
     'static/favicon-32.png',
     'static/favicon-256.png'
@@ -23,8 +25,23 @@ async function precache() {
     await cache.addAll(PRE_CACHE);
     const resp = await cache.match('index.html');
     if (resp)
-        await cache.put('./', resp);
+        await cache.put('./', await clearMain(resp));
     _self.skipWaiting();
+}
+async function clearMain(resp) {
+    const text = await resp.text();
+    const main = '<main id="main">';
+    const pos1 = text.indexOf(main);
+    const pos2 = text.indexOf('</main>', pos1);
+    if (pos1 < 0 || pos2 < 0) {
+        console.error('index.html is missing main section');
+        return resp;
+    }
+    const body = text.substring(0, pos1 + main.length) + text.substring(pos2);
+    const headers = [
+        ['Content-Type', 'text/html; charset=UTF-8'],
+    ];
+    return new Response(body, { headers: headers });
 }
 function onActivate(e) {
     console.log('onActivate', e);

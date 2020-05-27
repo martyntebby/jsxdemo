@@ -25,10 +25,21 @@
     <a href='/jobs'   class='jobs'   data-cmd>jobs</a>
     <a href='https://github.com/martyntebby/jsxrender' class='mainlink'>about</a>
   </nav>
-  <noscript><div class="error">
+  <noscript id="error"><div class="error">
     Requires modern browser running javascript.
   </div></noscript>
-  <main id='main'></main>
-  <script src="../public/main.js"></script>
+  <main id="main">
+    <div class="inset">
+    <h3>JSX Render - Hacker News Demo</h3>
+    A basic demo for <a href="https://github.com/martyntebby/jsxrender">jsxrender</a>.
+    <p>It is a <a href="https://en.wikipedia.org/wiki/Progressive_web_application">
+      progressive web application</a> allowing
+    <a href="https://natomasunified.org/kb/add-website-to-mobile-device-home-screen/">
+      installation</a> onto mobile devices.</p>
+    <a href="/news" class="news"
+      style="font-size:large; color:blue; text-decoration:underline" data-cmd>Continue</a>
+    </div>
+  </main>
+  <script async src="../public/main.js"></script>
 </body>
 </html>
