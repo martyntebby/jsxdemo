@@ -4,7 +4,7 @@
   deletes old caches and
   passes through requests for other files.
 */
-const CACHE_NAME = '0.9.6c';
+const CACHE_NAME = '0.9.7';
 const PRE_CACHE = [ 'index.html'
   ,'main.js'
   ,'static/app.css'
@@ -13,7 +13,7 @@ const PRE_CACHE = [ 'index.html'
   ,'static/favicon-256.png'
 ];
 
-const _self = self as any as ServiceWorkerGlobalScope;
+const _self = self as unknown as ServiceWorkerGlobalScope;
 
 sw();
 

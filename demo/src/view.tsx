@@ -15,7 +15,7 @@ function mylog(...args: any[]) {
 
 function renderToMarkup(cmd: string, arg: string, data: any) {
 //  mylog('renderToMarkup', cmd, arg);
-  const vnode = typeof data === 'string' ? ErrorView(data) :
+  const vnode = typeof data === 'string' ? ErrorView(data, arg) :
   cmd === 'user' ? UserView({ user: data }) :
   cmd === 'item' ? ItemView({ item: data }) :
   ItemsView({ items: data, cmd: cmd, page: Number.parseInt(arg) });
@@ -123,6 +123,6 @@ function LogsView() {
   );
 }
 
-function ErrorView(err: string) {
-  return <div className='error'>Error: {err}</div>;
+function ErrorView(err: string, summary = 'Error') {
+  return <details open className='error'><summary>{summary}</summary>{err}</details>;
 }

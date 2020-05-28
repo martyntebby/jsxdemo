@@ -4,7 +4,8 @@
 */
 export { h, h as createElement, jsx, jsx as jsxs, Fragment, renderToStaticMarkup };
 
-type Props = { [key: string]: any };
+type Indexed = { [key: string]: unknown; };
+type Props = Indexed & { children?: NodeType; };
 type NodeType = string | number | boolean | NodeType[] | null | undefined;
 type ElementType = string;
 
@@ -19,7 +20,7 @@ function h(type: string|Function, props: Props|null, ...children: NodeType[]): E
 // https://github.com/reactjs/rfcs/blob/createlement-rfc/text/0000-create-element-changes.md
 // https://babeljs.io/blog/2020/03/16/7.9.0
 
-function jsx(type: string|Function, props: Props, key?: any): ElementType {
+function jsx(type: string|Function, props: Props, key?: unknown): ElementType {
   if(typeof type === 'string') return doElement(type, props, props.children);
   if(type === Fragment) return doChildren(props.children);
   return type(props);
@@ -48,20 +49,20 @@ function doChildren(children: NodeType): string {
   return str;
 }
 
-function doProp(name: string, value: any): string {
+function doProp(name: string, value: unknown): string {
   if(name === 'children' || name === 'key' || name === 'ref' ||
       value === null || value === undefined || value === false) return '';
   if(name === 'className') name = 'class'
   else if(name === 'forHtml') name = 'for'
   else if(name === 'defaultValue') name = 'value'
-  else if(name === 'style' && typeof value === 'object') value = doStyle(value);
+  else if(name === 'style' && typeof value === 'object') value = doStyle(<Indexed>value);
   else if(value === true) value = '';
   return ' ' + name + '="' + value + '"';
 }
 
 const styleRegex = /([A-Z])/g;
 
-function doStyle(style: any): string {
+function doStyle(style: Indexed): string {
   return Object.keys(style).map(key => {
     const key2 = key.replace(styleRegex, '-$1'); // slow
     return key2.toLowerCase() + ':' + style[key];

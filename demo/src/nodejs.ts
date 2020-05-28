@@ -48,7 +48,7 @@ function serveNews(path: string, res: http.ServerResponse) {
   https.get(url, clientRequest)
     .on('error', err => sendResp(err.message))
 
-  function sendResp(data: any) {
+  function sendResp(data: unknown) {
     res.write(renderToMarkup(cmd, arg, data));
     res.end(indexHtmlStr.substring(mainPos));
   }

@@ -75,7 +75,7 @@ define("src/jsxrender", ["require", "exports"], function (require, exports) {
 });
 define("package", [], {
     "name": "jsxrender",
-    "version": "0.9.6c",
+    "version": "0.9.7",
     "description": "Small fast stateless subset of React.",
     "main": "public/main.js",
     "repository": {
@@ -85,11 +85,10 @@ define("package", [], {
     "config": {
         "port": 3000,
         "cfttl": 1800,
-        "dolog": false,
-        "useapi": false
+        "dolog": false
     },
     "scripts": {
-        "build": "rm -rf dist out public/sw.js && tsc -b . --force && (cd demo; node ../dist/bundle.js)",
+        "build": "rm -rf dist out public/*.js && tsc -b . --force && (cd demo; node ../dist/bundle.js)",
         "watch": "tsc -b . -w --listEmittedFiles",
         "clean": "rm -rf dist",
         "test": "node dist/tests.js"
@@ -120,7 +119,7 @@ define("demo/src/view", ["require", "exports", "src/jsxrender", "package"], func
     }
     exports.mylog = mylog;
     function renderToMarkup(cmd, arg, data) {
-        const vnode = typeof data === 'string' ? ErrorView(data) :
+        const vnode = typeof data === 'string' ? ErrorView(data, arg) :
             cmd === 'user' ? UserView({ user: data }) :
                 cmd === 'item' ? ItemView({ item: data }) :
                     ItemsView({ items: data, cmd: cmd, page: Number.parseInt(arg) });
@@ -226,9 +225,9 @@ define("demo/src/view", ["require", "exports", "src/jsxrender", "package"], func
             jsxrender_1.h("pre", null, logs.join('\n')),
             logs = []));
     }
-    function ErrorView(err) {
-        return jsxrender_1.h("div", { className: 'error' },
-            "Error: ",
+    function ErrorView(err, summary = 'Error') {
+        return jsxrender_1.h("details", { open: true, className: 'error' },
+            jsxrender_1.h("summary", null, summary),
             err);
     }
 });
@@ -240,11 +239,11 @@ define("demo/src/control", ["require", "exports", "demo/src/view", "demo/src/vie
     Object.defineProperty(exports, "renderToMarkup", { enumerable: true, get: function () { return view_1.renderToMarkup; } });
     Object.defineProperty(exports, "config", { enumerable: true, get: function () { return package_json_2.config; } });
     Object.defineProperty(exports, "version", { enumerable: true, get: function () { return package_json_2.version; } });
-    async function fetchMarkup(path, init, useapi, direct) {
-        const { cmd, arg, url } = direct ? { cmd: '', arg: '', url: path } : link2cmd(path, useapi);
-        const asJson = !useapi && !direct;
-        const data = await fetchData(url, init, asJson);
-        const markup = !asJson ? data : view_2.renderToMarkup(cmd, arg, data);
+    async function fetchMarkup(path, type, init) {
+        const isApi = !type;
+        const { cmd, arg, url } = isApi ? link2cmd(path) : { cmd: '', arg: '', url: path };
+        const data = await fetchData(url, init, isApi);
+        const markup = isApi ? view_2.renderToMarkup(cmd, arg, data) : data;
         return { markup, cmd, arg };
     }
     exports.fetchMarkup = fetchMarkup;
@@ -291,7 +290,6 @@ define("demo/src/browser", ["require", "exports", "demo/src/control"], function 
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.browser = void 0;
-    let useapi = false;
     function browser() {
         control_1.mylog('browser');
         const query = window.location.search;
@@ -304,7 +302,7 @@ define("demo/src/browser", ["require", "exports", "demo/src/control"], function 
         document.body.onclick = onClick;
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('../public/sw.js')
-                .then(reg => { control_1.mylog(reg); useapi = control_1.config.useapi; }, reason => swfail(reason));
+                .then(reg => control_1.mylog(reg), reason => swfail(reason));
         }
         else {
             swfail('Not supported.');
@@ -314,7 +312,7 @@ define("demo/src/browser", ["require", "exports", "demo/src/control"], function 
     function swfail(reason) {
         control_1.mylog('sw failed:', reason);
         const error = document.getElementById('error');
-        error.outerHTML = control_1.renderToMarkup('', '', 'ServiceWorker failed: ' + reason +
+        error.outerHTML = control_1.renderToMarkup('', 'Warning', 'ServiceWorker failed: ' + reason +
             '<br><br>Ensure cookies are enabled, the connection is secure,' +
             ' the browser is not in private mode and is supported' +
             ' (Chrome on Android, Safari on iOS).');
@@ -323,22 +321,24 @@ define("demo/src/browser", ["require", "exports", "demo/src/control"], function 
         clientRequest(e.state);
     }
     function onClick(e) {
-        if (e.target instanceof HTMLAnchorElement && e.target.dataset.cmd != null) {
-            const direct = e.target.dataset.cmd === 'direct';
-            clientRequest(e.target.pathname, direct);
-            e.preventDefault();
-            if (!direct)
-                window.history.pushState(e.target.pathname, '');
+        if (e.target instanceof HTMLAnchorElement) {
+            const cmd = e.target.dataset.cmd;
+            if (cmd != null) {
+                clientRequest(e.target.pathname, cmd);
+                e.preventDefault();
+                if (!cmd)
+                    window.history.pushState(e.target.pathname, '');
+            }
         }
     }
-    async function clientRequest(path, direct) {
-        const datap = control_1.fetchMarkup(path, undefined, useapi, direct);
+    async function clientRequest(path, type) {
+        const datap = control_1.fetchMarkup(path, type);
         const nav = document.getElementById('nav');
         const main = document.getElementById('main');
         const child = main.firstElementChild;
         if (child)
             child.className = 'loading';
-        const { markup, cmd, arg } = await datap;
+        const { markup, cmd } = await datap;
         main.innerHTML = markup;
         nav.className = cmd;
         window.scroll(0, 0);
@@ -369,7 +369,7 @@ define("demo/src/cfworker", ["require", "exports", "demo/src/control"], function
             return response;
         const init = { cf: { cacheTtl: control_2.config.cfttl } };
         const path = new URL(request.url).pathname;
-        const markupp = control_2.fetchMarkup(path.substring(1), init);
+        const markupp = control_2.fetchMarkup(path.substring(1), undefined, init);
         let index = '';
         let pos = -1;
         if (path === '/public/') {

@@ -34,8 +34,8 @@ function functest(offset = 0): void {
   functest2(offset);
 }
 
-function compare(vnode: JSX.Element|any, html: string): void {
-  const markup = ReactDOMServer.renderToStaticMarkup(vnode as any);
+function compare(vnode: string|JSX.Element, html: string): void {
+  const markup = ReactDOMServer.renderToStaticMarkup(vnode as string);
   const result = markup === html;
   if(!result) ++numErrs;
   if(logCompare) {
@@ -72,7 +72,7 @@ function functest1(offset = 0) {
     '<details><summary>a</summary><details>abc<div></div></details></details>');
 }
 
-function Details(props: { summary?: string, children?: any }) {
+function Details(props: { summary?: string, children?: unknown }) {
   return (
     <details>
       {props.summary && <summary>{props.summary}</summary>}

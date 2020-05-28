@@ -2,17 +2,19 @@
   Fetches data from hnapi or elsewhere and supplies as json or formatted html.
   Re exports some view methods and handles config info from package.json.
 */
-export { fetchMarkup, fetchData, link2cmd, updateConfig };
+export { fetchMarkup, fetchData, link2cmd, updateConfig, Indexed };
 export { mylog, renderToMarkup } from './view';
 import { mylog, renderToMarkup } from './view';
 export { config, version } from '../../package.json';
 import { config } from '../../package.json';
 
-async function fetchMarkup(path?: string, init?: RequestInit, useapi?: boolean, direct?: boolean) {
-  const { cmd, arg, url } = direct ? { cmd:'', arg:'', url:path! } : link2cmd(path, useapi);
-  const asJson = !useapi && !direct;
-  const data = await fetchData(url, init, asJson);
-  const markup: string = !asJson ? data : renderToMarkup(cmd, arg, data);
+type Indexed = { [key: string]: unknown; };
+
+async function fetchMarkup(path?: string, type?: string, init?: RequestInit) {
+  const isApi = !type;
+  const { cmd, arg, url } = isApi ? link2cmd(path) : { cmd:'', arg:'', url:path! };
+  const data = await fetchData(url, init, isApi);
+  const markup: string = isApi ? renderToMarkup(cmd, arg, data) : data;
   return { markup, cmd, arg };
 }
 
@@ -20,7 +22,7 @@ async function fetchData(url: string, init?: RequestInit, json?: boolean) {
   mylog('fetchData', url);
   try {
     const resp = await fetch(url, init);
-    if (!resp.ok) return resp.statusText;
+    if(!resp.ok) return resp.statusText;
     const datap = json ? resp.json() : resp.text();
     const data = await datap;
     return !data ? 'No data' : data.error ? data.error.toString() : data;
@@ -49,6 +51,6 @@ function cmd2url(cmd: string, arg: string, useapi?: boolean) {
 function updateConfig(args: string[]) {
   args.forEach(arg => {
     const [key, value] = arg.split('=');
-    if(key in config) (<any>config)[key] = value ?? true;
+    if(key in config) (<Indexed>config)[key] = value ?? true;
   });
 }

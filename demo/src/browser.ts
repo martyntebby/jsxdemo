@@ -8,8 +8,6 @@
 export { browser };
 import { fetchMarkup, mylog, updateConfig, config, renderToMarkup } from './control';
 
-let useapi = false;
-
 function browser() {
   mylog('browser');
   const query = window.location.search;
@@ -22,7 +20,7 @@ function browser() {
 
   if('serviceWorker' in navigator) {
     navigator.serviceWorker.register('../public/sw.js')
-    .then(reg => { mylog(reg); useapi = config.useapi; },
+    .then(reg => mylog(reg),
       reason => swfail(reason));
   }
   else {
@@ -33,7 +31,7 @@ function browser() {
 function swfail(reason: string) {
   mylog('sw failed:', reason);
   const error = document.getElementById('error')!;
-  error.outerHTML = renderToMarkup('', '', 'ServiceWorker failed: ' + reason +
+  error.outerHTML = renderToMarkup('', 'Warning', 'ServiceWorker failed: ' + reason +
     '<br><br>Ensure cookies are enabled, the connection is secure,' +
     ' the browser is not in private mode and is supported' +
     ' (Chrome on Android, Safari on iOS).');
@@ -44,21 +42,23 @@ function onPopState(e: PopStateEvent) {
 }
 
 function onClick(e: Event) {
-  if (e.target instanceof HTMLAnchorElement && e.target.dataset.cmd != null) {
-    const direct = e.target.dataset.cmd === 'direct';
-    clientRequest(e.target.pathname, direct);
-    e.preventDefault();
-    if(!direct) window.history.pushState(e.target.pathname, '');
+  if(e.target instanceof HTMLAnchorElement) {
+    const cmd = e.target.dataset.cmd;
+    if(cmd != null) {
+      clientRequest(e.target.pathname, cmd);
+      e.preventDefault();
+      if(!cmd) window.history.pushState(e.target.pathname, '');
+    }
   }
 }
 
-async function clientRequest(path?: string, direct?: boolean) {
-  const datap = fetchMarkup(path, undefined, useapi, direct);
+async function clientRequest(path?: string, type?: string) {
+  const datap = fetchMarkup(path, type);
   const nav = document.getElementById('nav')!;
   const main = document.getElementById('main')!;
   const child = main.firstElementChild;
   if(child) child.className = 'loading';
-  const { markup, cmd, arg } = await datap;
+  const { markup, cmd } = await datap;
   main.innerHTML = markup;
   nav.className = cmd;
   window.scroll(0, 0);

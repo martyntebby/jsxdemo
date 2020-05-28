@@ -6,10 +6,11 @@
 */
 //// <reference lib="webworker" />
 export { cfworker };
-import { fetchData, fetchMarkup, mylog, config } from '../src/control';
+import { fetchData, fetchMarkup, mylog, config, Indexed } from '../src/control';
 
 /// @ts-ignore
 declare var self: ServiceWorkerGlobalScope;
+declare var caches: CacheStorage & { default: Cache; };
 
 function cfworker() {
   mylog('cfworker');
@@ -20,8 +21,8 @@ function cfworker() {
 
 function updateConfig() {
   Object.keys(config).forEach(key => {
-    const value = (<any>self)[key.toUpperCase()];
-    if(value != null) (<any>config)[key] = value;
+    const value = (<Indexed>self)[key.toUpperCase()];
+    if(value != null) (<Indexed>config)[key] = value;
   });
 }
 
@@ -29,14 +30,14 @@ function updateConfig() {
 async function handleRequest(e: FetchEvent) {
   // get and cache data for base url access
   const request = e.request;
-  const cache: Cache = (<any>caches).default;
+  const cache = caches.default;
   let response = await cache.match(request);
   if(response) return response;
 
   // get optional index.html and news and combine them
-  const init: any = { cf: { cacheTtl: config.cfttl } };
+  const init = { cf: { cacheTtl: config.cfttl } } as unknown as RequestInit;
   const path = new URL(request.url).pathname;
-  const markupp = fetchMarkup(path.substring(1), init);
+  const markupp = fetchMarkup(path.substring(1), undefined, init);
   let index = '';
   let pos = -1;
   if(path === '/public/') {
