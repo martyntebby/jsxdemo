@@ -41,8 +41,9 @@ body {
   flex-grow: 1;
   text-align: right;
 }
-.news>.news, .newest>.newest, .show>.show, .ask>.ask, .jobs>.jobs {
+.intro>.intro, .news>.news, .newest>.newest, .show>.show, .ask>.ask, .jobs>.jobs {
   text-decoration: underline;
+  text-decoration-thickness: 0.1rem;
 }
 #main {
   margin: 0;

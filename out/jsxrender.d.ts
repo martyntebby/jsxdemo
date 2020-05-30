@@ -1,8 +1,8 @@
 export { h, h as createElement, jsx, jsx as jsxs, Fragment, renderToStaticMarkup };
-declare type Indexed = {
+declare type Mapped = {
     [key: string]: unknown;
 };
-declare type Props = Indexed & {
+declare type Props = Mapped & {
     children?: NodeType;
 };
 declare type NodeType = string | number | boolean | NodeType[] | null | undefined;

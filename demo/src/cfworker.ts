@@ -6,7 +6,7 @@
 */
 //// <reference lib="webworker" />
 export { cfworker };
-import { fetchData, fetchMarkup, mylog, config, Indexed } from '../src/control';
+import { fetchData, fetchMarkup, mylog, config, Mapped } from '../src/control';
 
 /// @ts-ignore
 declare var self: ServiceWorkerGlobalScope;
@@ -21,8 +21,8 @@ function cfworker() {
 
 function updateConfig() {
   Object.keys(config).forEach(key => {
-    const value = (<Indexed>self)[key.toUpperCase()];
-    if(value != null) (<Indexed>config)[key] = value;
+    const value = (<Mapped>self)[key.toUpperCase()];
+    if(value != null) (<Mapped>config)[key] = value;
   });
 }
 

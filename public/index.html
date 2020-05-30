@@ -55,8 +55,9 @@ body {
   flex-grow: 1;
   text-align: right;
 }
-.news>.news, .newest>.newest, .show>.show, .ask>.ask, .jobs>.jobs {
+.intro>.intro, .news>.news, .newest>.newest, .show>.show, .ask>.ask, .jobs>.jobs {
   text-decoration: underline;
+  text-decoration-thickness: 0.1rem;
 }
 #main {
   margin: 0;
@@ -107,7 +108,7 @@ a:hover {
   <nav id='nav'>
     <a href='' class='mainlink'
       onclick='event.preventDefault(); window.history.back()'>&lArr;</a>
-    <a href='intro'   class='intro'  data-cmd='get'>JSX</a>
+    <a href='intro'   class='intro'  data-cmd='intro'>JSX</a>
     <a href='/news'   class='news'   data-cmd>top</a>
     <a href='/newest' class='newest' data-cmd>new</a>
     <a href='/show'   class='show'   data-cmd>show</a>
@@ -128,6 +129,7 @@ a:hover {
       installation</a> onto mobile devices.</p>
     <a href="/news" class="news"
       style="font-size:large; color:blue; text-decoration:underline" data-cmd>Continue</a>
+    - on subsequent loads <span class="bold">top</span> becomes the default view.
     </div>
   </main>
   <script async src="../public/main.js"></script>

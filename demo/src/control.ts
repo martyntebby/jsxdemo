@@ -2,17 +2,17 @@
   Fetches data from hnapi or elsewhere and supplies as json or formatted html.
   Re exports some view methods and handles config info from package.json.
 */
-export { fetchMarkup, fetchData, link2cmd, updateConfig, Indexed };
+export { fetchMarkup, fetchData, link2cmd, updateConfig, Mapped };
 export { mylog, renderToMarkup } from './view';
 import { mylog, renderToMarkup } from './view';
 export { config, version } from '../../package.json';
 import { config } from '../../package.json';
 
-type Indexed = { [key: string]: unknown; };
+type Mapped = { [key: string]: unknown; };
 
 async function fetchMarkup(path?: string, type?: string, init?: RequestInit) {
   const isApi = !type;
-  const { cmd, arg, url } = isApi ? link2cmd(path) : { cmd:'', arg:'', url:path! };
+  const { cmd, arg, url } = isApi ? link2cmd(path) : { cmd:type!, arg:'', url:path! };
   const data = await fetchData(url, init, isApi);
   const markup: string = isApi ? renderToMarkup(cmd, arg, data) : data;
   return { markup, cmd, arg };
@@ -51,6 +51,6 @@ function cmd2url(cmd: string, arg: string, useapi?: boolean) {
 function updateConfig(args: string[]) {
   args.forEach(arg => {
     const [key, value] = arg.split('=');
-    if(key in config) (<Indexed>config)[key] = value ?? true;
+    if(key in config) (<Mapped>config)[key] = value ?? true;
   });
 }

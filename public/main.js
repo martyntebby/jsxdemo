@@ -241,7 +241,7 @@ define("demo/src/control", ["require", "exports", "demo/src/view", "demo/src/vie
     Object.defineProperty(exports, "version", { enumerable: true, get: function () { return package_json_2.version; } });
     async function fetchMarkup(path, type, init) {
         const isApi = !type;
-        const { cmd, arg, url } = isApi ? link2cmd(path) : { cmd: '', arg: '', url: path };
+        const { cmd, arg, url } = isApi ? link2cmd(path) : { cmd: type, arg: '', url: path };
         const data = await fetchData(url, init, isApi);
         const markup = isApi ? view_2.renderToMarkup(cmd, arg, data) : data;
         return { markup, cmd, arg };

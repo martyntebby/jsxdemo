@@ -66,7 +66,7 @@ function functest1(offset = 0) {
   compare(<><div/><span/></>, '<div></div><span></span>');
   compare(<Details/>, '<details></details>');
   compare(<Details summary='abc'/>, '<details><summary>abc</summary></details>');
-  compare(<Details><div>abc</div></Details>, '<details><div>abc</div></details>');
+  compare(<Details><span/><div>abc</div></Details>, '<details><span></span><div>abc</div></details>');
   const a = { summary: 'a', abc: 2 }
   compare(<Details {...a}><Details>abc<div/></Details></Details>,
     '<details><summary>a</summary><details>abc<div></div></details></details>');

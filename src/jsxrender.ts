@@ -4,8 +4,8 @@
 */
 export { h, h as createElement, jsx, jsx as jsxs, Fragment, renderToStaticMarkup };
 
-type Indexed = { [key: string]: unknown; };
-type Props = Indexed & { children?: NodeType; };
+type Mapped = { [key: string]: unknown; };
+type Props = Mapped & { children?: NodeType; };
 type NodeType = string | number | boolean | NodeType[] | null | undefined;
 type ElementType = string;
 
@@ -17,6 +17,7 @@ function h(type: string|Function, props: Props|null, ...children: NodeType[]): E
   return type(props);
 }
 
+// https://github.com/microsoft/TypeScript/issues/34547
 // https://github.com/reactjs/rfcs/blob/createlement-rfc/text/0000-create-element-changes.md
 // https://babeljs.io/blog/2020/03/16/7.9.0
 
@@ -55,14 +56,14 @@ function doProp(name: string, value: unknown): string {
   if(name === 'className') name = 'class'
   else if(name === 'forHtml') name = 'for'
   else if(name === 'defaultValue') name = 'value'
-  else if(name === 'style' && typeof value === 'object') value = doStyle(<Indexed>value);
+  else if(name === 'style' && typeof value === 'object') value = doStyle(<Mapped>value);
   else if(value === true) value = '';
   return ' ' + name + '="' + value + '"';
 }
 
 const styleRegex = /([A-Z])/g;
 
-function doStyle(style: Indexed): string {
+function doStyle(style: Mapped): string {
   return Object.keys(style).map(key => {
     const key2 = key.replace(styleRegex, '-$1'); // slow
     return key2.toLowerCase() + ':' + style[key];
