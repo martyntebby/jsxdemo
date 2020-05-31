@@ -15,7 +15,8 @@ function nodejs() {
   updateConfig(process.argv.slice(2));
   indexHtmlStr = fs.readFileSync('public/index.html', 'utf8');
   mainPos = indexHtmlStr.indexOf('</main>');
-  http.createServer(serverRequest).listen(config.port);
+  const server = http.createServer(serverRequest).listen(config.port);
+  console.log('listen', server.address());
 }
 
 function serverRequest(req: http.IncomingMessage, res: http.ServerResponse) {

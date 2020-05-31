@@ -6,7 +6,7 @@ export { h, h as createElement, jsx, jsx as jsxs, Fragment, renderToStaticMarkup
 
 type Mapped = { [key: string]: unknown; };
 type Props = Mapped & { children?: NodeType; };
-type NodeType = string | number | boolean | NodeType[] | null | undefined;
+type NodeType = NodeType[] | string | number | boolean | null | undefined;
 type ElementType = string;
 
 function h(type: string|Function, props: Props|null, ...children: NodeType[]): ElementType {
@@ -52,10 +52,10 @@ function doChildren(children: NodeType): string {
 
 function doProp(name: string, value: unknown): string {
   if(name === 'children' || name === 'key' || name === 'ref' ||
-      value === null || value === undefined || value === false) return '';
-  if(name === 'className') name = 'class'
-  else if(name === 'forHtml') name = 'for'
-  else if(name === 'defaultValue') name = 'value'
+    value === null || value === undefined || value === false) return '';
+  if(name === 'className') name = 'class';
+  else if(name === 'forHtml') name = 'for';
+  else if(name === 'defaultValue') name = 'value';
   else if(name === 'style' && typeof value === 'object') value = doStyle(<Mapped>value);
   else if(value === true) value = '';
   return ' ' + name + '="' + value + '"';

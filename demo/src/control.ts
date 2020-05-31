@@ -15,6 +15,7 @@ async function fetchMarkup(path?: string, type?: string, init?: RequestInit) {
   const { cmd, arg, url } = isApi ? link2cmd(path) : { cmd:type!, arg:'', url:path! };
   const data = await fetchData(url, init, isApi);
   const markup: string = isApi ? renderToMarkup(cmd, arg, data) : data;
+  if(config.perftest && cmd === 'news') setTimeout(perftest, 20, data);
   return { markup, cmd, arg };
 }
 
@@ -53,4 +54,20 @@ function updateConfig(args: string[]) {
     const [key, value] = arg.split('=');
     if(key in config) (<Mapped>config)[key] = value ?? true;
   });
+}
+
+function perftest(items: any) {
+  const iterations: number = <any>config.perftest > 1 ? <any>config.perftest : 10000;
+  console.log('perftest', iterations);
+  const start = Date.now();
+  let count = 0;
+  for(let i = iterations; i > 0; --i) {
+    const str = renderToMarkup('news', '1', items);
+    if(str !== i.toString()) count++;
+  }
+  const end = Date.now();
+  const duration = (end - start) / 1000.0;
+  const tps = (iterations / duration).toFixed();
+  const str = 'iterations ' + count + '  duration ' + duration + '  tps ' + tps;
+  console.log(str);
 }

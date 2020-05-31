@@ -75,7 +75,7 @@ define("src/jsxrender", ["require", "exports"], function (require, exports) {
 });
 define("package", [], {
     "name": "jsxrender",
-    "version": "0.9.7",
+    "version": "0.9.7a",
     "description": "Small fast stateless subset of React.",
     "main": "public/main.js",
     "repository": {
@@ -85,7 +85,8 @@ define("package", [], {
     "config": {
         "port": 3000,
         "cfttl": 1800,
-        "dolog": false
+        "dolog": false,
+        "perftest": false
     },
     "scripts": {
         "build": "rm -rf dist out public/*.js && tsc -b . --force && (cd demo; node ../dist/bundle.js)",
@@ -244,6 +245,8 @@ define("demo/src/control", ["require", "exports", "demo/src/view", "demo/src/vie
         const { cmd, arg, url } = isApi ? link2cmd(path) : { cmd: type, arg: '', url: path };
         const data = await fetchData(url, init, isApi);
         const markup = isApi ? view_2.renderToMarkup(cmd, arg, data) : data;
+        if (package_json_3.config.perftest && cmd === 'news')
+            setTimeout(perftest, 20, data);
         return { markup, cmd, arg };
     }
     exports.fetchMarkup = fetchMarkup;
@@ -285,6 +288,22 @@ define("demo/src/control", ["require", "exports", "demo/src/view", "demo/src/vie
         });
     }
     exports.updateConfig = updateConfig;
+    function perftest(items) {
+        const iterations = package_json_3.config.perftest > 1 ? package_json_3.config.perftest : 10000;
+        console.log('perftest', iterations);
+        const start = Date.now();
+        let count = 0;
+        for (let i = iterations; i > 0; --i) {
+            const str = view_2.renderToMarkup('news', '1', items);
+            if (str !== i.toString())
+                count++;
+        }
+        const end = Date.now();
+        const duration = (end - start) / 1000.0;
+        const tps = (iterations / duration).toFixed();
+        const str = 'iterations ' + count + '  duration ' + duration + '  tps ' + tps;
+        console.log(str);
+    }
 });
 define("demo/src/browser", ["require", "exports", "demo/src/control"], function (require, exports, control_1) {
     "use strict";
@@ -400,7 +419,8 @@ define("demo/src/nodejs", ["require", "exports", "fs", "http", "https", "demo/sr
         control_3.updateConfig(process.argv.slice(2));
         indexHtmlStr = fs.readFileSync('public/index.html', 'utf8');
         mainPos = indexHtmlStr.indexOf('</main>');
-        http.createServer(serverRequest).listen(control_3.config.port);
+        const server = http.createServer(serverRequest).listen(control_3.config.port);
+        console.log('listen', server.address());
     }
     exports.nodejs = nodejs;
     function serverRequest(req, res) {

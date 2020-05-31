@@ -5,7 +5,7 @@ declare type Mapped = {
 declare type Props = Mapped & {
     children?: NodeType;
 };
-declare type NodeType = string | number | boolean | NodeType[] | null | undefined;
+declare type NodeType = NodeType[] | string | number | boolean | null | undefined;
 declare type ElementType = string;
 declare function h(type: string | Function, props: Props | null, ...children: NodeType[]): ElementType;
 declare function jsx(type: string | Function, props: Props, key?: unknown): ElementType;
