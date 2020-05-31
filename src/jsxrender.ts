@@ -2,18 +2,32 @@
   Implements React.createElement (and experimental jsx/jsxs)
   to return string instead of JSX.Element.
 */
-export { h, h as createElement, jsx, jsx as jsxs, Fragment, renderToStaticMarkup };
+export { h, h as createElement, jsx, jsx as jsxs, Fragment, renderToStaticMarkup, logCounts };
 
 type Mapped = { [key: string]: unknown; };
 type Props = Mapped & { children?: NodeType; };
 type NodeType = NodeType[] | string | number | boolean | null | undefined;
 type ElementType = string;
 
+let hCount = 0;
+let jsxCount = 0;
+let funcCount = 0;
+let childrenCount = 0;
+let elementCount = 0;
+let propCount = 0;
+
+function logCounts() {
+  console.log('counts', 'h', hCount, 'jsx', jsxCount, 'func', funcCount, 'children', childrenCount, 'element', elementCount, 'prop', propCount);
+  hCount = jsxCount = funcCount = childrenCount = elementCount = propCount = 0;
+}
+
 function h(type: string|Function, props: Props|null, ...children: NodeType[]): ElementType {
+  ++hCount;
   if(typeof type === 'string') return doElement(type, props, children);
   if(type === Fragment) return doChildren(children);
   props = props || {};
   props.children = children;
+  ++funcCount;
   return type(props);
 }
 
@@ -22,8 +36,10 @@ function h(type: string|Function, props: Props|null, ...children: NodeType[]): E
 // https://babeljs.io/blog/2020/03/16/7.9.0
 
 function jsx(type: string|Function, props: Props, key?: unknown): ElementType {
+  ++jsxCount;
   if(typeof type === 'string') return doElement(type, props, props.children);
   if(type === Fragment) return doChildren(props.children);
+  ++funcCount;
   return type(props);
 }
 
@@ -36,12 +52,14 @@ function renderToStaticMarkup(element: ElementType): string {
 }
 
 function doElement(type: string, props: Props|null, children: NodeType): string {
+  ++elementCount;
   let str = '<' + type;
   for(const name in props) str += doProp(name, props[name]);
   return str + '>' + doChildren(children) + '</' + type + '>';
 }
 
 function doChildren(children: NodeType): string {
+  ++childrenCount;
   if(typeof children === 'string') return children;
   if(typeof children === 'number') return children.toString();
   if(typeof children === 'boolean' || children === null || children === undefined) return '';
@@ -51,6 +69,7 @@ function doChildren(children: NodeType): string {
 }
 
 function doProp(name: string, value: unknown): string {
+  ++propCount;
   if(name === 'children' || name === 'key' || name === 'ref' ||
     value === null || value === undefined || value === false) return '';
   if(name === 'className') name = 'class';

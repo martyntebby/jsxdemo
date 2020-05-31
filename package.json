@@ -1,6 +1,6 @@
 {
   "name": "jsxrender",
-  "version": "0.9.7a",
+  "version": "0.9.7b",
   "description": "Small fast stateless subset of React.",
   "main": "public/main.js",
   "repository": {
@@ -11,7 +11,7 @@
     "port": 3000,
     "cfttl": 1800,
     "dolog": false,
-    "perftest": false
+    "perftest": 0
   },
   "scripts": {
     "build": "rm -rf dist out public/*.js && tsc -b . --force && (cd demo; node ../dist/bundle.js)",

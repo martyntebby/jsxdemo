@@ -2,23 +2,38 @@
 define("src/jsxrender", ["require", "exports"], function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.renderToStaticMarkup = exports.Fragment = exports.jsxs = exports.jsx = exports.createElement = exports.h = void 0;
+    exports.logCounts = exports.renderToStaticMarkup = exports.Fragment = exports.jsxs = exports.jsx = exports.createElement = exports.h = void 0;
+    let hCount = 0;
+    let jsxCount = 0;
+    let funcCount = 0;
+    let childrenCount = 0;
+    let elementCount = 0;
+    let propCount = 0;
+    function logCounts() {
+        console.log('counts', 'h', hCount, 'jsx', jsxCount, 'func', funcCount, 'children', childrenCount, 'element', elementCount, 'prop', propCount);
+        hCount = jsxCount = funcCount = childrenCount = elementCount = propCount = 0;
+    }
+    exports.logCounts = logCounts;
     function h(type, props, ...children) {
+        ++hCount;
         if (typeof type === 'string')
             return doElement(type, props, children);
         if (type === Fragment)
             return doChildren(children);
         props = props || {};
         props.children = children;
+        ++funcCount;
         return type(props);
     }
     exports.h = h;
     exports.createElement = h;
     function jsx(type, props, key) {
+        ++jsxCount;
         if (typeof type === 'string')
             return doElement(type, props, props.children);
         if (type === Fragment)
             return doChildren(props.children);
+        ++funcCount;
         return type(props);
     }
     exports.jsx = jsx;
@@ -32,12 +47,14 @@ define("src/jsxrender", ["require", "exports"], function (require, exports) {
     }
     exports.renderToStaticMarkup = renderToStaticMarkup;
     function doElement(type, props, children) {
+        ++elementCount;
         let str = '<' + type;
         for (const name in props)
             str += doProp(name, props[name]);
         return str + '>' + doChildren(children) + '</' + type + '>';
     }
     function doChildren(children) {
+        ++childrenCount;
         if (typeof children === 'string')
             return children;
         if (typeof children === 'number')
@@ -50,6 +67,7 @@ define("src/jsxrender", ["require", "exports"], function (require, exports) {
         return str;
     }
     function doProp(name, value) {
+        ++propCount;
         if (name === 'children' || name === 'key' || name === 'ref' ||
             value === null || value === undefined || value === false)
             return '';
@@ -75,7 +93,7 @@ define("src/jsxrender", ["require", "exports"], function (require, exports) {
 });
 define("package", [], {
     "name": "jsxrender",
-    "version": "0.9.7a",
+    "version": "0.9.7b",
     "description": "Small fast stateless subset of React.",
     "main": "public/main.js",
     "repository": {
@@ -86,7 +104,7 @@ define("package", [], {
         "port": 3000,
         "cfttl": 1800,
         "dolog": false,
-        "perftest": false
+        "perftest": 0
     },
     "scripts": {
         "build": "rm -rf dist out public/*.js && tsc -b . --force && (cd demo; node ../dist/bundle.js)",
@@ -232,7 +250,7 @@ define("demo/src/view", ["require", "exports", "src/jsxrender", "package"], func
             err);
     }
 });
-define("demo/src/control", ["require", "exports", "demo/src/view", "demo/src/view", "package", "package"], function (require, exports, view_1, view_2, package_json_2, package_json_3) {
+define("demo/src/control", ["require", "exports", "demo/src/view", "demo/src/view", "package", "package", "src/jsxrender"], function (require, exports, view_1, view_2, package_json_2, package_json_3, jsxrender_2) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.updateConfig = exports.link2cmd = exports.fetchData = exports.fetchMarkup = void 0;
@@ -303,6 +321,7 @@ define("demo/src/control", ["require", "exports", "demo/src/view", "demo/src/vie
         const tps = (iterations / duration).toFixed();
         const str = 'iterations ' + count + '  duration ' + duration + '  tps ' + tps;
         console.log(str);
+        jsxrender_2.logCounts();
     }
 });
 define("demo/src/browser", ["require", "exports", "demo/src/control"], function (require, exports, control_1) {

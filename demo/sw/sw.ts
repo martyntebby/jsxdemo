@@ -4,7 +4,7 @@
   deletes old caches and
   passes through requests for other files.
 */
-const CACHE_NAME = '0.9.7a';
+const CACHE_NAME = '0.9.7b';
 const PRE_CACHE = [ 'index.html'
   ,'main.js'
   ,'static/app.css'

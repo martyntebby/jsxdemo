@@ -7,6 +7,7 @@ export { mylog, renderToMarkup } from './view';
 import { mylog, renderToMarkup } from './view';
 export { config, version } from '../../package.json';
 import { config } from '../../package.json';
+import { logCounts } from '../../src/jsxrender';
 
 type Mapped = { [key: string]: unknown; };
 
@@ -57,7 +58,7 @@ function updateConfig(args: string[]) {
 }
 
 function perftest(items: any) {
-  const iterations: number = <any>config.perftest > 1 ? <any>config.perftest : 10000;
+  const iterations = config.perftest > 1 ? config.perftest : 10000;
   console.log('perftest', iterations);
   const start = Date.now();
   let count = 0;
@@ -70,4 +71,5 @@ function perftest(items: any) {
   const tps = (iterations / duration).toFixed();
   const str = 'iterations ' + count + '  duration ' + duration + '  tps ' + tps;
   console.log(str);
+  logCounts();
 }
