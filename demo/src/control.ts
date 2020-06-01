@@ -2,12 +2,11 @@
   Fetches data from hnapi or elsewhere and supplies as json or formatted html.
   Re exports some view methods and handles config info from package.json.
 */
-export { fetchMarkup, fetchData, link2cmd, updateConfig, Mapped };
+export { fetchMarkup, fetchData, link2cmd, updateConfig, perftest, Mapped };
 export { mylog, renderToMarkup } from './view';
 import { mylog, renderToMarkup } from './view';
 export { config, version } from '../../package.json';
 import { config } from '../../package.json';
-import { logCounts } from '../../src/jsxrender';
 
 type Mapped = { [key: string]: unknown; };
 
@@ -71,5 +70,4 @@ function perftest(items: any) {
   const tps = (iterations / duration).toFixed();
   const str = 'iterations ' + count + '  duration ' + duration + '  tps ' + tps;
   console.log(str);
-  logCounts();
 }

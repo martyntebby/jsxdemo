@@ -5,7 +5,7 @@ export { nodejs };
 import * as fs from 'fs';
 import * as http from 'http';
 import * as https from 'https';
-import { link2cmd, renderToMarkup, mylog, updateConfig, config } from './control';
+import { link2cmd, renderToMarkup, mylog, updateConfig, config, perftest } from './control';
 
 let indexHtmlStr = '';
 let mainPos = 0;
@@ -13,6 +13,17 @@ let mainPos = 0;
 function nodejs() {
   mylog('nodejs');
   updateConfig(process.argv.slice(2));
+  if(config.perftest) doPerfTest(); else doServer();
+}
+
+function doPerfTest() {
+  const news = fs.readFileSync('public/static/news.json', 'utf8');
+  const json = JSON.parse(news);
+  perftest(json);
+  process.exit();
+}
+
+function doServer() {
   indexHtmlStr = fs.readFileSync('public/index.html', 'utf8');
   mainPos = indexHtmlStr.indexOf('</main>');
   const server = http.createServer(serverRequest).listen(config.port);
@@ -46,13 +57,17 @@ function serveNews(path: string, res: http.ServerResponse) {
   res.setHeader('Content-Type', 'text/html');
   res.write(indexHtmlStr.substring(0, mainPos));
 
-  https.get(url, clientRequest)
-    .on('error', err => sendResp(err.message))
-
   function sendResp(data: unknown) {
     res.write(renderToMarkup(cmd, arg, data));
     res.end(indexHtmlStr.substring(mainPos));
   }
+
+  fetchJson(url, sendResp);
+}
+
+function fetchJson(url: string, sendResp: (data: unknown) => void) {
+  https.get(url, clientRequest)
+    .on('error', err => sendResp(err.message));
 
   function clientRequest(res2: http.IncomingMessage) {
     if(res2.statusCode !== 200) {

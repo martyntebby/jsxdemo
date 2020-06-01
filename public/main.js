@@ -2,44 +2,29 @@
 define("src/jsxrender", ["require", "exports"], function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.logCounts = exports.renderToStaticMarkup = exports.Fragment = exports.jsxs = exports.jsx = exports.createElement = exports.h = void 0;
-    let hCount = 0;
-    let jsxCount = 0;
-    let funcCount = 0;
-    let childrenCount = 0;
-    let elementCount = 0;
-    let propCount = 0;
-    function logCounts() {
-        console.log('counts', 'h', hCount, 'jsx', jsxCount, 'func', funcCount, 'children', childrenCount, 'element', elementCount, 'prop', propCount);
-        hCount = jsxCount = funcCount = childrenCount = elementCount = propCount = 0;
-    }
-    exports.logCounts = logCounts;
+    exports.renderToStaticMarkup = exports.Fragment = exports.jsxs = exports.jsx = exports.createElement = exports.h = void 0;
     function h(type, props, ...children) {
-        ++hCount;
         if (typeof type === 'string')
             return doElement(type, props, children);
         if (type === Fragment)
             return doChildren(children);
         props = props || {};
         props.children = children;
-        ++funcCount;
         return type(props);
     }
     exports.h = h;
     exports.createElement = h;
     function jsx(type, props, key) {
-        ++jsxCount;
         if (typeof type === 'string')
-            return doElement(type, props, props.children);
+            return doElement(type, props, [props.children]);
         if (type === Fragment)
-            return doChildren(props.children);
-        ++funcCount;
+            return doChildren([props.children]);
         return type(props);
     }
     exports.jsx = jsx;
     exports.jsxs = jsx;
     function Fragment(props) {
-        return doChildren(props.children);
+        return doChildren([props.children]);
     }
     exports.Fragment = Fragment;
     function renderToStaticMarkup(element) {
@@ -47,27 +32,37 @@ define("src/jsxrender", ["require", "exports"], function (require, exports) {
     }
     exports.renderToStaticMarkup = renderToStaticMarkup;
     function doElement(type, props, children) {
-        ++elementCount;
         let str = '<' + type;
         for (const name in props)
             str += doProp(name, props[name]);
         return str + '>' + doChildren(children) + '</' + type + '>';
     }
     function doChildren(children) {
-        ++childrenCount;
-        if (typeof children === 'string')
-            return children;
-        if (typeof children === 'number')
-            return children.toString();
-        if (typeof children === 'boolean' || children === null || children === undefined)
+        let str = '';
+        for (const child of children) {
+            if (typeof child === 'string')
+                str += child;
+            else if (typeof child === 'number')
+                str += child.toString();
+            else if (typeof child === 'boolean' || child === null || child === undefined) { }
+            else
+                str += doChildren(child);
+        }
+        return str;
+    }
+    function doChild(child) {
+        if (typeof child === 'string')
+            return child;
+        if (typeof child === 'number')
+            return child.toString();
+        if (typeof child === 'boolean' || child === null || child === undefined)
             return '';
         let str = '';
-        for (const child of children)
-            str += doChildren(child);
+        for (const child2 of child)
+            str += doChild(child2);
         return str;
     }
     function doProp(name, value) {
-        ++propCount;
         if (name === 'children' || name === 'key' || name === 'ref' ||
             value === null || value === undefined || value === false)
             return '';
@@ -93,7 +88,7 @@ define("src/jsxrender", ["require", "exports"], function (require, exports) {
 });
 define("package", [], {
     "name": "jsxrender",
-    "version": "0.9.7b",
+    "version": "0.9.7c",
     "description": "Small fast stateless subset of React.",
     "main": "public/main.js",
     "repository": {
@@ -250,10 +245,10 @@ define("demo/src/view", ["require", "exports", "src/jsxrender", "package"], func
             err);
     }
 });
-define("demo/src/control", ["require", "exports", "demo/src/view", "demo/src/view", "package", "package", "src/jsxrender"], function (require, exports, view_1, view_2, package_json_2, package_json_3, jsxrender_2) {
+define("demo/src/control", ["require", "exports", "demo/src/view", "demo/src/view", "package", "package"], function (require, exports, view_1, view_2, package_json_2, package_json_3) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.updateConfig = exports.link2cmd = exports.fetchData = exports.fetchMarkup = void 0;
+    exports.perftest = exports.updateConfig = exports.link2cmd = exports.fetchData = exports.fetchMarkup = void 0;
     Object.defineProperty(exports, "mylog", { enumerable: true, get: function () { return view_1.mylog; } });
     Object.defineProperty(exports, "renderToMarkup", { enumerable: true, get: function () { return view_1.renderToMarkup; } });
     Object.defineProperty(exports, "config", { enumerable: true, get: function () { return package_json_2.config; } });
@@ -321,8 +316,8 @@ define("demo/src/control", ["require", "exports", "demo/src/view", "demo/src/vie
         const tps = (iterations / duration).toFixed();
         const str = 'iterations ' + count + '  duration ' + duration + '  tps ' + tps;
         console.log(str);
-        jsxrender_2.logCounts();
     }
+    exports.perftest = perftest;
 });
 define("demo/src/browser", ["require", "exports", "demo/src/control"], function (require, exports, control_1) {
     "use strict";
@@ -436,12 +431,24 @@ define("demo/src/nodejs", ["require", "exports", "fs", "http", "https", "demo/sr
     function nodejs() {
         control_3.mylog('nodejs');
         control_3.updateConfig(process.argv.slice(2));
+        if (control_3.config.perftest)
+            doPerfTest();
+        else
+            doServer();
+    }
+    exports.nodejs = nodejs;
+    function doPerfTest() {
+        const news = fs.readFileSync('public/static/news.json', 'utf8');
+        const json = JSON.parse(news);
+        control_3.perftest(json);
+        process.exit();
+    }
+    function doServer() {
         indexHtmlStr = fs.readFileSync('public/index.html', 'utf8');
         mainPos = indexHtmlStr.indexOf('</main>');
         const server = http.createServer(serverRequest).listen(control_3.config.port);
         console.log('listen', server.address());
     }
-    exports.nodejs = nodejs;
     function serverRequest(req, res) {
         let url = req.url;
         control_3.mylog('serverRequest', url);
@@ -468,12 +475,15 @@ define("demo/src/nodejs", ["require", "exports", "fs", "http", "https", "demo/sr
         res.statusCode = 200;
         res.setHeader('Content-Type', 'text/html');
         res.write(indexHtmlStr.substring(0, mainPos));
-        https.get(url, clientRequest)
-            .on('error', err => sendResp(err.message));
         function sendResp(data) {
             res.write(control_3.renderToMarkup(cmd, arg, data));
             res.end(indexHtmlStr.substring(mainPos));
         }
+        fetchJson(url, sendResp);
+    }
+    function fetchJson(url, sendResp) {
+        https.get(url, clientRequest)
+            .on('error', err => sendResp(err.message));
         function clientRequest(res2) {
             if (res2.statusCode !== 200) {
                 res2.resume();

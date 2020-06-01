@@ -1,62 +1,58 @@
-export { h, h as createElement, jsx, jsx as jsxs, Fragment, renderToStaticMarkup, logCounts };
-let hCount = 0;
-let jsxCount = 0;
-let funcCount = 0;
-let childrenCount = 0;
-let elementCount = 0;
-let propCount = 0;
-function logCounts() {
-    console.log('counts', 'h', hCount, 'jsx', jsxCount, 'func', funcCount, 'children', childrenCount, 'element', elementCount, 'prop', propCount);
-    hCount = jsxCount = funcCount = childrenCount = elementCount = propCount = 0;
-}
+export { h, h as createElement, jsx, jsx as jsxs, Fragment, renderToStaticMarkup };
 function h(type, props, ...children) {
-    ++hCount;
     if (typeof type === 'string')
         return doElement(type, props, children);
     if (type === Fragment)
         return doChildren(children);
     props = props || {};
     props.children = children;
-    ++funcCount;
     return type(props);
 }
 function jsx(type, props, key) {
-    ++jsxCount;
     if (typeof type === 'string')
-        return doElement(type, props, props.children);
+        return doElement(type, props, [props.children]);
     if (type === Fragment)
-        return doChildren(props.children);
-    ++funcCount;
+        return doChildren([props.children]);
     return type(props);
 }
 function Fragment(props) {
-    return doChildren(props.children);
+    return doChildren([props.children]);
 }
 function renderToStaticMarkup(element) {
     return element;
 }
 function doElement(type, props, children) {
-    ++elementCount;
     let str = '<' + type;
     for (const name in props)
         str += doProp(name, props[name]);
     return str + '>' + doChildren(children) + '</' + type + '>';
 }
 function doChildren(children) {
-    ++childrenCount;
-    if (typeof children === 'string')
-        return children;
-    if (typeof children === 'number')
-        return children.toString();
-    if (typeof children === 'boolean' || children === null || children === undefined)
+    let str = '';
+    for (const child of children) {
+        if (typeof child === 'string')
+            str += child;
+        else if (typeof child === 'number')
+            str += child.toString();
+        else if (typeof child === 'boolean' || child === null || child === undefined) { }
+        else
+            str += doChildren(child);
+    }
+    return str;
+}
+function doChild(child) {
+    if (typeof child === 'string')
+        return child;
+    if (typeof child === 'number')
+        return child.toString();
+    if (typeof child === 'boolean' || child === null || child === undefined)
         return '';
     let str = '';
-    for (const child of children)
-        str += doChildren(child);
+    for (const child2 of child)
+        str += doChild(child2);
     return str;
 }
 function doProp(name, value) {
-    ++propCount;
     if (name === 'children' || name === 'key' || name === 'ref' ||
         value === null || value === undefined || value === false)
         return '';

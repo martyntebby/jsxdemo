@@ -1,4 +1,4 @@
-export { h, h as createElement, jsx, jsx as jsxs, Fragment, renderToStaticMarkup, logCounts };
+export { h, h as createElement, jsx, jsx as jsxs, Fragment, renderToStaticMarkup };
 declare type Mapped = {
     [key: string]: unknown;
 };
@@ -7,7 +7,6 @@ declare type Props = Mapped & {
 };
 declare type NodeType = NodeType[] | string | number | boolean | null | undefined;
 declare type ElementType = string;
-declare function logCounts(): void;
 declare function h(type: string | Function, props: Props | null, ...children: NodeType[]): ElementType;
 declare function jsx(type: string | Function, props: Props, key?: unknown): ElementType;
 declare function Fragment(props: Props): ElementType;

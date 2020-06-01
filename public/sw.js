@@ -1,5 +1,5 @@
 "use strict";
-const CACHE_NAME = '0.9.7b';
+const CACHE_NAME = '0.9.7c';
 const PRE_CACHE = ['index.html',
     'main.js',
     'static/app.css',
