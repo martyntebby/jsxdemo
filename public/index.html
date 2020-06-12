@@ -1,16 +1,16 @@
 <!DOCTYPE html>
-<html lang='en'>
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <title>JSX Hacker News</title>
   <link rel="preconnect" href="https://api.hnpwa.com"/>
-  <link rel="manifest" href="static/manifest.json">
-  <link rel="icon" type="image/png" href="static/favicon-32.png">
-  <link rel="apple-touch-icon" href="static/favicon-256.png">
+  <link rel="manifest" href="/public/static/manifest.json">
+  <link rel="icon" href="/public/static/favicon-32.png">
+  <link rel="apple-touch-icon" href="/public/static/favicon-256.png">
+  <base rel="noopener noreferrer nofollow" target="_blank"/>
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="description" content="Sample Hacker News app using jsxrender"/>
   <meta name="theme-color" content="orange"/>
-  <base target="_blank" rel="noopener noreferrer nofollow"/>
   <style>
 body {
   margin: 0;
@@ -105,20 +105,21 @@ a:hover {
 </style>
 </head>
 <body>
-  <nav id='nav'>
-    <a href='' class='mainlink'
-      onclick='event.preventDefault(); window.history.back()'>&lArr;</a>
-    <a href='intro'   class='intro'  data-cmd='intro'>JSX</a>
-    <a href='/news'   class='news'   data-cmd>top</a>
-    <a href='/newest' class='newest' data-cmd>new</a>
-    <a href='/show'   class='show'   data-cmd>show</a>
-    <a href='/ask'    class='ask'    data-cmd>ask</a>
-    <a href='/jobs'   class='jobs'   data-cmd>jobs</a>
-    <a href='https://github.com/martyntebby/jsxrender' class='mainlink'>about</a>
+  <nav id="nav">
+    <a href="/" class="mainlink" target="_self"
+      onclick="event.preventDefault(); window.history.back()"       >&lArr;</a>
+    <a href="/public/index.html" class="intro" target="_self"       >JSX</a>
+    <a href="/myapi/news/1"   class="news"   target="_self" data-cmd>top</a>
+    <a href="/myapi/newest/1" class="newest" target="_self" data-cmd>new</a>
+    <a href="/myapi/show/1"   class="show"   target="_self" data-cmd>show</a>
+    <a href="/myapi/ask/1"    class="ask"    target="_self" data-cmd>ask</a>
+    <a href="/myapi/jobs/1"   class="jobs"   target="_self" data-cmd>jobs</a>
+    <a href="https://github.com/martyntebby/jsxrender" class="mainlink">about</a>
   </nav>
-  <noscript id="error"><div class="error">
-    Requires modern browser running javascript.
-  </div></noscript>
+  <noscript id="error"><details open class="error">
+    <summary>Warning</summary>
+    Works best with modern browser running javascript.
+  </details></noscript>
   <main id="main">
     <div class="inset">
     <h3>JSX Render - Hacker News Demo</h3>
@@ -127,11 +128,11 @@ a:hover {
       progressive web application</a> allowing
     <a href="https://natomasunified.org/kb/add-website-to-mobile-device-home-screen/">
       installation</a> onto mobile devices.</p>
-    <a href="/news" class="news"
-      style="font-size:large; color:blue; text-decoration:underline" data-cmd>Continue</a>
+    <a href="/myapi/news/1" class="news" target="_self" data-cmd
+      style="color:blue; font-size:large; text-decoration:underline">Continue</a>
     - on subsequent loads <span class="bold">top</span> becomes the default view.
     </div>
   </main>
-  <script async src="../public/main.js"></script>
+  <script async src="/public/main.js"></script>
 </body>
 </html>

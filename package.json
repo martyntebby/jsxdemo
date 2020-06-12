@@ -1,6 +1,6 @@
 {
   "name": "jsxrender",
-  "version": "0.9.7c",
+  "version": "0.9.7d",
   "description": "Small fast stateless subset of React.",
   "main": "public/main.js",
   "repository": {
@@ -9,23 +9,24 @@
   },
   "config": {
     "port": 3000,
-    "cfttl": 1800,
-    "dolog": false,
+    "dolog": true,
+    "worker": "service",
     "perftest": 0
   },
   "scripts": {
-    "build": "rm -rf dist out public/*.js && tsc -b . --force && (cd demo; node ../dist/bundle.js)",
+    "build": "rm -rf dist out public/*.js && tsc -b . --force && node dist/bundle.js",
     "watch": "tsc -b . -w --listEmittedFiles",
     "clean": "rm -rf dist",
+    "start": "node .",
     "test": "node dist/tests.js"
   },
   "author": "Martyn Tebby",
   "license": "ISC",
   "devDependencies": {
     "@types/node": "12.12.6",
-    "@types/react": "^16.9.35",
+    "@types/react": "^16.9.36",
     "@types/react-dom": "^16.9.8",
-    "typescript": "^3.9.3"
+    "typescript": "^3.9.5"
   },
   "dependencies": {}
 }

@@ -5,7 +5,7 @@ function h(type, props, ...children) {
     if (type === Fragment)
         return doChildren(children);
     props = props || {};
-    props.children = children;
+    props.children = props.children || children;
     return type(props);
 }
 function jsx(type, props, key) {

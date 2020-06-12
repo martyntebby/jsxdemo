@@ -39,10 +39,10 @@ function ItemView(props: { item: HnItem }) {
   const points = i.points > 0 && <span>{i.points} points</span>;
   const user = i.user && <span>by <UserNameView user={i.user}/></span>;
   const comments = i.comments_count > 0 &&
-  <span>| <a href={'/item/' + i.id} data-cmd>{i.comments_count} comments</a></span>;
+  <span>| <Link href={'/item/' + i.id} cmd>{i.comments_count} comments</Link></span>;
   return (
     <article className={i.comments && 'inset'}>
-      <a className='mainlink' href={url} data-cmd={!i.domain}>{i.title}</a> {domain}
+      <Link className='mainlink' href={url} cmd={!i.domain}>{i.title}</Link> {domain}
       <div className='smallgrey'>
         {points} {user} {i.time_ago} {comments}
       </div>
@@ -77,7 +77,7 @@ function CommentView(props: { comment: HnComment }): JSX.Element {
 }
 
 function UserNameView(props: { user: string }) {
-  return <a className='bold' href={'/user/' + props.user} data-cmd>{props.user}</a>;
+  return <Link className='bold' href={'/user/' + props.user} cmd>{props.user}</Link>;
 }
 
 const Y_URL = 'https://news.ycombinator.com/';
@@ -102,9 +102,9 @@ function UserView(props: { user: HnUser }) {
 
 function PagerView(props: { cmd: string, page: number }) {
   const nolink = props.page > 1 ? undefined : 'nolink';
-  const prev = <a href={`/${props.cmd}/${props.page - 1}`} data-cmd
-  className={nolink} >&larr; prev</a>;
-  const next = <a href={`/${props.cmd}/${props.page + 1}`} data-cmd>next &rarr;</a>;
+  const prev = <Link href={`/${props.cmd}/${props.page - 1}`} cmd
+    className={nolink}>&larr; prev</Link>;
+  const next = <Link href={`/${props.cmd}/${props.page + 1}`} cmd>next &rarr;</Link>;
   return (
     <div className='pager'>
       {prev} <span>page {props.page}</span> {next} <LogsView/>
@@ -122,6 +122,14 @@ function LogsView() {
   );
 }
 
-function ErrorView(err: string, summary = 'Error') {
+function Link(props: { href: string, className?: string, cmd?: boolean, children: any }) {
+  return (
+    <a href={(props.cmd ? '/myapi' : '') + props.href} className={props.className}
+      target={props.cmd ? '_self' : undefined} data-cmd={props.cmd}>{props.children}</a>
+  );
+}
+
+function ErrorView(err: string, summary?: string) {
+  summary = summary || 'Error';
   return <details open className='error'><summary>{summary}</summary>{err}</details>;
 }

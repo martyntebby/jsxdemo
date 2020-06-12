@@ -6,25 +6,44 @@
   registers service worker
 */
 export { browser };
-import { fetchMarkup, mylog, updateConfig, config, renderToMarkup } from './control';
+import { mylog, config, updateConfig, renderToMarkup, request2cmd, cacheFetch } from './control';
+
+let sw = false;
+let myworker: Worker | undefined;
 
 function browser() {
   mylog('browser');
+  if(!('fetch' in window) || !('caches' in window)) {
+    swfail('Browser not supported (missing caches / fetch).');
+    return;
+  }
+
   const query = window.location.search;
   if(query) updateConfig(query.substring(1).split('&'));
+
   const main = document.getElementById('main')!;
   if(!main.firstElementChild) clientRequest();
 
   window.onpopstate = onPopState;
   document.body.onclick = onClick;
 
-  if('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('../public/sw.js')
-    .then(reg => mylog(reg),
-      reason => swfail(reason));
+  startWorker();
+}
+
+function startWorker() {
+  if(config.worker === 'web' && window.Worker) {
+    myworker = new Worker('main.js');
+    myworker.onmessage = onMessage;
   }
-  else {
-    swfail('Not supported.');
+
+  if(config.worker === 'service') {
+    if('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('main.js')
+        .then(reg => {sw=true; mylog(reg)}, reason => swfail(reason));
+    }
+    else {
+      swfail('Not supported.');
+    }
   }
 }
 
@@ -45,21 +64,51 @@ function onClick(e: Event) {
   if(e.target instanceof HTMLAnchorElement) {
     const cmd = e.target.dataset.cmd;
     if(cmd != null) {
-      clientRequest(e.target.pathname, cmd);
       e.preventDefault();
-      if(!cmd) window.history.pushState(e.target.pathname, '');
+      const path = e.target.pathname;
+      clientRequest(path, cmd);
+      if(!cmd) window.history.pushState(path, '');
     }
   }
 }
 
-async function clientRequest(path?: string, type?: string) {
-  const datap = fetchMarkup(path, type);
+function onMessage(e: MessageEvent) {
+  mylog('onMessage', e);
+  gotResponse(e.data);
+}
+
+function clientRequest(path?: string, type?: string) {
+  path = path || '/myapi/news/1';
+  const { cmd } = request2cmd(path);
+
   const nav = document.getElementById('nav')!;
   const main = document.getElementById('main')!;
   const child = main.firstElementChild;
   if(child) child.className = 'loading';
-  const { markup, cmd } = await datap;
-  main.innerHTML = markup;
   nav.className = cmd;
+
+  fetchPath(path);
+}
+
+async function fetchPath(path: string) {
+  if(myworker) {
+    myworker.postMessage(path);
+    return;
+  }
+  const func = sw ? fetch : cacheFetch;
+  try {
+    const resp = await func(path);
+    const text = await resp.text();
+    gotResponse(text);
+  }
+  catch(err) {
+    const html = renderToMarkup('', '', err + '. Maybe offline?');
+    gotResponse(html);
+  }
+}
+
+function gotResponse(markup: string) {
+  const main = document.getElementById('main')!;
+  main.innerHTML = markup;
   window.scroll(0, 0);
 }

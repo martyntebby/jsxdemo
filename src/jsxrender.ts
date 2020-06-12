@@ -9,11 +9,11 @@ type Props = Mapped & { children?: NodeType; };
 type NodeType = NodeType[] | string | number | boolean | null | undefined;
 type ElementType = string;
 
-function h(type: string|Function, props: Props|null, ...children: NodeType[]): ElementType {
+function h(type: string|Function, props?: Props|null, ...children: NodeType[]): ElementType {
   if(typeof type === 'string') return doElement(type, props, children);
   if(type === Fragment) return doChildren(children);
   props = props || {};
-  props.children = children;
+  props.children = props.children || children;
   return type(props);
 }
 
@@ -35,7 +35,7 @@ function renderToStaticMarkup(element: ElementType): string {
   return element;
 }
 
-function doElement(type: string, props: Props|null, children: NodeType[]): string {
+function doElement(type: string, props: Props|null|undefined, children: NodeType[]): string {
   let str = '<' + type;
   for(const name in props) str += doProp(name, props[name]);
   return str + '>' + doChildren(children) + '</' + type + '>';

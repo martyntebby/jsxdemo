@@ -10,8 +10,8 @@ const encoding = 'utf8';
 main();
 
 function main() {
-  const inFile = process.argv[2] || 'index.html';
-  const outFile = process.argv[3] || '../public/index.html';
+  const inFile = process.argv[2] || 'demo/index.html';
+  const outFile = process.argv[3] || 'public/index.html';
   const inStr = fs.readFileSync(inFile, encoding);
   const outStr = inStr.replace(regex, replacer);
   fs.writeFileSync(outFile, outStr, encoding);
@@ -19,6 +19,7 @@ function main() {
 
 function replacer(substring: string, href: string, src: string) {
   const tag = href ? 'style' : 'script';
-  const text = fs.readFileSync(href || src, encoding);
+  const file = '.' + (href || src);
+  const text = fs.readFileSync(file, encoding);
   return `<${tag}>\n${text}</${tag}>`;
 }
