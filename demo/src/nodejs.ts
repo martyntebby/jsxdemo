@@ -12,6 +12,7 @@ let indexStrs: string[];
 function nodejs() {
   mylog('nodejs');
   updateConfig(process.argv.slice(2));
+  config.worker = 'node';
   if(config.perftest) doPerfTest(); else doServer();
 }
 
@@ -26,7 +27,7 @@ function doServer() {
   const indexStr = fs.readFileSync('public/index.html', 'utf8');
   indexStrs = splitIndexMain(indexStr);
   const server = http.createServer(serverRequest).listen(config.port);
-  console.log('listen', server.address());
+  mylog('listening', server.address());
 }
 
 function serverRequest(req: http.IncomingMessage, res: http.ServerResponse) {
@@ -35,9 +36,14 @@ function serverRequest(req: http.IncomingMessage, res: http.ServerResponse) {
   if(!url) return;
   const pos = url.indexOf('?');
   if(pos > 0) url = url.substring(0, pos);
-  if(url === '/') url = '/myapi/';
-
+  if(url === '/') {
+    res.statusCode = 301;
+    res.setHeader('Location', '/public/');
+    res.end();
+    return;
+  }
   // hack - should handle with nginx, express, etc.
+  if(url === '/public/') url = '/public/index.html';
   if(url.startsWith('/public/')) {
     fs.readFile('.' + url, null, (err, data) => {
       if(err) mylog(err.message);
@@ -68,10 +74,11 @@ function serveNews(path: string, res: http.ServerResponse) {
     res.end(indexStrs[2]);
   }
 
-  fetchJson(<string>req, sendResp);
+  fetchJson(req, sendResp);
 }
 
 function fetchJson(url: string, sendResp: (data: unknown) => void) {
+  mylog('fetchJson', url);
   https.get(url, clientRequest)
     .on('error', err => sendResp(err.message));
 

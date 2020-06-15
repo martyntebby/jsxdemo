@@ -20,11 +20,9 @@ body {
   color: red;
   margin: 0.5rem;
   padding: 0.5rem;
-  font-size: large;
   border: 0.1rem solid red;
 }
 .pager {
-  position: -webkit-sticky;
   position: sticky;
   z-index: 1;
   bottom: 0;
@@ -35,7 +33,6 @@ body {
   box-shadow: 0 -1px 1px rgba(0,0,0,0.1);
 }
 #nav {
-  position: -webkit-sticky;
   position: sticky;
   z-index: 1;
   top: 0;
@@ -106,9 +103,9 @@ a:hover {
 </head>
 <body>
   <nav id="nav">
-    <a href="/" class="mainlink" target="_self"
-      onclick="event.preventDefault(); window.history.back()"       >&lArr;</a>
-    <a href="/public/index.html" class="intro" target="_self"       >JSX</a>
+    <a href="/public/" class="mainlink" target="_self"
+      onclick="event.preventDefault(); window.history.back()">&lArr;</a>
+    <a href="/public/index.html" class="intro" target="_self">JSX</a>
     <a href="/myapi/news/1"   class="news"   target="_self" data-cmd>top</a>
     <a href="/myapi/newest/1" class="newest" target="_self" data-cmd>new</a>
     <a href="/myapi/show/1"   class="show"   target="_self" data-cmd>show</a>
@@ -116,10 +113,9 @@ a:hover {
     <a href="/myapi/jobs/1"   class="jobs"   target="_self" data-cmd>jobs</a>
     <a href="https://github.com/martyntebby/jsxrender" class="mainlink">about</a>
   </nav>
-  <noscript id="error"><details open class="error">
-    <summary>Warning</summary>
-    Works best with modern browser running javascript.
-  </details></noscript>
+  <noscript id="error"><div class="error">
+    Works best with JavaScript.
+  </div></noscript>
   <main id="main">
     <div class="inset">
     <h3>JSX Render - Hacker News Demo</h3>

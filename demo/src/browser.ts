@@ -13,8 +13,8 @@ let myworker: Worker | undefined;
 
 function browser() {
   mylog('browser');
-  if(!('fetch' in window) || !('caches' in window)) {
-    swfail('Browser not supported (missing caches / fetch).');
+  if(!('fetch' in window)) {
+    swfail('Browser not supported (missing fetch).');
     return;
   }
 
@@ -38,7 +38,8 @@ function startWorker() {
 
   if(config.worker === 'service') {
     if('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('main.js')
+      // using main.js does not get swapped out - probably because of self caching
+      navigator.serviceWorker.register('sw.js')
         .then(reg => {sw=true; mylog(reg)}, reason => swfail(reason));
     }
     else {
@@ -63,28 +64,28 @@ function onPopState(e: PopStateEvent) {
 function onClick(e: Event) {
   if(e.target instanceof HTMLAnchorElement) {
     const cmd = e.target.dataset.cmd;
-    if(cmd != null) {
+    if(cmd !== undefined) {
       e.preventDefault();
-      const path = e.target.pathname;
-      clientRequest(path, cmd);
-      if(!cmd) window.history.pushState(path, '');
+      const path = cmd || e.target.pathname;
+      if(cmd === '') window.history.pushState(path, '');
+      clientRequest(path);
     }
   }
 }
 
 function onMessage(e: MessageEvent) {
-  mylog('onMessage', e);
   gotResponse(e.data);
 }
 
-function clientRequest(path?: string, type?: string) {
+function clientRequest(path?: string) {
   path = path || '/myapi/news/1';
-  const { cmd } = request2cmd(path);
 
-  const nav = document.getElementById('nav')!;
   const main = document.getElementById('main')!;
   const child = main.firstElementChild;
   if(child) child.className = 'loading';
+
+  const nav = document.getElementById('nav')!;
+  const { cmd } = request2cmd(path);
   nav.className = cmd;
 
   fetchPath(path);
@@ -102,7 +103,7 @@ async function fetchPath(path: string) {
     gotResponse(text);
   }
   catch(err) {
-    const html = renderToMarkup('', '', err + '. Maybe offline?');
+    const html = renderToMarkup('', '', err + ' Maybe offline?');
     gotResponse(html);
   }
 }

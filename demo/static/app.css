@@ -6,11 +6,9 @@ body {
   color: red;
   margin: 0.5rem;
   padding: 0.5rem;
-  font-size: large;
   border: 0.1rem solid red;
 }
 .pager {
-  position: -webkit-sticky;
   position: sticky;
   z-index: 1;
   bottom: 0;
@@ -21,7 +19,6 @@ body {
   box-shadow: 0 -1px 1px rgba(0,0,0,0.1);
 }
 #nav {
-  position: -webkit-sticky;
   position: sticky;
   z-index: 1;
   top: 0;

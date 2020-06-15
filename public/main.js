@@ -88,7 +88,7 @@ define("src/jsxrender", ["require", "exports"], function (require, exports) {
 });
 define("package", [], {
     "name": "jsxrender",
-    "version": "0.9.7d",
+    "version": "0.9.7e",
     "description": "Small fast stateless subset of React.",
     "main": "public/main.js",
     "repository": {
@@ -102,10 +102,11 @@ define("package", [], {
         "perftest": 0
     },
     "scripts": {
-        "build": "rm -rf dist out public/*.js && tsc -b . --force && node dist/bundle.js",
+        "build": "rm -rf dist out public/main.js && tsc -b . --force && node dist/bundle.js",
         "watch": "tsc -b . -w --listEmittedFiles",
         "clean": "rm -rf dist",
         "start": "node .",
+        "deno": "deno run --allow-net --allow-read public/main.js",
         "test": "node dist/tests.js"
     },
     "author": "Martyn Tebby",
@@ -258,21 +259,30 @@ define("demo/src/control", ["require", "exports", "demo/src/view", "demo/src/vie
     Object.defineProperty(exports, "renderToMarkup", { enumerable: true, get: function () { return view_1.renderToMarkup; } });
     Object.defineProperty(exports, "config", { enumerable: true, get: function () { return package_json_2.config; } });
     Object.defineProperty(exports, "version", { enumerable: true, get: function () { return package_json_2.version; } });
-    const STATIC_TTL = 60 * 60 * 24 * 30;
+    const STATIC_TTL = 60 * 60 * 24;
     const DYNAMIC_TTL = 60 * 10;
+    const MAIN_SITE_INDEX = 'https://jsxrender.westinca.com/public/index.html';
     ;
     let indexStrs;
     async function getCache() {
-        return caches && (caches.default || await caches.open(package_json_3.version));
+        return caches.default || await caches.open(package_json_3.version);
     }
     async function cacheFetch(request, evt) {
-        const reqstr = request.url || request;
+        try {
+            return await cacheFetch1(request, evt);
+        }
+        catch (err) {
+            return new Response(err);
+        }
+    }
+    exports.cacheFetch = cacheFetch;
+    async function cacheFetch1(request, evt) {
+        const reqstr = typeof request === 'string' ? request : request.url;
         view_2.mylog('cacheFetch', reqstr);
         const { cmd, arg, req } = request2cmd(request);
         const cache = await getCache();
         const cached = cache && await cache.match(request);
         if (cached) {
-            view_2.mylog('cached', reqstr);
             if (!cmd)
                 return cached;
             const date = cached.headers.get('Date');
@@ -281,45 +291,46 @@ define("demo/src/control", ["require", "exports", "demo/src/view", "demo/src/vie
                 if (diff < DYNAMIC_TTL * 1000)
                     return cached;
             }
-            view_2.mylog('too old', reqstr, date);
         }
         const ttl = cmd ? DYNAMIC_TTL : STATIC_TTL;
         const init = { cf: { cacheTtl: ttl } };
-        const resp2 = await fetch(req, init);
-        if (!resp2.ok) {
-            view_2.mylog('fetching', resp2.url, 'failed', resp2.status, resp2.statusText);
+        const resp2 = await fetch(req || request, init);
+        if (!resp2.ok)
             return cached || resp2;
-        }
         const resp3 = cmd ? await api2response(resp2, cmd, arg) : resp2;
-        if (cache && resp3.ok) {
-            view_2.mylog('caching', reqstr);
+        if (cache && resp3.ok &&
+            (cmd === 'news' || cmd === 'newest' || arg === '1' ||
+                (package_json_3.config.worker !== 'cf' ? resp3.type === 'basic' : resp3.url === MAIN_SITE_INDEX))) {
             const p = cache.put(request, resp3.clone());
             evt === null || evt === void 0 ? void 0 : evt.waitUntil(p);
         }
         return resp3;
     }
-    exports.cacheFetch = cacheFetch;
     async function api2response(resp, cmd, arg) {
-        const cf = package_json_3.config.worker === 'cf';
         const data = await resp.json();
-        const markup = view_2.renderToMarkup(cmd, arg, data);
-        const sections = cf ? await setupIndexStrs(cf) : [];
-        if (!sections) {
-            view_2.mylog('missing sections');
-            return Response.error();
+        let html = view_2.renderToMarkup(cmd, arg, data);
+        if (package_json_3.config.worker === 'cf' || package_json_3.config.worker === 'deno') {
+            const sections = await getIndexStrs();
+            if (sections)
+                html = sections[0] + html + sections[2];
         }
-        const html = cf ? sections[0] + markup + sections[2] : markup;
         return html2response(html, DYNAMIC_TTL);
     }
-    async function setupIndexStrs(cf = false) {
-        if (indexStrs === undefined) {
-            const url = (cf ? 'https://jsxrender.westinca.com' : '') + '/public/index.html';
+    async function getIndexStrs() {
+        return indexStrs || await setupIndexStrs(true);
+    }
+    async function setupIndexStrs(server = false) {
+        view_2.mylog('setupIndexStrs', server);
+        if (!indexStrs) {
+            const url = server ? MAIN_SITE_INDEX : '/public/index.html';
             const resp = await cacheFetch(url);
             if (resp.ok) {
                 const index = await resp.text();
                 indexStrs = splitIndexMain(index);
-                const cache = await getCache();
-                cache === null || cache === void 0 ? void 0 : cache.put('./', html2response(indexStrs[0] + indexStrs[2], STATIC_TTL));
+                if (!server) {
+                    const cache = await getCache();
+                    cache === null || cache === void 0 ? void 0 : cache.put('./', html2response(indexStrs[0] + indexStrs[2], STATIC_TTL));
+                }
             }
         }
         return indexStrs;
@@ -345,18 +356,17 @@ define("demo/src/control", ["require", "exports", "demo/src/view", "demo/src/vie
         const path = typeof request === 'string' ? request
             : new URL(request.url).pathname;
         const strs = path.split('/');
-        const api = strs[1] === 'myapi';
+        const api = path === '/' || strs[1] === 'myapi';
         const cmd = !api ? '' : strs[2] || 'news';
         const arg = !api ? '' : strs[3] || '1';
-        const req = api ? cmd2url(cmd, arg) : request;
+        const req = !api ? '' : cmd2url(cmd, arg);
         return { cmd, arg, req };
     }
     exports.request2cmd = request2cmd;
-    function cmd2url(cmd, arg, useapi) {
-        return useapi ? `/myapi/${cmd}/${arg}`
-            : cmd === 'newest'
-                ? `https://node-hnapi.herokuapp.com/${cmd}?page=${arg}`
-                : `https://api.hnpwa.com/v0/${cmd}/${arg}.json`;
+    function cmd2url(cmd, arg) {
+        return cmd === 'newest'
+            ? `https://node-hnapi.herokuapp.com/${cmd}?page=${arg}`
+            : `https://api.hnpwa.com/v0/${cmd}/${arg}.json`;
     }
     function updateConfig(args) {
         args.forEach(arg => {
@@ -368,7 +378,7 @@ define("demo/src/control", ["require", "exports", "demo/src/view", "demo/src/vie
     exports.updateConfig = updateConfig;
     function perftest(items) {
         const iterations = package_json_3.config.perftest > 1 ? package_json_3.config.perftest : 10000;
-        console.log('perftest', iterations);
+        view_2.mylog('perftest', iterations);
         const start = Date.now();
         let count = 0;
         for (let i = iterations; i > 0; --i) {
@@ -380,7 +390,7 @@ define("demo/src/control", ["require", "exports", "demo/src/view", "demo/src/vie
         const duration = (end - start) / 1000.0;
         const tps = (iterations / duration).toFixed();
         const str = 'iterations ' + count + '  duration ' + duration + '  tps ' + tps;
-        console.log(str);
+        view_2.mylog(str);
     }
     exports.perftest = perftest;
 });
@@ -392,8 +402,8 @@ define("demo/src/browser", ["require", "exports", "demo/src/control"], function 
     let myworker;
     function browser() {
         control_1.mylog('browser');
-        if (!('fetch' in window) || !('caches' in window)) {
-            swfail('Browser not supported (missing caches / fetch).');
+        if (!('fetch' in window)) {
+            swfail('Browser not supported (missing fetch).');
             return;
         }
         const query = window.location.search;
@@ -414,7 +424,7 @@ define("demo/src/browser", ["require", "exports", "demo/src/control"], function 
         }
         if (control_1.config.worker === 'service') {
             if ('serviceWorker' in navigator) {
-                navigator.serviceWorker.register('main.js')
+                navigator.serviceWorker.register('sw.js')
                     .then(reg => { sw = true; control_1.mylog(reg); }, reason => swfail(reason));
             }
             else {
@@ -436,27 +446,26 @@ define("demo/src/browser", ["require", "exports", "demo/src/control"], function 
     function onClick(e) {
         if (e.target instanceof HTMLAnchorElement) {
             const cmd = e.target.dataset.cmd;
-            if (cmd != null) {
+            if (cmd !== undefined) {
                 e.preventDefault();
-                const path = e.target.pathname;
-                clientRequest(path, cmd);
-                if (!cmd)
+                const path = cmd || e.target.pathname;
+                if (cmd === '')
                     window.history.pushState(path, '');
+                clientRequest(path);
             }
         }
     }
     function onMessage(e) {
-        control_1.mylog('onMessage', e);
         gotResponse(e.data);
     }
-    function clientRequest(path, type) {
+    function clientRequest(path) {
         path = path || '/myapi/news/1';
-        const { cmd } = control_1.request2cmd(path);
-        const nav = document.getElementById('nav');
         const main = document.getElementById('main');
         const child = main.firstElementChild;
         if (child)
             child.className = 'loading';
+        const nav = document.getElementById('nav');
+        const { cmd } = control_1.request2cmd(path);
         nav.className = cmd;
         fetchPath(path);
     }
@@ -472,7 +481,7 @@ define("demo/src/browser", ["require", "exports", "demo/src/control"], function 
             gotResponse(text);
         }
         catch (err) {
-            const html = control_1.renderToMarkup('', '', err + '. Maybe offline?');
+            const html = control_1.renderToMarkup('', '', err + ' Maybe offline?');
             gotResponse(html);
         }
     }
@@ -490,6 +499,7 @@ define("demo/src/nodejs", ["require", "exports", "fs", "http", "https", "demo/sr
     function nodejs() {
         control_2.mylog('nodejs');
         control_2.updateConfig(process.argv.slice(2));
+        control_2.config.worker = 'node';
         if (control_2.config.perftest)
             doPerfTest();
         else
@@ -506,7 +516,7 @@ define("demo/src/nodejs", ["require", "exports", "fs", "http", "https", "demo/sr
         const indexStr = fs.readFileSync('public/index.html', 'utf8');
         indexStrs = control_2.splitIndexMain(indexStr);
         const server = http.createServer(serverRequest).listen(control_2.config.port);
-        console.log('listen', server.address());
+        control_2.mylog('listening', server.address());
     }
     function serverRequest(req, res) {
         let url = req.url;
@@ -516,8 +526,14 @@ define("demo/src/nodejs", ["require", "exports", "fs", "http", "https", "demo/sr
         const pos = url.indexOf('?');
         if (pos > 0)
             url = url.substring(0, pos);
-        if (url === '/')
-            url = '/myapi/';
+        if (url === '/') {
+            res.statusCode = 301;
+            res.setHeader('Location', '/public/');
+            res.end();
+            return;
+        }
+        if (url === '/public/')
+            url = '/public/index.html';
         if (url.startsWith('/public/')) {
             fs.readFile('.' + url, null, (err, data) => {
                 if (err)
@@ -548,6 +564,7 @@ define("demo/src/nodejs", ["require", "exports", "fs", "http", "https", "demo/sr
         fetchJson(req, sendResp);
     }
     function fetchJson(url, sendResp) {
+        control_2.mylog('fetchJson', url);
         https.get(url, clientRequest)
             .on('error', err => sendResp(err.message));
         function clientRequest(res2) {
@@ -617,10 +634,9 @@ define("demo/src/worker", ["require", "exports", "demo/src/control"], function (
         e.respondWith(control_3.cacheFetch(e.request, e));
     }
     function onMessage(e) {
-        control_3.mylog('onMessage', e);
         control_3.cacheFetch(e.data)
             .then(res => res.text()
-            .then(text => postMessage(text)));
+            .then(text => self.postMessage(text)));
     }
     function cfUpdateConfig() {
         Object.keys(control_3.config).forEach(key => {
@@ -637,7 +653,9 @@ define("demo/src/main", ["require", "exports", "demo/src/control", "demo/src/nod
     main();
     function main() {
         control_4.mylog('main', control_4.version);
-        if ('window' in globalThis)
+        if ('Deno' in globalThis)
+            control_4.mylog('deno not implemented');
+        else if ('window' in globalThis)
             browser_1.browser();
         else if (typeof process === 'object' && process.version)
             nodejs_1.nodejs();

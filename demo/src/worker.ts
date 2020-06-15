@@ -74,11 +74,9 @@ function onFetch(e: FetchEvent) {
 }
 
 function onMessage(e: ExtendableMessageEvent) {
-  mylog('onMessage', e);
   cacheFetch(e.data)
   .then(res => res.text()
-  /// @ts-ignore
-  .then(text => postMessage(text)));
+    .then(text => (<Worker><unknown>self).postMessage(text)));
 }
 
 function cfUpdateConfig() {
