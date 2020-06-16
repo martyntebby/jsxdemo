@@ -4,7 +4,7 @@
 import * as fs from 'fs';
 import * as process from 'process';
 
-const regex = /<link rel="stylesheet" href="([^ ]+)"\/>|<script src="([^ ]+)"><\/script>/g;
+const regex = /<!--include="([^ ]+)"-->|<link rel="stylesheet" href="([^ ]+)"\/>|<script src="([^ ]+)"><\/script>/g;
 const encoding = 'utf8';
 
 main();
@@ -17,9 +17,9 @@ function main() {
   fs.writeFileSync(outFile, outStr, encoding);
 }
 
-function replacer(substring: string, href: string, src: string) {
-  const tag = href ? 'style' : 'script';
-  const file = '.' + (href || src);
+function replacer(substring: string, include: string, href: string, src: string) {
+  const tag = include ? 'div' : href ? 'style' : 'script';
+  const file = '.' + (include || href || src);
   const text = fs.readFileSync(file, encoding);
   return `<${tag}>\n${text}</${tag}>`;
 }

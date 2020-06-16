@@ -67,7 +67,7 @@ function onClick(e: Event) {
     if(cmd !== undefined) {
       e.preventDefault();
       const path = cmd || e.target.pathname;
-      if(cmd === '') window.history.pushState(path, '');
+      window.history.pushState(path, '');
       clientRequest(path);
     }
   }

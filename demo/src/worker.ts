@@ -15,6 +15,7 @@ import { config, version, mylog, cacheFetch, setupIndexStrs } from './control';
 const PRE_CACHE = [ 'index.html'
   ,'main.js'
   ,'static/app.css'
+  ,'static/intro.html'
   ,'static/manifest.json'
   ,'static/favicon-32.png'
   ,'static/favicon-256.png'
@@ -48,7 +49,7 @@ function cfworker() {
 function worker() {
   mylog('worker');
   self.addEventListener('message', onMessage);
-  setupIndexStrs();
+  setupIndexStrs(false);
 }
 
 function onInstall(e: ExtendableEvent) {
@@ -56,7 +57,7 @@ function onInstall(e: ExtendableEvent) {
   mylog('precache', PRE_CACHE);
   e.waitUntil(caches.open(version).then(cache =>
     cache.addAll(PRE_CACHE)).then(() =>
-      setupIndexStrs().then(() =>
+      setupIndexStrs(false).then(() =>
         self.skipWaiting())));
 }
 

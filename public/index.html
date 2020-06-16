@@ -103,9 +103,10 @@ a:hover {
 </head>
 <body>
   <nav id="nav">
-    <a href="/public/" class="mainlink" target="_self"
+    <a href="/public/index.html" class="mainlink" target="_self"
       onclick="event.preventDefault(); window.history.back()">&lArr;</a>
-    <a href="/public/index.html" class="intro" target="_self">JSX</a>
+    <a href="/public/index.html" class="intro" target="_self"
+      data-cmd="/public/static/intro.html">JSX</a>
     <a href="/myapi/news/1"   class="news"   target="_self" data-cmd>top</a>
     <a href="/myapi/newest/1" class="newest" target="_self" data-cmd>new</a>
     <a href="/myapi/show/1"   class="show"   target="_self" data-cmd>show</a>
@@ -117,7 +118,8 @@ a:hover {
     Works best with JavaScript.
   </div></noscript>
   <main id="main">
-    <div class="inset">
+    <div>
+  <div class="inset">
     <h3>JSX Render - Hacker News Demo</h3>
     A basic demo for <a href="https://github.com/martyntebby/jsxrender">jsxrender</a>.
     <p>It is a <a href="https://en.wikipedia.org/wiki/Progressive_web_application">
@@ -127,7 +129,8 @@ a:hover {
     <a href="/myapi/news/1" class="news" target="_self" data-cmd
       style="color:blue; font-size:large; text-decoration:underline">Continue</a>
     - on subsequent loads <span class="bold">top</span> becomes the default view.
-    </div>
+  </div>
+</div>
   </main>
   <script async src="/public/main.js"></script>
 </body>

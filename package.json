@@ -9,7 +9,7 @@
   },
   "config": {
     "port": 3000,
-    "dolog": true,
+    "dolog": false,
     "worker": "service",
     "perftest": 0
   },

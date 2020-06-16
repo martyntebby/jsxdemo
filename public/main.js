@@ -97,7 +97,7 @@ define("package", [], {
     },
     "config": {
         "port": 3000,
-        "dolog": true,
+        "dolog": false,
         "worker": "service",
         "perftest": 0
     },
@@ -254,7 +254,7 @@ define("demo/src/view", ["require", "exports", "src/jsxrender", "package"], func
 define("demo/src/control", ["require", "exports", "demo/src/view", "demo/src/view", "package", "package"], function (require, exports, view_1, view_2, package_json_2, package_json_3) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.perftest = exports.updateConfig = exports.setupIndexStrs = exports.cacheFetch = exports.splitIndexMain = exports.request2cmd = void 0;
+    exports.perftest = exports.updateConfig = exports.splitIndexMain = exports.setupIndexStrs = exports.request2cmd = exports.cacheFetch = void 0;
     Object.defineProperty(exports, "mylog", { enumerable: true, get: function () { return view_1.mylog; } });
     Object.defineProperty(exports, "renderToMarkup", { enumerable: true, get: function () { return view_1.renderToMarkup; } });
     Object.defineProperty(exports, "config", { enumerable: true, get: function () { return package_json_2.config; } });
@@ -263,6 +263,7 @@ define("demo/src/control", ["require", "exports", "demo/src/view", "demo/src/vie
     const DYNAMIC_TTL = 60 * 10;
     const MAIN_SITE_INDEX = 'https://jsxrender.westinca.com/public/index.html';
     ;
+    let isServer;
     let indexStrs;
     async function getCache() {
         return caches.default || await caches.open(package_json_3.version);
@@ -309,25 +310,36 @@ define("demo/src/control", ["require", "exports", "demo/src/view", "demo/src/vie
     async function api2response(resp, cmd, arg) {
         const data = await resp.json();
         let html = view_2.renderToMarkup(cmd, arg, data);
-        if (package_json_3.config.worker === 'cf' || package_json_3.config.worker === 'deno') {
+        if (isServer) {
             const sections = await getIndexStrs();
             if (sections)
                 html = sections[0] + html + sections[2];
         }
         return html2response(html, DYNAMIC_TTL);
     }
-    async function getIndexStrs() {
-        return indexStrs || await setupIndexStrs(true);
+    function html2response(html, ttl) {
+        const headers = [
+            ['Date', new Date().toUTCString()],
+            ['Content-Type', 'text/html'],
+            ['Content-Length', html.length.toString()],
+            ['Cache-Control', 'max-age=' + ttl]
+        ];
+        return new Response(html, { headers: headers, status: 200, statusText: 'OK' });
     }
-    async function setupIndexStrs(server = false) {
+    async function getIndexStrs() {
+        return indexStrs || await setupIndexStrs();
+    }
+    async function setupIndexStrs(server) {
         view_2.mylog('setupIndexStrs', server);
         if (!indexStrs) {
-            const url = server ? MAIN_SITE_INDEX : '/public/index.html';
+            if (server !== undefined)
+                isServer = server;
+            const url = isServer ? MAIN_SITE_INDEX : '/public/index.html';
             const resp = await cacheFetch(url);
             if (resp.ok) {
                 const index = await resp.text();
                 indexStrs = splitIndexMain(index);
-                if (!server) {
+                if (!isServer) {
                     const cache = await getCache();
                     cache === null || cache === void 0 ? void 0 : cache.put('./', html2response(indexStrs[0] + indexStrs[2], STATIC_TTL));
                 }
@@ -343,15 +355,6 @@ define("demo/src/control", ["require", "exports", "demo/src/view", "demo/src/vie
         return [text.substring(0, pos1), text.substring(pos1, pos2), text.substring(pos2)];
     }
     exports.splitIndexMain = splitIndexMain;
-    function html2response(html, ttl) {
-        const headers = [
-            ['Date', new Date().toUTCString()],
-            ['Content-Type', 'text/html'],
-            ['Content-Length', html.length.toString()],
-            ['Cache-Control', 'max-age=' + ttl]
-        ];
-        return new Response(html, { headers: headers, status: 200, statusText: 'OK' });
-    }
     function request2cmd(request) {
         const path = typeof request === 'string' ? request
             : new URL(request.url).pathname;
@@ -449,8 +452,7 @@ define("demo/src/browser", ["require", "exports", "demo/src/control"], function 
             if (cmd !== undefined) {
                 e.preventDefault();
                 const path = cmd || e.target.pathname;
-                if (cmd === '')
-                    window.history.pushState(path, '');
+                window.history.pushState(path, '');
                 clientRequest(path);
             }
         }
@@ -596,6 +598,7 @@ define("demo/src/worker", ["require", "exports", "demo/src/control"], function (
     const PRE_CACHE = ['index.html',
         'main.js',
         'static/app.css',
+        'static/intro.html',
         'static/manifest.json',
         'static/favicon-32.png',
         'static/favicon-256.png'
@@ -618,13 +621,13 @@ define("demo/src/worker", ["require", "exports", "demo/src/control"], function (
     function worker() {
         control_3.mylog('worker');
         self.addEventListener('message', onMessage);
-        control_3.setupIndexStrs();
+        control_3.setupIndexStrs(false);
     }
     exports.worker = worker;
     function onInstall(e) {
         control_3.mylog('onInstall', e);
         control_3.mylog('precache', PRE_CACHE);
-        e.waitUntil(caches.open(control_3.version).then(cache => cache.addAll(PRE_CACHE)).then(() => control_3.setupIndexStrs().then(() => self.skipWaiting())));
+        e.waitUntil(caches.open(control_3.version).then(cache => cache.addAll(PRE_CACHE)).then(() => control_3.setupIndexStrs(false).then(() => self.skipWaiting())));
     }
     function onActivate(e) {
         control_3.mylog('onActivate', e);

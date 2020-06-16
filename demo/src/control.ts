@@ -2,8 +2,7 @@
   Fetches data from hnapi or elsewhere and supplies as json or formatted html.
   Re exports some view methods and handles config info from package.json.
 */
-export { request2cmd, splitIndexMain };
-export { cacheFetch, setupIndexStrs };
+export { cacheFetch, request2cmd, setupIndexStrs, splitIndexMain };
 export { updateConfig, perftest };
 export type { Mapped, ExtendableEvent };
 export { mylog, renderToMarkup } from './view';
@@ -21,6 +20,7 @@ interface ExtendableEvent {
   waitUntil(f: any): void;
 };
 
+let isServer: boolean | undefined;
 let indexStrs: string[] | undefined;
 
 declare var caches: CacheStorage & { default?: Cache; };
@@ -75,26 +75,38 @@ async function cacheFetch1(request: RequestInfo, evt?: ExtendableEvent) {
 async function api2response(resp: Response, cmd: string, arg: string) {
   const data = await resp.json();
   let html = renderToMarkup(cmd, arg, data);
-  if(config.worker === 'cf' || config.worker === 'deno') {
+  if(isServer) {
     const sections = await getIndexStrs();
     if(sections) html = sections[0] + html + sections[2];
   }
   return html2response(html, DYNAMIC_TTL);
 }
 
-async function getIndexStrs() {
-  return indexStrs || await setupIndexStrs(true);
+function html2response(html: string, ttl: number) {
+  const headers = [
+    //['Link', '</public/main.js>; rel=preload; as=script'], //, </public/app.css>; rel=preload; as=style'],
+    ['Date', new Date().toUTCString()],
+    ['Content-Type', 'text/html'],
+    ['Content-Length', html.length.toString()],
+    ['Cache-Control', 'max-age=' + ttl]
+  ];
+  return new Response(html, { headers: headers, status: 200, statusText: 'OK' });
 }
 
-async function setupIndexStrs(server = false) {
+async function getIndexStrs() {
+  return indexStrs || await setupIndexStrs();
+}
+
+async function setupIndexStrs(server?: boolean) {
   mylog('setupIndexStrs', server);
   if(!indexStrs) {
-    const url = server ? MAIN_SITE_INDEX : '/public/index.html';
+    if(server !== undefined) isServer = server;
+    const url = isServer ? MAIN_SITE_INDEX : '/public/index.html';
     const resp = await cacheFetch(url);
     if(resp.ok) {
       const index = await resp.text();
       indexStrs = splitIndexMain(index);
-      if(!server) {
+      if(!isServer) {
         const cache = await getCache();
         cache?.put('./', html2response(indexStrs[0] + indexStrs[2], STATIC_TTL));
       }
@@ -108,17 +120,6 @@ function splitIndexMain(text: string): string[] {
   const pos1 = text.indexOf(main) + main.length;
   const pos2 = text.indexOf('</main>', pos1);
   return [ text.substring(0, pos1), text.substring(pos1, pos2), text.substring(pos2) ];
-}
-
-function html2response(html: string, ttl: number) {
-  const headers = [
-    //['Link', '</public/main.js>; rel=preload; as=script'], //, </public/app.css>; rel=preload; as=style'],
-    ['Date', new Date().toUTCString()],
-    ['Content-Type', 'text/html'],
-    ['Content-Length', html.length.toString()],
-    ['Cache-Control', 'max-age=' + ttl]
-  ];
-  return new Response(html, { headers: headers, status: 200, statusText: 'OK' });
 }
 
 function request2cmd(request: RequestInfo) {
