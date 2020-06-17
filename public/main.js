@@ -245,8 +245,9 @@ define("demo/src/view", ["require", "exports", "src/jsxrender", "package"], func
         return (jsxrender_1.h("a", { href: (props.cmd ? '/myapi' : '') + props.href, className: props.className, target: props.cmd ? '_self' : undefined, "data-cmd": props.cmd }, props.children));
     }
     function ErrorView(err, summary) {
+        const open = !summary;
         summary = summary || 'Error';
-        return jsxrender_1.h("details", { open: true, className: 'error' },
+        return jsxrender_1.h("details", { open: open, className: 'error' },
             jsxrender_1.h("summary", null, summary),
             err);
     }
@@ -402,11 +403,10 @@ define("demo/src/browser", ["require", "exports", "demo/src/control"], function 
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.browser = void 0;
     let sw = false;
-    let myworker;
     function browser() {
         control_1.mylog('browser');
         if (!('fetch' in window)) {
-            swfail('Browser not supported (missing fetch).');
+            swfail('Browser not supported.', 'Missing fetch.');
             return;
         }
         const query = window.location.search;
@@ -421,24 +421,20 @@ define("demo/src/browser", ["require", "exports", "demo/src/control"], function 
     }
     exports.browser = browser;
     function startWorker() {
-        if (control_1.config.worker === 'web' && window.Worker) {
-            myworker = new Worker('main.js');
-            myworker.onmessage = onMessage;
-        }
         if (control_1.config.worker === 'service') {
             if ('serviceWorker' in navigator) {
                 navigator.serviceWorker.register('sw.js')
-                    .then(reg => { sw = true; control_1.mylog(reg); }, reason => swfail(reason));
+                    .then(reg => { sw = true; control_1.mylog(reg); }, err => swfail('ServiceWorker failed.', err));
             }
             else {
-                swfail('Not supported.');
+                swfail('ServiceWorker unsupported.', '');
             }
         }
     }
-    function swfail(reason) {
-        control_1.mylog('sw failed:', reason);
+    function swfail(summary, reason) {
+        control_1.mylog('sw failed:', summary, reason);
         const error = document.getElementById('error');
-        error.outerHTML = control_1.renderToMarkup('', 'Warning', 'ServiceWorker failed: ' + reason +
+        error.outerHTML = control_1.renderToMarkup('', summary, reason +
             '<br><br>Ensure cookies are enabled, the connection is secure,' +
             ' the browser is not in private mode and is supported' +
             ' (Chrome on Android, Safari on iOS).');
@@ -457,40 +453,28 @@ define("demo/src/browser", ["require", "exports", "demo/src/control"], function 
             }
         }
     }
-    function onMessage(e) {
-        gotResponse(e.data);
-    }
-    function clientRequest(path) {
+    async function clientRequest(path) {
         path = path || '/myapi/news/1';
+        const markupp = fetchPath(path);
+        const { cmd } = control_1.request2cmd(path);
+        const nav = document.getElementById('nav');
         const main = document.getElementById('main');
         const child = main.firstElementChild;
         if (child)
             child.className = 'loading';
-        const nav = document.getElementById('nav');
-        const { cmd } = control_1.request2cmd(path);
-        nav.className = cmd;
-        fetchPath(path);
+        main.innerHTML = await markupp;
+        nav.className = cmd || 'other';
+        window.scroll(0, 0);
     }
     async function fetchPath(path) {
-        if (myworker) {
-            myworker.postMessage(path);
-            return;
-        }
         const func = sw ? fetch : control_1.cacheFetch;
         try {
             const resp = await func(path);
-            const text = await resp.text();
-            gotResponse(text);
+            return await resp.text();
         }
         catch (err) {
-            const html = control_1.renderToMarkup('', '', err + ' Maybe offline?');
-            gotResponse(html);
+            return control_1.renderToMarkup('', '', err + ' Maybe offline?');
         }
-    }
-    function gotResponse(markup) {
-        const main = document.getElementById('main');
-        main.innerHTML = markup;
-        window.scroll(0, 0);
     }
 });
 define("demo/src/nodejs", ["require", "exports", "fs", "http", "https", "demo/src/control"], function (require, exports, fs, http, https, control_2) {

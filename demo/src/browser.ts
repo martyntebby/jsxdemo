@@ -9,12 +9,11 @@ export { browser };
 import { mylog, config, updateConfig, renderToMarkup, request2cmd, cacheFetch } from './control';
 
 let sw = false;
-let myworker: Worker | undefined;
 
 function browser() {
   mylog('browser');
   if(!('fetch' in window)) {
-    swfail('Browser not supported (missing fetch).');
+    swfail('Browser not supported.', 'Missing fetch.');
     return;
   }
 
@@ -31,27 +30,22 @@ function browser() {
 }
 
 function startWorker() {
-  if(config.worker === 'web' && window.Worker) {
-    myworker = new Worker('main.js');
-    myworker.onmessage = onMessage;
-  }
-
   if(config.worker === 'service') {
     if('serviceWorker' in navigator) {
       // using main.js does not get swapped out - probably because of self caching
       navigator.serviceWorker.register('sw.js')
-        .then(reg => {sw=true; mylog(reg)}, reason => swfail(reason));
+        .then(reg => {sw=true; mylog(reg)}, err => swfail('ServiceWorker failed.', err));
     }
     else {
-      swfail('Not supported.');
+      swfail('ServiceWorker unsupported.', '');
     }
   }
 }
 
-function swfail(reason: string) {
-  mylog('sw failed:', reason);
+function swfail(summary: string, reason: string) {
+  mylog('sw failed:', summary, reason);
   const error = document.getElementById('error')!;
-  error.outerHTML = renderToMarkup('', 'Warning', 'ServiceWorker failed: ' + reason +
+  error.outerHTML = renderToMarkup('', summary, reason +
     '<br><br>Ensure cookies are enabled, the connection is secure,' +
     ' the browser is not in private mode and is supported' +
     ' (Chrome on Android, Safari on iOS).');
@@ -73,43 +67,28 @@ function onClick(e: Event) {
   }
 }
 
-function onMessage(e: MessageEvent) {
-  gotResponse(e.data);
-}
-
-function clientRequest(path?: string) {
+async function clientRequest(path?: string) {
   path = path || '/myapi/news/1';
+  const markupp = fetchPath(path);
+  const { cmd } = request2cmd(path);
 
+  const nav = document.getElementById('nav')!;
   const main = document.getElementById('main')!;
   const child = main.firstElementChild;
   if(child) child.className = 'loading';
 
-  const nav = document.getElementById('nav')!;
-  const { cmd } = request2cmd(path);
-  nav.className = cmd;
-
-  fetchPath(path);
+  main.innerHTML = await markupp;
+  nav.className = cmd || 'other';
+  window.scroll(0, 0);
 }
 
 async function fetchPath(path: string) {
-  if(myworker) {
-    myworker.postMessage(path);
-    return;
-  }
   const func = sw ? fetch : cacheFetch;
   try {
     const resp = await func(path);
-    const text = await resp.text();
-    gotResponse(text);
+    return await resp.text();
   }
   catch(err) {
-    const html = renderToMarkup('', '', err + ' Maybe offline?');
-    gotResponse(html);
+    return renderToMarkup('', '', err + ' Maybe offline?');
   }
-}
-
-function gotResponse(markup: string) {
-  const main = document.getElementById('main')!;
-  main.innerHTML = markup;
-  window.scroll(0, 0);
 }

@@ -130,6 +130,7 @@ function Link(props: { href: string, className?: string, cmd?: boolean, children
 }
 
 function ErrorView(err: string, summary?: string) {
+  const open = !summary;
   summary = summary || 'Error';
-  return <details open className='error'><summary>{summary}</summary>{err}</details>;
+  return <details open={open} className='error'><summary>{summary}</summary>{err}</details>;
 }
