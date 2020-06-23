@@ -12,7 +12,8 @@ import { config, version } from '../../package.json';
 
 const STATIC_TTL = 60 * 60 * 24;
 const DYNAMIC_TTL = 60 * 10;
-const MAIN_SITE_INDEX = 'https://jsxrender.westinca.com/public/index.html';
+const BASE_URL = 'https://jsxrender.westinca.com/public';
+const MAIN_SITE_INDEX = BASE_URL + '/index.html';
 
 type Mapped = { [key: string]: unknown; };
 
@@ -147,7 +148,11 @@ function updateConfig(args: string[]): void {
   });
 }
 
-function perftest(items: any): void {
+async function perftest(items?: any): Promise<string> {
+  if(!items) {
+    const res = await cacheFetch(BASE_URL + '/static/news.json');
+    return perftest(await res.json());
+  }
   const iterations = config.perftest > 1 ? config.perftest : 10000;
   mylog('perftest', iterations);
   const start = Date.now();
@@ -161,4 +166,5 @@ function perftest(items: any): void {
   const tps = (iterations / duration).toFixed();
   const str = 'iterations ' + count + '  duration ' + duration + '  tps ' + tps;
   mylog(str);
+  return str;
 }

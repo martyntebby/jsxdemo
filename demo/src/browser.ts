@@ -6,11 +6,11 @@
   registers service worker
 */
 export { browser };
-import { mylog, config, updateConfig, renderToMarkup, request2cmd, cacheFetch } from './control';
+import { mylog, config, updateConfig, renderToMarkup, request2cmd, cacheFetch, perftest } from './control';
 
 let sw = false;
 
-function browser() {
+async function browser() {
   mylog('browser');
   if(!('fetch' in window)) {
     swfail('Browser not supported.', 'Missing fetch.');
@@ -21,6 +21,11 @@ function browser() {
   if(query) updateConfig(query.substring(1).split('&'));
 
   const main = document.getElementById('main')!;
+  if(config.perftest) {
+    main.innerHTML = 'perftest ...';
+    main.innerHTML = await perftest();
+    return;
+  }
   if(!main.firstElementChild) clientRequest();
 
   window.onpopstate = onPopState;

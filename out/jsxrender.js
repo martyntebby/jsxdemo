@@ -4,9 +4,9 @@ function h(type, props, ...children) {
         return doElement(type, props, children);
     if (type === Fragment)
         return doChildren(children);
-    props = props || {};
-    props.children = props.children || children;
-    return type(props);
+    const props2 = props || {};
+    props2.children = children;
+    return type(props2);
 }
 function jsx(type, props, key) {
     if (typeof type === 'string')

@@ -12,16 +12,18 @@ type ElementType = string;
 function h(type: string|Function, props?: Props|null, ...children: NodeType[]): ElementType {
   if(typeof type === 'string') return doElement(type, props, children);
   if(type === Fragment) return doChildren(children);
-  props = props || {};
-  props.children = props.children || children;
-  return type(props);
+  const props2 = props || {};
+  props2.children = children;
+  return type(props2);
 }
 
 // https://github.com/microsoft/TypeScript/issues/34547
 // https://github.com/reactjs/rfcs/blob/createlement-rfc/text/0000-create-element-changes.md
 // https://babeljs.io/blog/2020/03/16/7.9.0
 
-function jsx(type: string|Function, props: Props, key?: unknown): ElementType {
+function jsx(type: string|Function, props: Props, key?: unknown
+//    ,isStaticChildren?: boolean, source?: unknown, self?: unknown // jsxDEV
+    ): ElementType {
   if(typeof type === 'string') return doElement(type, props, [props.children]);
   if(type === Fragment) return doChildren([props.children]);
   return type(props);

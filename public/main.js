@@ -8,9 +8,9 @@ define("src/jsxrender", ["require", "exports"], function (require, exports) {
             return doElement(type, props, children);
         if (type === Fragment)
             return doChildren(children);
-        props = props || {};
-        props.children = props.children || children;
-        return type(props);
+        const props2 = props || {};
+        props2.children = children;
+        return type(props2);
     }
     exports.h = h;
     exports.createElement = h;
@@ -262,7 +262,8 @@ define("demo/src/control", ["require", "exports", "demo/src/view", "demo/src/vie
     Object.defineProperty(exports, "version", { enumerable: true, get: function () { return package_json_2.version; } });
     const STATIC_TTL = 60 * 60 * 24;
     const DYNAMIC_TTL = 60 * 10;
-    const MAIN_SITE_INDEX = 'https://jsxrender.westinca.com/public/index.html';
+    const BASE_URL = 'https://jsxrender.westinca.com/public';
+    const MAIN_SITE_INDEX = BASE_URL + '/index.html';
     ;
     let isServer;
     let indexStrs;
@@ -380,7 +381,11 @@ define("demo/src/control", ["require", "exports", "demo/src/view", "demo/src/vie
         });
     }
     exports.updateConfig = updateConfig;
-    function perftest(items) {
+    async function perftest(items) {
+        if (!items) {
+            const res = await cacheFetch(BASE_URL + '/static/news.json');
+            return perftest(await res.json());
+        }
         const iterations = package_json_3.config.perftest > 1 ? package_json_3.config.perftest : 10000;
         view_2.mylog('perftest', iterations);
         const start = Date.now();
@@ -395,6 +400,7 @@ define("demo/src/control", ["require", "exports", "demo/src/view", "demo/src/vie
         const tps = (iterations / duration).toFixed();
         const str = 'iterations ' + count + '  duration ' + duration + '  tps ' + tps;
         view_2.mylog(str);
+        return str;
     }
     exports.perftest = perftest;
 });
@@ -403,7 +409,7 @@ define("demo/src/browser", ["require", "exports", "demo/src/control"], function 
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.browser = void 0;
     let sw = false;
-    function browser() {
+    async function browser() {
         control_1.mylog('browser');
         if (!('fetch' in window)) {
             swfail('Browser not supported.', 'Missing fetch.');
@@ -413,6 +419,11 @@ define("demo/src/browser", ["require", "exports", "demo/src/control"], function 
         if (query)
             control_1.updateConfig(query.substring(1).split('&'));
         const main = document.getElementById('main');
+        if (control_1.config.perftest) {
+            main.innerHTML = 'perftest ...';
+            main.innerHTML = await control_1.perftest();
+            return;
+        }
         if (!main.firstElementChild)
             clientRequest();
         window.onpopstate = onPopState;
