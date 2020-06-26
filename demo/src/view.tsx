@@ -104,7 +104,8 @@ function PagerView(props: { cmd: string, page: number }) {
   const nolink = props.page > 1 ? undefined : 'nolink';
   const prev = <Link href={`/${props.cmd}/${props.page - 1}`} cmd
     className={nolink}>&larr; prev</Link>;
-  const next = <Link href={`/${props.cmd}/${props.page + 1}`} cmd>next &rarr;</Link>;
+  const next = <Link href={`/${props.cmd}/${props.page + 1}`} cmd
+    prefetch>next &rarr;</Link>;
   return (
     <div className='pager'>
       {prev} <span>page {props.page}</span> {next} <LogsView/>
@@ -122,11 +123,14 @@ function LogsView() {
   );
 }
 
-function Link(props: { href: string, className?: string, cmd?: boolean, children: any }) {
-  return (
-    <a href={(props.cmd ? '/myapi' : '') + props.href} className={props.className}
-      target={props.cmd ? '_self' : undefined} data-cmd={props.cmd}>{props.children}</a>
-  );
+function Link(props: { href: string, className?: string,
+    cmd?: boolean, prefetch?: boolean, children: any }) {
+  const href = (props.cmd ? '/myapi' : '') + props.href;
+  const target = props.cmd ? '_self' : undefined;
+  const prefetch = props.prefetch ? <link rel='prefetch' href={href}/> : undefined;
+  const a = <a href={href} className={props.className}
+    target={target} data-cmd={props.cmd}>{props.children}</a>
+  return props.prefetch ? <span>{prefetch}{a}</span> : a;
 }
 
 function ErrorView(err: string, summary?: string) {

@@ -48,6 +48,8 @@ function serverRequest(req: http.IncomingMessage, res: http.ServerResponse) {
     fs.readFile('.' + url, null, (err, data) => {
       if(err) mylog(err.message);
       res.statusCode = 200;
+      res.setHeader('Date', new Date().toUTCString());
+      res.setHeader('Cache-Control', 'max-age=3600');
       res.end(data);
     });
     return;
@@ -66,6 +68,8 @@ function serveNews(path: string, res: http.ServerResponse) {
   const { cmd, arg, req } = request2cmd(path);
 
   res.statusCode = 200;
+  res.setHeader('Date', new Date().toUTCString());
+  res.setHeader('Cache-Control', 'max-age=600');
   res.setHeader('Content-Type', 'text/html');
   res.write(indexStrs[0]);
 

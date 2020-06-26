@@ -131,9 +131,13 @@ a:hover {
       installation</a> onto mobile devices.</p>
     <a href="/myapi/news/1" class="news" target="_self" data-cmd
       style="color:blue; font-size:large; text-decoration:underline">Continue</a>
+    <noscript>
+      <link rel="prefetch" href="/myapi/news/1"/>
+      <link rel="prefetch" href="/myapi/newest/1"/>
+    </noscript>
   </div>
 </div>
   </main>
-  <script async src="/public/main.js"></script>
+  <script async type="module" src="/public/main.js"></script>
 </body>
 </html>

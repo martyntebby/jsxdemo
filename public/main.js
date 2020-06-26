@@ -88,7 +88,7 @@ define("src/jsxrender", ["require", "exports"], function (require, exports) {
 });
 define("package", [], {
     "name": "jsxrender",
-    "version": "0.9.7e",
+    "version": "0.9.7f",
     "description": "Small fast stateless subset of React.",
     "main": "public/main.js",
     "repository": {
@@ -113,7 +113,7 @@ define("package", [], {
     "license": "ISC",
     "devDependencies": {
         "@types/node": "12.12.6",
-        "@types/react": "^16.9.36",
+        "@types/react": "^16.9.41",
         "@types/react-dom": "^16.9.8",
         "typescript": "^3.9.5"
     },
@@ -223,7 +223,7 @@ define("demo/src/view", ["require", "exports", "src/jsxrender", "package"], func
     function PagerView(props) {
         const nolink = props.page > 1 ? undefined : 'nolink';
         const prev = jsxrender_1.h(Link, { href: `/${props.cmd}/${props.page - 1}`, cmd: true, className: nolink }, "\u2190 prev");
-        const next = jsxrender_1.h(Link, { href: `/${props.cmd}/${props.page + 1}`, cmd: true }, "next \u2192");
+        const next = jsxrender_1.h(Link, { href: `/${props.cmd}/${props.page + 1}`, cmd: true, prefetch: true }, "next \u2192");
         return (jsxrender_1.h("div", { className: 'pager' },
             prev,
             " ",
@@ -242,7 +242,13 @@ define("demo/src/view", ["require", "exports", "src/jsxrender", "package"], func
             logs = []));
     }
     function Link(props) {
-        return (jsxrender_1.h("a", { href: (props.cmd ? '/myapi' : '') + props.href, className: props.className, target: props.cmd ? '_self' : undefined, "data-cmd": props.cmd }, props.children));
+        const href = (props.cmd ? '/myapi' : '') + props.href;
+        const target = props.cmd ? '_self' : undefined;
+        const prefetch = props.prefetch ? jsxrender_1.h("link", { rel: 'prefetch', href: href }) : undefined;
+        const a = jsxrender_1.h("a", { href: href, className: props.className, target: target, "data-cmd": props.cmd }, props.children);
+        return props.prefetch ? jsxrender_1.h("span", null,
+            prefetch,
+            a) : a;
     }
     function ErrorView(err, summary) {
         const open = !summary;
@@ -536,6 +542,8 @@ define("demo/src/nodejs", ["require", "exports", "fs", "http", "https", "demo/sr
                 if (err)
                     control_2.mylog(err.message);
                 res.statusCode = 200;
+                res.setHeader('Date', new Date().toUTCString());
+                res.setHeader('Cache-Control', 'max-age=3600');
                 res.end(data);
             });
             return;
@@ -552,6 +560,8 @@ define("demo/src/nodejs", ["require", "exports", "fs", "http", "https", "demo/sr
     function serveNews(path, res) {
         const { cmd, arg, req } = control_2.request2cmd(path);
         res.statusCode = 200;
+        res.setHeader('Date', new Date().toUTCString());
+        res.setHeader('Cache-Control', 'max-age=600');
         res.setHeader('Content-Type', 'text/html');
         res.write(indexStrs[0]);
         function sendResp(data) {
@@ -671,6 +681,7 @@ define("demo/src/main", ["require", "exports", "demo/src/control", "demo/src/nod
     }
 });
 function define(name, params, func) {
+    name = fixModuleName(name);
     const _self = globalThis;
     _self.myexports = _self.myexports || {};
     if (typeof func !== 'function') {
@@ -680,7 +691,11 @@ function define(name, params, func) {
     const req = typeof require === 'undefined' ? undefined : require;
     const args = [req, _self.myexports[name] = {}];
     for (let i = 2; i < params.length; ++i) {
-        args[i] = _self.myexports[params[i]] || (req && req(params[i]));
+        const name2 = fixModuleName(params[i]);
+        args[i] = _self.myexports[name2] || (req && req(name2));
     }
     func.apply(null, args);
+}
+function fixModuleName(name) {
+    return name.startsWith('react/jsx-') ? 'src/jsxrender' : name;
 }
