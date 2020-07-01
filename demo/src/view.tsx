@@ -100,15 +100,19 @@ function UserView(props: { user: HnUser }) {
   );
 }
 
+let color = 0;
+
 function PagerView(props: { cmd: string, page: number }) {
   const nolink = props.page > 1 ? undefined : 'nolink';
   const prev = <Link href={`/${props.cmd}/${props.page - 1}`} cmd
     className={nolink}>&larr; prev</Link>;
   const next = <Link href={`/${props.cmd}/${props.page + 1}`} cmd
-    prefetch>next &rarr;</Link>;
+    prefetch={!config.perftest}>next &rarr;</Link>;
+  const style = config.perftest ? `color:hsl(${++color/10},100%,50%)` : 'pointer-events:none';
+  const page = <a style={style as any} data-cmd='perftest'>page {props.page}</a>;
   return (
     <div className='pager'>
-      {prev} <span>page {props.page}</span> {next} <LogsView/>
+      {prev} {page} {next} <LogsView/>
     </div>
   );
 }

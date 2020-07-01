@@ -148,23 +148,27 @@ function updateConfig(args: string[]): void {
   });
 }
 
-async function perftest(items?: any): Promise<string> {
+async function perftest(items?: any, func?: (str: string) => void): Promise<string> {
   if(!items) {
     const res = await cacheFetch(BASE_URL + '/static/news.json');
-    return perftest(await res.json());
+    return perftest(await res.json(), func);
   }
-  const iterations = config.perftest > 1 ? config.perftest : 10000;
-  mylog('perftest', iterations);
-  const start = Date.now();
-  let count = 0;
-  for(let i = iterations; i > 0; --i) {
+  mylog('perftest', config.perftest);
+  const iterations = config.perftest < 0 ? -config.perftest
+    : config.perftest > 1 ? config.perftest : 10000;
+  return perfs(iterations, () => {
     const str = renderToMarkup('news', '1', items);
-    if(str !== i.toString()) count++;
-  }
+    if(func) func(str);
+  });
+}
+
+function perfs(iterations: number, func: () => void) {
+  const start = Date.now();
+  for(let i = iterations; i > 0; --i) func();
   const end = Date.now();
   const duration = (end - start) / 1000.0;
   const tps = (iterations / duration).toFixed();
-  const str = 'iterations ' + count + '  duration ' + duration + '  tps ' + tps;
+  const str = 'iterations: ' + iterations + '  duration: ' + duration + '  tps: ' + tps;
   mylog(str);
   return str;
 }

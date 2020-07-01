@@ -220,16 +220,19 @@ define("demo/src/view", ["require", "exports", "src/jsxrender", "package"], func
                 jsxrender_1.h("span", null, " | "),
                 jsxrender_1.h("a", { href: Y_URL + 'threads?id=' + u.id }, "comments"))));
     }
+    let color = 0;
     function PagerView(props) {
         const nolink = props.page > 1 ? undefined : 'nolink';
         const prev = jsxrender_1.h(Link, { href: `/${props.cmd}/${props.page - 1}`, cmd: true, className: nolink }, "\u2190 prev");
-        const next = jsxrender_1.h(Link, { href: `/${props.cmd}/${props.page + 1}`, cmd: true, prefetch: true }, "next \u2192");
+        const next = jsxrender_1.h(Link, { href: `/${props.cmd}/${props.page + 1}`, cmd: true, prefetch: !package_json_1.config.perftest }, "next \u2192");
+        const style = package_json_1.config.perftest ? `color:hsl(${++color / 10},100%,50%)` : 'pointer-events:none';
+        const page = jsxrender_1.h("a", { style: style, "data-cmd": 'perftest' },
+            "page ",
+            props.page);
         return (jsxrender_1.h("div", { className: 'pager' },
             prev,
             " ",
-            jsxrender_1.h("span", null,
-                "page ",
-                props.page),
+            page,
             " ",
             next,
             " ",
@@ -387,28 +390,32 @@ define("demo/src/control", ["require", "exports", "demo/src/view", "demo/src/vie
         });
     }
     exports.updateConfig = updateConfig;
-    async function perftest(items) {
+    async function perftest(items, func) {
         if (!items) {
             const res = await cacheFetch(BASE_URL + '/static/news.json');
-            return perftest(await res.json());
+            return perftest(await res.json(), func);
         }
-        const iterations = package_json_3.config.perftest > 1 ? package_json_3.config.perftest : 10000;
-        view_2.mylog('perftest', iterations);
-        const start = Date.now();
-        let count = 0;
-        for (let i = iterations; i > 0; --i) {
+        view_2.mylog('perftest', package_json_3.config.perftest);
+        const iterations = package_json_3.config.perftest < 0 ? -package_json_3.config.perftest
+            : package_json_3.config.perftest > 1 ? package_json_3.config.perftest : 10000;
+        return perfs(iterations, () => {
             const str = view_2.renderToMarkup('news', '1', items);
-            if (str !== i.toString())
-                count++;
-        }
+            if (func)
+                func(str);
+        });
+    }
+    exports.perftest = perftest;
+    function perfs(iterations, func) {
+        const start = Date.now();
+        for (let i = iterations; i > 0; --i)
+            func();
         const end = Date.now();
         const duration = (end - start) / 1000.0;
         const tps = (iterations / duration).toFixed();
-        const str = 'iterations ' + count + '  duration ' + duration + '  tps ' + tps;
+        const str = 'iterations: ' + iterations + '  duration: ' + duration + '  tps: ' + tps;
         view_2.mylog(str);
         return str;
     }
-    exports.perftest = perftest;
 });
 define("demo/src/browser", ["require", "exports", "demo/src/control"], function (require, exports, control_1) {
     "use strict";
@@ -425,11 +432,6 @@ define("demo/src/browser", ["require", "exports", "demo/src/control"], function 
         if (query)
             control_1.updateConfig(query.substring(1).split('&'));
         const main = document.getElementById('main');
-        if (control_1.config.perftest) {
-            main.innerHTML = 'perftest ...';
-            main.innerHTML = await control_1.perftest();
-            return;
-        }
         if (!main.firstElementChild)
             clientRequest();
         window.onpopstate = onPopState;
@@ -464,6 +466,10 @@ define("demo/src/browser", ["require", "exports", "demo/src/control"], function 
             const cmd = e.target.dataset.cmd;
             if (cmd !== undefined) {
                 e.preventDefault();
+                if (cmd === 'perftest') {
+                    perftest2();
+                    return;
+                }
                 const path = cmd || e.target.pathname;
                 window.history.pushState(path, '');
                 clientRequest(path);
@@ -492,6 +498,13 @@ define("demo/src/browser", ["require", "exports", "demo/src/control"], function 
         catch (err) {
             return control_1.renderToMarkup('', '', err + ' Maybe offline?');
         }
+    }
+    async function perftest2() {
+        const main = document.getElementById('main');
+        const func = control_1.config.perftest > 0 ? undefined :
+            (str) => main.innerHTML = str;
+        main.innerHTML = 'perftest ' + control_1.config.perftest + ' ...';
+        main.innerHTML = await control_1.perftest(undefined, func);
     }
 });
 define("demo/src/nodejs", ["require", "exports", "fs", "http", "https", "demo/src/control"], function (require, exports, fs, http, https, control_2) {

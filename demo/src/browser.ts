@@ -21,11 +21,6 @@ async function browser() {
   if(query) updateConfig(query.substring(1).split('&'));
 
   const main = document.getElementById('main')!;
-  if(config.perftest) {
-    main.innerHTML = 'perftest ...';
-    main.innerHTML = await perftest();
-    return;
-  }
   if(!main.firstElementChild) clientRequest();
 
   window.onpopstate = onPopState;
@@ -65,6 +60,7 @@ function onClick(e: Event) {
     const cmd = e.target.dataset.cmd;
     if(cmd !== undefined) {
       e.preventDefault();
+      if(cmd === 'perftest') { perftest2(); return; }
       const path = cmd || e.target.pathname;
       window.history.pushState(path, '');
       clientRequest(path);
@@ -96,4 +92,12 @@ async function fetchPath(path: string) {
   catch(err) {
     return renderToMarkup('', '', err + ' Maybe offline?');
   }
+}
+
+async function perftest2() {
+  const main = document.getElementById('main')!;
+  const func = config.perftest > 0 ? undefined :
+    (str: string) => main.innerHTML = str;
+  main.innerHTML = 'perftest ' + config.perftest + ' ...';
+  main.innerHTML = await perftest(undefined, func);
 }
