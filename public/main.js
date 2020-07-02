@@ -225,7 +225,7 @@ define("demo/src/view", ["require", "exports", "src/jsxrender", "package"], func
         const nolink = props.page > 1 ? undefined : 'nolink';
         const prev = jsxrender_1.h(Link, { href: `/${props.cmd}/${props.page - 1}`, cmd: true, className: nolink }, "\u2190 prev");
         const next = jsxrender_1.h(Link, { href: `/${props.cmd}/${props.page + 1}`, cmd: true, prefetch: !package_json_1.config.perftest }, "next \u2192");
-        const style = package_json_1.config.perftest ? `color:hsl(${++color / 10},100%,50%)` : 'pointer-events:none';
+        const style = package_json_1.config.perftest ? `color:hsl(${++color},100%,50%)` : 'pointer-events:none';
         const page = jsxrender_1.h("a", { style: style, "data-cmd": 'perftest' },
             "page ",
             props.page);
@@ -290,7 +290,6 @@ define("demo/src/control", ["require", "exports", "demo/src/view", "demo/src/vie
     exports.cacheFetch = cacheFetch;
     async function cacheFetch1(request, evt) {
         const reqstr = typeof request === 'string' ? request : request.url;
-        view_2.mylog('cacheFetch', reqstr);
         const { cmd, arg, req } = request2cmd(request);
         const cache = await getCache();
         const cached = cache && await cache.match(request);
@@ -422,6 +421,7 @@ define("demo/src/browser", ["require", "exports", "demo/src/control"], function 
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.browser = void 0;
     let sw = false;
+    let started = 0;
     async function browser() {
         control_1.mylog('browser');
         if (!('fetch' in window)) {
@@ -434,13 +434,14 @@ define("demo/src/browser", ["require", "exports", "demo/src/control"], function 
         const main = document.getElementById('main');
         if (!main.firstElementChild)
             clientRequest();
+        window.onmessage = onMessage;
         window.onpopstate = onPopState;
         document.body.onclick = onClick;
         startWorker();
     }
     exports.browser = browser;
     function startWorker() {
-        if (control_1.config.worker === 'service') {
+        if (control_1.config.worker === 'service' && !control_1.config.perftest) {
             if ('serviceWorker' in navigator) {
                 navigator.serviceWorker.register('sw.js')
                     .then(reg => { sw = true; control_1.mylog(reg); }, err => swfail('ServiceWorker failed.', err));
@@ -466,14 +467,35 @@ define("demo/src/browser", ["require", "exports", "demo/src/control"], function 
             const cmd = e.target.dataset.cmd;
             if (cmd !== undefined) {
                 e.preventDefault();
-                if (cmd === 'perftest') {
-                    perftest2();
-                    return;
-                }
+                if (cmd === 'perftest')
+                    return perftest1();
+                started = 0;
                 const path = cmd || e.target.pathname;
                 window.history.pushState(path, '');
                 clientRequest(path);
             }
+        }
+    }
+    async function onMessage(e) {
+        if (!started)
+            return;
+        const count = e.data;
+        if (count > 0) {
+            const markupp = fetchPath('/myapi/ask/2');
+            const main = document.getElementById('main');
+            const markup = await markupp;
+            window.postMessage(count - 1, '*');
+            main.innerHTML = markup;
+        }
+        else {
+            const duration = (Date.now() - started) / 1000;
+            const iterations = -control_1.config.perftest;
+            const ips = (iterations / duration).toFixed();
+            const str = 'iterations: ' + iterations + ' duration: ' + duration + ' fps: ' + ips;
+            control_1.mylog(str);
+            const main = document.getElementById('main');
+            main.innerHTML = str;
+            started = 0;
         }
     }
     async function clientRequest(path) {
@@ -497,6 +519,22 @@ define("demo/src/browser", ["require", "exports", "demo/src/control"], function 
         }
         catch (err) {
             return control_1.renderToMarkup('', '', err + ' Maybe offline?');
+        }
+    }
+    function perftest1() {
+        if (control_1.config.perftest > 0) {
+            perftest2();
+        }
+        else {
+            if (started) {
+                control_1.mylog('stop');
+                started = 0;
+            }
+            else {
+                control_1.mylog('perftest1', control_1.config.perftest);
+                started = Date.now();
+                window.postMessage(-control_1.config.perftest, '*');
+            }
         }
     }
     async function perftest2() {

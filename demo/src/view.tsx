@@ -108,7 +108,7 @@ function PagerView(props: { cmd: string, page: number }) {
     className={nolink}>&larr; prev</Link>;
   const next = <Link href={`/${props.cmd}/${props.page + 1}`} cmd
     prefetch={!config.perftest}>next &rarr;</Link>;
-  const style = config.perftest ? `color:hsl(${++color/10},100%,50%)` : 'pointer-events:none';
+  const style = config.perftest ? `color:hsl(${++color},100%,50%)` : 'pointer-events:none';
   const page = <a style={style as any} data-cmd='perftest'>page {props.page}</a>;
   return (
     <div className='pager'>

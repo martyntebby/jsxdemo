@@ -41,7 +41,7 @@ async function cacheFetch(request: RequestInfo, evt?: ExtendableEvent) {
 
 async function cacheFetch1(request: RequestInfo, evt?: ExtendableEvent) {
   const reqstr = typeof request === 'string' ? request : request.url;
-  mylog('cacheFetch', reqstr);
+//  mylog('cacheFetch', reqstr);
   const { cmd, arg, req } = request2cmd(request);
 
   // look in cache for static or not too old

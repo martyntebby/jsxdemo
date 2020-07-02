@@ -9,6 +9,7 @@ export { browser };
 import { mylog, config, updateConfig, renderToMarkup, request2cmd, cacheFetch, perftest } from './control';
 
 let sw = false;
+let started = 0;
 
 async function browser() {
   mylog('browser');
@@ -23,6 +24,7 @@ async function browser() {
   const main = document.getElementById('main')!;
   if(!main.firstElementChild) clientRequest();
 
+  window.onmessage = onMessage;
   window.onpopstate = onPopState;
   document.body.onclick = onClick;
 
@@ -30,7 +32,7 @@ async function browser() {
 }
 
 function startWorker() {
-  if(config.worker === 'service') {
+  if(config.worker === 'service' && !config.perftest) {
     if('serviceWorker' in navigator) {
       // using main.js does not get swapped out - probably because of self caching
       navigator.serviceWorker.register('sw.js')
@@ -60,11 +62,35 @@ function onClick(e: Event) {
     const cmd = e.target.dataset.cmd;
     if(cmd !== undefined) {
       e.preventDefault();
-      if(cmd === 'perftest') { perftest2(); return; }
+      if(cmd === 'perftest') return perftest1();
+      started = 0;
       const path = cmd || e.target.pathname;
       window.history.pushState(path, '');
       clientRequest(path);
     }
+  }
+}
+
+async function onMessage(e: MessageEvent) {
+//  mylog('onMessage', e.data);
+  if(!started) return;
+  const count: number = e.data;
+  if(count > 0) {
+    const markupp = fetchPath('/myapi/ask/2');
+    const main = document.getElementById('main')!;
+    const markup = await markupp;
+    window.postMessage(count - 1, '*');
+    main.innerHTML = markup;
+  }
+  else {
+    const duration = (Date.now() - started) / 1000;
+    const iterations = -config.perftest;
+    const ips = (iterations / duration).toFixed();
+    const str = 'iterations: ' + iterations + ' duration: ' + duration + ' fps: ' + ips;
+    mylog(str);
+    const main = document.getElementById('main')!;
+    main.innerHTML = str;
+    started = 0;
   }
 }
 
@@ -91,6 +117,23 @@ async function fetchPath(path: string) {
   }
   catch(err) {
     return renderToMarkup('', '', err + ' Maybe offline?');
+  }
+}
+
+function perftest1() {
+  if(config.perftest > 0) {
+    perftest2();
+  }
+  else {
+    if(started) {
+      mylog('stop');
+      started = 0;
+    }
+    else {
+      mylog('perftest1', config.perftest);
+      started = Date.now();
+      window.postMessage(-config.perftest, '*');
+    }
   }
 }
 
