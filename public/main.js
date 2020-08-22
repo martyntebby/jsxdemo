@@ -87,13 +87,13 @@ define("src/jsxrender", ["require", "exports"], function (require, exports) {
     }
 });
 define("package", [], {
-    "name": "jsxrender",
-    "version": "0.9.7f",
-    "description": "Small fast stateless subset of React.",
+    "name": "jsxdemo",
+    "version": "0.9.8",
+    "description": "Hacker News demo for jsxrender.",
     "main": "public/main.js",
     "repository": {
         "type": "git",
-        "url": "https://github.com/martyntebby/jsxrender.git"
+        "url": "https://github.com/martyntebby/jsxdemo.git"
     },
     "config": {
         "port": 3000,
@@ -102,12 +102,12 @@ define("package", [], {
         "perftest": 0
     },
     "scripts": {
-        "build": "rm -rf dist out public/main.js && tsc -b . --force && node dist/bundle.js",
+        "build": "rm -rf dist public/main.js && tsc -b . --force && node dist/bundle.js",
         "watch": "tsc -b . -w --listEmittedFiles",
         "clean": "rm -rf dist",
         "start": "node .",
         "deno": "deno run --allow-net --allow-read public/main.js",
-        "test": "node dist/tests.js"
+        "test": "echo none"
     },
     "author": "Martyn Tebby",
     "license": "ISC",
@@ -115,6 +115,7 @@ define("package", [], {
         "@types/node": "12.12.6",
         "@types/react": "^16.9.41",
         "@types/react-dom": "^16.9.8",
+        "jsxrender": "martyntebby/jsxrender",
         "typescript": "^3.9.5"
     },
     "dependencies": {}
@@ -271,7 +272,7 @@ define("demo/src/control", ["require", "exports", "demo/src/view", "demo/src/vie
     Object.defineProperty(exports, "version", { enumerable: true, get: function () { return package_json_2.version; } });
     const STATIC_TTL = 60 * 60 * 24;
     const DYNAMIC_TTL = 60 * 10;
-    const BASE_URL = 'https://jsxrender.westinca.com/public';
+    const BASE_URL = 'https://jsxdemo.westinca.com/public';
     const MAIN_SITE_INDEX = BASE_URL + '/index.html';
     ;
     let isServer;

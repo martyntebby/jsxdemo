@@ -1,7 +1,7 @@
-name = "jsxrender"
+name = "jsxdemo"
 type = "javascript"
 zone_id = "$CF_ZONE_ID"
 account_id = "$CF_ACCOUNT_ID"
 routes = [
-  "jsxrender.westinca.com/myapi/*"
+  "jsxdemo.westinca.com/myapi/*"
 ]

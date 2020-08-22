@@ -1,11 +1,11 @@
 {
-  "name": "jsxrender",
-  "version": "0.9.7f",
-  "description": "Small fast stateless subset of React.",
+  "name": "jsxdemo",
+  "version": "0.9.8",
+  "description": "Hacker News demo for jsxrender.",
   "main": "public/main.js",
   "repository": {
     "type": "git",
-    "url": "https://github.com/martyntebby/jsxrender.git"
+    "url": "https://github.com/martyntebby/jsxdemo.git"
   },
   "config": {
     "port": 3000,
@@ -14,12 +14,12 @@
     "perftest": 0
   },
   "scripts": {
-    "build": "rm -rf dist out public/main.js && tsc -b . --force && node dist/bundle.js",
+    "build": "rm -rf dist public/main.js && tsc -b . --force && node dist/bundle.js",
     "watch": "tsc -b . -w --listEmittedFiles",
     "clean": "rm -rf dist",
     "start": "node .",
     "deno": "deno run --allow-net --allow-read public/main.js",
-    "test": "node dist/tests.js"
+    "test": "echo none"
   },
   "author": "Martyn Tebby",
   "license": "ISC",
@@ -27,6 +27,7 @@
     "@types/node": "12.12.6",
     "@types/react": "^16.9.41",
     "@types/react-dom": "^16.9.8",
+    "jsxrender": "martyntebby/jsxrender",
     "typescript": "^3.9.5"
   },
   "dependencies": {}

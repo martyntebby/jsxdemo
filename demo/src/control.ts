@@ -12,7 +12,7 @@ import { config, version } from '../../package.json';
 
 const STATIC_TTL = 60 * 60 * 24;
 const DYNAMIC_TTL = 60 * 10;
-const BASE_URL = 'https://jsxrender.westinca.com/public';
+const BASE_URL = 'https://jsxdemo.westinca.com/public';
 const MAIN_SITE_INDEX = BASE_URL + '/index.html';
 
 type Mapped = { [key: string]: unknown; };

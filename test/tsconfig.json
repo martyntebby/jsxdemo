@@ -1,8 +1,0 @@
-{
-  "extends": "../tsbase",
-  "include": [ "tests.tsx", "../src/jsxrender.ts", "../demo/src/modulehack.ts" ],
-  "compilerOptions": {
-    "module": "amd",
-    "outFile": "../dist/tests.js",
-  }
-}
