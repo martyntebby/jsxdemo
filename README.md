@@ -9,6 +9,8 @@ and also for server side rendering using isomorphic code.
 It is written in typescript and useable with the React @type files
 (see package.json).
 
+[jsxrender](https://github.com/martyntebby/jsxrender)
+
 Hacker News Demo
 ----------------
 A simple Hacker News demo app using jsxrender.
