@@ -22,8 +22,6 @@ npm install
 
 npm run build
 
-npm test
-
 Performance
 -----------
 Taken from webpagetest.org on a Moto G4.
