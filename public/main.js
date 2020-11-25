@@ -88,8 +88,9 @@ define("src/jsxrender", ["require", "exports"], function (require, exports) {
 });
 define("package", [], {
     "name": "jsxdemo",
-    "version": "0.9.8",
+    "version": "0.9.9",
     "description": "Hacker News demo for jsxrender.",
+    "homepage": "https://github.com/martyntebby/jsxdemo#readme",
     "main": "public/main.js",
     "repository": {
         "type": "git",
@@ -102,21 +103,23 @@ define("package", [], {
         "perftest": 0
     },
     "scripts": {
+        "install": "ln -sf node_modules/jsxrender/src .",
         "build": "rm -rf dist public/main.js && tsc -b . --force && node dist/bundle.js",
         "watch": "tsc -b . -w --listEmittedFiles",
         "clean": "rm -rf dist",
         "start": "node .",
+        "perf": "node . perftest=10000",
         "deno": "deno run --allow-net --allow-read public/main.js",
         "test": "echo none"
     },
     "author": "Martyn Tebby",
     "license": "ISC",
     "devDependencies": {
-        "@types/node": "12.12.6",
-        "@types/react": "^16.9.41",
-        "@types/react-dom": "^16.9.8",
-        "jsxrender": "martyntebby/jsxrender",
-        "typescript": "^3.9.5"
+        "typescript": "^4.1.2",
+        "@types/node": "14.14.10",
+        "@types/react": "^17.0.0",
+        "@types/react-dom": "^17.0.0",
+        "jsxrender": "martyntebby/jsxrender"
     },
     "dependencies": {}
 });
@@ -265,7 +268,7 @@ define("demo/src/view", ["require", "exports", "src/jsxrender", "package"], func
 define("demo/src/control", ["require", "exports", "demo/src/view", "demo/src/view", "package", "package"], function (require, exports, view_1, view_2, package_json_2, package_json_3) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.perftest = exports.updateConfig = exports.splitIndexMain = exports.setupIndexStrs = exports.request2cmd = exports.cacheFetch = void 0;
+    exports.version = exports.config = exports.renderToMarkup = exports.mylog = exports.perftest = exports.updateConfig = exports.splitIndexMain = exports.setupIndexStrs = exports.request2cmd = exports.cacheFetch = void 0;
     Object.defineProperty(exports, "mylog", { enumerable: true, get: function () { return view_1.mylog; } });
     Object.defineProperty(exports, "renderToMarkup", { enumerable: true, get: function () { return view_1.renderToMarkup; } });
     Object.defineProperty(exports, "config", { enumerable: true, get: function () { return package_json_2.config; } });

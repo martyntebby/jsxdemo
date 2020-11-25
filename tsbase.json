@@ -5,7 +5,6 @@
     "moduleResolution": "node",
     "removeComments": true,
     "outDir": "dist",
-    "jsx": "react",
     "strict": true
   }
 }

@@ -6,5 +6,6 @@
     "outFile": "../public/main.js",
     "resolveJsonModule": true,
     "jsxFactory": "h",
+    "jsx": "react",
   }
 }
