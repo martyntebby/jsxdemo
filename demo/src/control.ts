@@ -34,7 +34,7 @@ async function cacheFetch(request: RequestInfo, evt?: ExtendableEvent) {
   try {
     return await cacheFetch1(request, evt);
   }
-  catch(err) {
+  catch(err: any) {
     return new Response(err);
   }
 }
@@ -78,7 +78,7 @@ async function api2response(resp: Response, cmd: string, arg: string) {
   let html = renderToMarkup(cmd, arg, data);
   if(isServer) {
     const sections = await getIndexStrs();
-    if(sections) html = sections[0] + html + sections[2];
+    if(sections) html = sections[0] + cmd + sections[1] + html + sections[3];
   }
   return html2response(html, DYNAMIC_TTL);
 }
@@ -109,7 +109,8 @@ async function setupIndexStrs(server?: boolean) {
       indexStrs = splitIndexMain(index);
       if(!isServer) {
         const cache = await getCache();
-        cache?.put('./', html2response(indexStrs[0] + indexStrs[2], STATIC_TTL));
+        const html = indexStrs[0] + 'other' + indexStrs[1] + indexStrs[3];
+        cache?.put('./', html2response(html, STATIC_TTL));
       }
     }
   }
@@ -117,10 +118,13 @@ async function setupIndexStrs(server?: boolean) {
 }
 
 function splitIndexMain(text: string): string[] {
+  const nav = '<nav id="nav" class="">';
+  const pos0 = text.indexOf(nav) + nav.length - 2;
   const main = '<main id="main">';
   const pos1 = text.indexOf(main) + main.length;
   const pos2 = text.indexOf('</main>', pos1);
-  return [ text.substring(0, pos1), text.substring(pos1, pos2), text.substring(pos2) ];
+  return [ text.substring(0, pos0), text.substring(pos0, pos1),
+    text.substring(pos1, pos2), text.substring(pos2) ];
 }
 
 function request2cmd(request: RequestInfo) {
@@ -135,11 +139,12 @@ function request2cmd(request: RequestInfo) {
 }
 
 function cmd2url(cmd: string, arg: string) {
-  return cmd === 'newest'
-  ? `https://node-hnapi.herokuapp.com/${cmd}?page=${arg}`
-  : `https://api.hnpwa.com/v0/${cmd}/${arg}.json`;
+  switch(cmd) {
+    case 'search': return `https://hn.algolia.com/api/v1/search?query=${arg}&hitsPerPage=50&tags=story`;
+    case 'newest': return `https://node-hnapi.herokuapp.com/${cmd}?page=${arg}`;
+    default: return `https://api.hnpwa.com/v0/${cmd}/${arg}.json`;
+  }
 }
-
 
 function updateConfig(args: string[]): void {
   args.forEach(arg => {

@@ -14,7 +14,7 @@
   <link rel="stylesheet" href="/public/static/app.css"/>
 </head>
 <body>
-  <nav id="nav" class="other">
+  <nav id="nav" class="">
     <a href="/public/index.html" class="mainlink" target="_self"
       onclick="event.preventDefault(); window.history.back()">&lArr;</a>
     <a href="/public/index.html" class="intro" target="_self"
@@ -24,6 +24,9 @@
     <a href="/myapi/show/1"   class="show"   target="_self" data-cmd>show</a>
     <a href="/myapi/ask/1"    class="ask"    target="_self" data-cmd>ask</a>
     <a href="/myapi/jobs/1"   class="jobs"   target="_self" data-cmd>jobs</a>
+    <form action="/myapi/search/" class="search" target="_self" data-cmd>
+      <input type="search" placeholder="Search" name="query">
+    </form>
     <a href="https://github.com/martyntebby/jsxdemo" class="mainlink">about</a>
   </nav>
   <noscript id="error"><div class="error">

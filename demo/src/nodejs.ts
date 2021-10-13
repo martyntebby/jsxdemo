@@ -50,6 +50,7 @@ function serverRequest(req: http.IncomingMessage, res: http.ServerResponse) {
       res.statusCode = 200;
       res.setHeader('Date', new Date().toUTCString());
       res.setHeader('Cache-Control', 'max-age=3600');
+      if(url?.endsWith('.js')) res.setHeader('Content-Type', 'application/javascript');
       res.end(data);
     });
     return;
@@ -71,11 +72,11 @@ function serveNews(path: string, res: http.ServerResponse) {
   res.setHeader('Date', new Date().toUTCString());
   res.setHeader('Cache-Control', 'max-age=600');
   res.setHeader('Content-Type', 'text/html');
-  res.write(indexStrs[0]);
+  res.write(indexStrs[0] + cmd + indexStrs[1]);
 
   function sendResp(data: unknown) {
     res.write(renderToMarkup(cmd, arg, data));
-    res.end(indexStrs[2]);
+    res.end(indexStrs[3]);
   }
 
   fetchJson(req, sendResp);
@@ -99,7 +100,7 @@ function fetchJson(url: string, sendResp: (data: unknown) => void) {
           const json = JSON.parse(data);
           data = !json ? 'No data' : json.error ? json.error.toString() : json;
         }
-        catch(err) {
+        catch(err: any) {
           data = err.toString();
         }
         sendResp(data);

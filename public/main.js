@@ -115,10 +115,10 @@ define("package", [], {
     "author": "Martyn Tebby",
     "license": "ISC",
     "devDependencies": {
-        "typescript": "^4.1.2",
-        "@types/node": "14.14.10",
-        "@types/react": "^17.0.0",
-        "@types/react-dom": "^17.0.0",
+        "typescript": "4.4.4",
+        "@types/node": "14.17.21",
+        "@types/react": "^17.0.29",
+        "@types/react-dom": "^17.0.9",
         "jsxrender": "martyntebby/jsxrender"
     },
     "dependencies": {}
@@ -142,40 +142,82 @@ define("demo/src/view", ["require", "exports", "src/jsxrender", "package"], func
         const vnode = typeof data === 'string' ? ErrorView(data, arg) :
             cmd === 'user' ? UserView({ user: data }) :
                 cmd === 'item' ? ItemView({ item: data }) :
-                    ItemsView({ items: data, cmd: cmd, page: Number.parseInt(arg) });
-        return jsxrender_1.renderToStaticMarkup(vnode);
+                    cmd === 'search' ? SearchesView({ items: data, cmd: cmd }) :
+                        ItemsView({ items: data, cmd: cmd, page: Number.parseInt(arg) });
+        return (0, jsxrender_1.renderToStaticMarkup)(vnode);
     }
     exports.renderToMarkup = renderToMarkup;
+    function SearchesView(props) {
+        return ((0, jsxrender_1.h)("ol", { className: 'ol' }, props.items.hits.map(item => (0, jsxrender_1.h)("li", { className: 'li' },
+            (0, jsxrender_1.h)(SearchView, { item: item })))));
+    }
+    function SearchView(props) {
+        const i = props.item;
+        const idomain = i.url && i.url.split('/', 3)[2];
+        const url = '/item/' + i.objectID;
+        const iurl = i.url || url;
+        const iuser = i.author;
+        const icomments_count = i.num_comments;
+        const created = i.created_at.substring(0, 10);
+        const domain = idomain && (0, jsxrender_1.h)("span", { className: 'smallgrey' },
+            "(",
+            idomain,
+            ")");
+        const points = i.points > 0 && (0, jsxrender_1.h)("span", null,
+            i.points,
+            " points");
+        const user = iuser && (0, jsxrender_1.h)("span", null,
+            "by ",
+            (0, jsxrender_1.h)(UserNameView, { user: iuser }));
+        const comments = icomments_count > 0 &&
+            (0, jsxrender_1.h)("span", null,
+                "| ",
+                (0, jsxrender_1.h)(Link, { href: url, cmd: true },
+                    icomments_count,
+                    " comments"));
+        return ((0, jsxrender_1.h)("article", null,
+            (0, jsxrender_1.h)(Link, { className: 'mainlink', href: iurl, cmd: !idomain }, i.title),
+            " ",
+            domain,
+            (0, jsxrender_1.h)("div", { className: 'smallgrey' },
+                points,
+                " ",
+                user,
+                " ",
+                created,
+                " ",
+                comments)));
+    }
     function ItemsView(props) {
-        return (jsxrender_1.h("div", null,
-            jsxrender_1.h("ol", { start: (props.page - 1) * 30 + 1, className: 'ol' }, props.items.map(item => jsxrender_1.h("li", { className: 'li' },
-                jsxrender_1.h(ItemView, { item: item })))),
+        return ((0, jsxrender_1.h)("div", null,
+            (0, jsxrender_1.h)("ol", { start: (props.page - 1) * 30 + 1, className: 'ol' }, props.items.map(item => (0, jsxrender_1.h)("li", { className: 'li' },
+                (0, jsxrender_1.h)(ItemView, { item: item })))),
             PagerView(props)));
     }
     function ItemView(props) {
         const i = props.item;
         const url = i.domain ? i.url : '/' + i.url.replace('?id=', '/');
-        const domain = i.domain && jsxrender_1.h("span", { className: 'smallgrey' },
+        const domain = i.domain && (0, jsxrender_1.h)("span", { className: 'smallgrey' },
             "(",
             i.domain,
             ")");
-        const points = i.points > 0 && jsxrender_1.h("span", null,
+        const points = i.points > 0 && (0, jsxrender_1.h)("span", null,
             i.points,
             " points");
-        const user = i.user && jsxrender_1.h("span", null,
+        const user = i.user && (0, jsxrender_1.h)("span", null,
             "by ",
-            jsxrender_1.h(UserNameView, { user: i.user }));
+            (0, jsxrender_1.h)(UserNameView, { user: i.user }));
         const comments = i.comments_count > 0 &&
-            jsxrender_1.h("span", null,
+            (0, jsxrender_1.h)("span", null,
                 "| ",
-                jsxrender_1.h(Link, { href: '/item/' + i.id, cmd: true },
+                (0, jsxrender_1.h)(Link, { href: '/item/' + i.id, cmd: true },
                     i.comments_count,
                     " comments"));
-        return (jsxrender_1.h("article", { className: i.comments && 'inset' },
-            jsxrender_1.h(Link, { className: 'mainlink', href: url, cmd: !i.domain }, i.title),
+        return ((0, jsxrender_1.h)("article", { className: i.comments && 'inset' },
+            (0, jsxrender_1.h)(Link, { className: 'mainlink', href: url, cmd: !i.domain }, i.title),
             " ",
             domain,
-            jsxrender_1.h("div", { className: 'smallgrey' },
+            (0, jsxrender_1.h)("div", { className: 'smallgrey' },
                 points,
                 " ",
                 user,
@@ -183,85 +225,85 @@ define("demo/src/view", ["require", "exports", "src/jsxrender", "package"], func
                 i.time_ago,
                 " ",
                 comments),
-            i.content && jsxrender_1.h("p", null),
+            i.content && (0, jsxrender_1.h)("p", null),
             i.content,
-            jsxrender_1.h(CommentsView, { comments: i.comments })));
+            (0, jsxrender_1.h)(CommentsView, { comments: i.comments })));
     }
     function CommentsView(props) {
-        return !props.comments ? null : (jsxrender_1.h("div", null,
-            jsxrender_1.h("p", null),
-            props.comments.map(comment => jsxrender_1.h(CommentView, { comment: comment }))));
+        return !props.comments ? null : ((0, jsxrender_1.h)("div", null,
+            (0, jsxrender_1.h)("p", null),
+            props.comments.map(comment => (0, jsxrender_1.h)(CommentView, { comment: comment }))));
     }
     function CommentView(props) {
         const c = props.comment;
-        return (jsxrender_1.h("details", { className: 'details', open: true },
-            jsxrender_1.h("summary", null,
-                jsxrender_1.h(UserNameView, { user: c.user }),
+        return ((0, jsxrender_1.h)("details", { className: 'details', open: true },
+            (0, jsxrender_1.h)("summary", null,
+                (0, jsxrender_1.h)(UserNameView, { user: c.user }),
                 " ",
                 c.time_ago),
             c.content,
-            jsxrender_1.h(CommentsView, { comments: c.comments })));
+            (0, jsxrender_1.h)(CommentsView, { comments: c.comments })));
     }
     function UserNameView(props) {
-        return jsxrender_1.h(Link, { className: 'bold', href: '/user/' + props.user, cmd: true }, props.user);
+        return (0, jsxrender_1.h)(Link, { className: 'bold', href: '/user/' + props.user, cmd: true }, props.user);
     }
     const Y_URL = 'https://news.ycombinator.com/';
     function UserView(props) {
         const u = props.user;
-        return (jsxrender_1.h("div", { className: 'inset' },
-            jsxrender_1.h("p", null,
+        return ((0, jsxrender_1.h)("div", { className: 'inset' },
+            (0, jsxrender_1.h)("p", null,
                 "user ",
-                jsxrender_1.h("span", { className: 'bold large' },
+                (0, jsxrender_1.h)("span", { className: 'bold large' },
                     u.id,
                     " "),
                 "(",
                 u.karma,
                 ") created ",
                 u.created),
-            jsxrender_1.h("div", null, u.about),
-            jsxrender_1.h("p", null,
-                jsxrender_1.h("a", { href: Y_URL + 'submitted?id=' + u.id }, "submissions"),
-                jsxrender_1.h("span", null, " | "),
-                jsxrender_1.h("a", { href: Y_URL + 'threads?id=' + u.id }, "comments"))));
+            (0, jsxrender_1.h)("div", null, u.about),
+            (0, jsxrender_1.h)("p", null,
+                (0, jsxrender_1.h)("a", { href: Y_URL + 'submitted?id=' + u.id }, "submissions"),
+                (0, jsxrender_1.h)("span", null, " | "),
+                (0, jsxrender_1.h)("a", { href: Y_URL + 'threads?id=' + u.id }, "comments"))));
     }
     let color = 0;
     function PagerView(props) {
         const nolink = props.page > 1 ? undefined : 'nolink';
-        const prev = jsxrender_1.h(Link, { href: `/${props.cmd}/${props.page - 1}`, cmd: true, className: nolink }, "\u2190 prev");
-        const next = jsxrender_1.h(Link, { href: `/${props.cmd}/${props.page + 1}`, cmd: true, prefetch: !package_json_1.config.perftest }, "next \u2192");
+        const prev = (0, jsxrender_1.h)(Link, { href: `/${props.cmd}/${props.page - 1}`, cmd: true, className: nolink }, "\u2190 prev");
+        const next = (0, jsxrender_1.h)(Link, { href: `/${props.cmd}/${props.page + 1}`, cmd: true, prefetch: !package_json_1.config.perftest }, "next \u2192");
         const style = package_json_1.config.perftest ? `color:hsl(${++color},100%,50%)` : 'pointer-events:none';
-        const page = jsxrender_1.h("a", { style: style, "data-cmd": 'perftest' },
+        const page = (0, jsxrender_1.h)("a", { style: style, "data-cmd": 'perftest' },
             "page ",
             props.page);
-        return (jsxrender_1.h("div", { className: 'pager' },
+        return ((0, jsxrender_1.h)("div", { className: 'pager' },
             prev,
             " ",
             page,
             " ",
             next,
             " ",
-            jsxrender_1.h(LogsView, null)));
+            (0, jsxrender_1.h)(LogsView, null)));
     }
     function LogsView() {
-        return logs.length === 0 ? null : (jsxrender_1.h("details", null,
-            jsxrender_1.h("summary", null, "Logs"),
-            jsxrender_1.h("pre", null, logs.join('\n')),
+        return logs.length === 0 ? null : ((0, jsxrender_1.h)("details", null,
+            (0, jsxrender_1.h)("summary", null, "Logs"),
+            (0, jsxrender_1.h)("pre", null, logs.join('\n')),
             logs = []));
     }
     function Link(props) {
         const href = (props.cmd ? '/myapi' : '') + props.href;
         const target = props.cmd ? '_self' : undefined;
-        const prefetch = props.prefetch ? jsxrender_1.h("link", { rel: 'prefetch', href: href }) : undefined;
-        const a = jsxrender_1.h("a", { href: href, className: props.className, target: target, "data-cmd": props.cmd }, props.children);
-        return props.prefetch ? jsxrender_1.h("span", null,
+        const prefetch = props.prefetch ? (0, jsxrender_1.h)("link", { rel: 'prefetch', href: href }) : undefined;
+        const a = (0, jsxrender_1.h)("a", { href: href, className: props.className, target: target, "data-cmd": props.cmd }, props.children);
+        return props.prefetch ? (0, jsxrender_1.h)("span", null,
             prefetch,
             a) : a;
     }
     function ErrorView(err, summary) {
         const open = !summary;
         summary = summary || 'Error';
-        return jsxrender_1.h("details", { open: open, className: 'error' },
-            jsxrender_1.h("summary", null, summary),
+        return (0, jsxrender_1.h)("details", { open: open, className: 'error' },
+            (0, jsxrender_1.h)("summary", null, summary),
             err);
     }
 });
@@ -323,11 +365,11 @@ define("demo/src/control", ["require", "exports", "demo/src/view", "demo/src/vie
     }
     async function api2response(resp, cmd, arg) {
         const data = await resp.json();
-        let html = view_2.renderToMarkup(cmd, arg, data);
+        let html = (0, view_2.renderToMarkup)(cmd, arg, data);
         if (isServer) {
             const sections = await getIndexStrs();
             if (sections)
-                html = sections[0] + html + sections[2];
+                html = sections[0] + cmd + sections[1] + html + sections[3];
         }
         return html2response(html, DYNAMIC_TTL);
     }
@@ -344,7 +386,7 @@ define("demo/src/control", ["require", "exports", "demo/src/view", "demo/src/vie
         return indexStrs || await setupIndexStrs();
     }
     async function setupIndexStrs(server) {
-        view_2.mylog('setupIndexStrs', server);
+        (0, view_2.mylog)('setupIndexStrs', server);
         if (!indexStrs) {
             if (server !== undefined)
                 isServer = server;
@@ -355,7 +397,8 @@ define("demo/src/control", ["require", "exports", "demo/src/view", "demo/src/vie
                 indexStrs = splitIndexMain(index);
                 if (!isServer) {
                     const cache = await getCache();
-                    cache === null || cache === void 0 ? void 0 : cache.put('./', html2response(indexStrs[0] + indexStrs[2], STATIC_TTL));
+                    const html = indexStrs[0] + 'other' + indexStrs[1] + indexStrs[3];
+                    cache === null || cache === void 0 ? void 0 : cache.put('./', html2response(html, STATIC_TTL));
                 }
             }
         }
@@ -363,10 +406,13 @@ define("demo/src/control", ["require", "exports", "demo/src/view", "demo/src/vie
     }
     exports.setupIndexStrs = setupIndexStrs;
     function splitIndexMain(text) {
+        const nav = '<nav id="nav" class="">';
+        const pos0 = text.indexOf(nav) + nav.length - 2;
         const main = '<main id="main">';
         const pos1 = text.indexOf(main) + main.length;
         const pos2 = text.indexOf('</main>', pos1);
-        return [text.substring(0, pos1), text.substring(pos1, pos2), text.substring(pos2)];
+        return [text.substring(0, pos0), text.substring(pos0, pos1),
+            text.substring(pos1, pos2), text.substring(pos2)];
     }
     exports.splitIndexMain = splitIndexMain;
     function request2cmd(request) {
@@ -381,9 +427,11 @@ define("demo/src/control", ["require", "exports", "demo/src/view", "demo/src/vie
     }
     exports.request2cmd = request2cmd;
     function cmd2url(cmd, arg) {
-        return cmd === 'newest'
-            ? `https://node-hnapi.herokuapp.com/${cmd}?page=${arg}`
-            : `https://api.hnpwa.com/v0/${cmd}/${arg}.json`;
+        switch (cmd) {
+            case 'search': return `https://hn.algolia.com/api/v1/search?query=${arg}&hitsPerPage=50&tags=story`;
+            case 'newest': return `https://node-hnapi.herokuapp.com/${cmd}?page=${arg}`;
+            default: return `https://api.hnpwa.com/v0/${cmd}/${arg}.json`;
+        }
     }
     function updateConfig(args) {
         args.forEach(arg => {
@@ -398,11 +446,11 @@ define("demo/src/control", ["require", "exports", "demo/src/view", "demo/src/vie
             const res = await cacheFetch(BASE_URL + '/static/news.json');
             return perftest(await res.json(), func);
         }
-        view_2.mylog('perftest', package_json_3.config.perftest);
+        (0, view_2.mylog)('perftest', package_json_3.config.perftest);
         const iterations = package_json_3.config.perftest < 0 ? -package_json_3.config.perftest
             : package_json_3.config.perftest > 1 ? package_json_3.config.perftest : 10000;
         return perfs(iterations, () => {
-            const str = view_2.renderToMarkup('news', '1', items);
+            const str = (0, view_2.renderToMarkup)('news', '1', items);
             if (func)
                 func(str);
         });
@@ -416,7 +464,7 @@ define("demo/src/control", ["require", "exports", "demo/src/view", "demo/src/vie
         const duration = (end - start) / 1000.0;
         const tps = (iterations / duration).toFixed();
         const str = 'iterations: ' + iterations + '  duration: ' + duration + '  tps: ' + tps;
-        view_2.mylog(str);
+        (0, view_2.mylog)(str);
         return str;
     }
 });
@@ -427,20 +475,21 @@ define("demo/src/browser", ["require", "exports", "demo/src/control"], function 
     let sw = false;
     let started = 0;
     async function browser() {
-        control_1.mylog('browser');
+        (0, control_1.mylog)('browser');
         if (!('fetch' in window)) {
             swfail('Browser not supported.', 'Missing fetch.');
             return;
         }
         const query = window.location.search;
         if (query)
-            control_1.updateConfig(query.substring(1).split('&'));
+            (0, control_1.updateConfig)(query.substring(1).split('&'));
         const main = document.getElementById('main');
         if (!main.firstElementChild)
             clientRequest();
         window.onmessage = onMessage;
         window.onpopstate = onPopState;
         document.body.onclick = onClick;
+        document.body.onsubmit = onSubmit;
         startWorker();
     }
     exports.browser = browser;
@@ -448,7 +497,7 @@ define("demo/src/browser", ["require", "exports", "demo/src/control"], function 
         if (control_1.config.worker === 'service' && !control_1.config.perftest) {
             if ('serviceWorker' in navigator) {
                 navigator.serviceWorker.register('sw.js')
-                    .then(reg => { sw = true; control_1.mylog(reg); }, err => swfail('ServiceWorker failed.', err));
+                    .then(reg => { sw = true; (0, control_1.mylog)(reg); }, err => swfail('ServiceWorker failed.', err));
             }
             else {
                 swfail('ServiceWorker unsupported.', '');
@@ -456,9 +505,9 @@ define("demo/src/browser", ["require", "exports", "demo/src/control"], function 
         }
     }
     function swfail(summary, reason) {
-        control_1.mylog('sw failed:', summary, reason);
+        (0, control_1.mylog)('sw failed:', summary, reason);
         const error = document.getElementById('error');
-        error.outerHTML = control_1.renderToMarkup('', summary, reason +
+        error.outerHTML = (0, control_1.renderToMarkup)('', summary, reason +
             '<br><br>Ensure cookies are enabled, the connection is secure,' +
             ' the browser is not in private mode and is supported' +
             ' (Chrome on Android, Safari on iOS).');
@@ -480,6 +529,17 @@ define("demo/src/browser", ["require", "exports", "demo/src/control"], function 
             }
         }
     }
+    function onSubmit(e) {
+        if (e.target instanceof HTMLFormElement) {
+            const cmd = e.target.dataset.cmd;
+            if (cmd !== undefined) {
+                e.preventDefault();
+                const path = '/myapi/search/' + e.target.query.value;
+                window.history.pushState(path, '');
+                clientRequest(path);
+            }
+        }
+    }
     async function onMessage(e) {
         if (!started)
             return;
@@ -496,7 +556,7 @@ define("demo/src/browser", ["require", "exports", "demo/src/control"], function 
             const iterations = -control_1.config.perftest;
             const ips = (iterations / duration).toFixed();
             const str = 'iterations: ' + iterations + ' duration: ' + duration + ' fps: ' + ips;
-            control_1.mylog(str);
+            (0, control_1.mylog)(str);
             const main = document.getElementById('main');
             main.innerHTML = str;
             started = 0;
@@ -505,7 +565,7 @@ define("demo/src/browser", ["require", "exports", "demo/src/control"], function 
     async function clientRequest(path) {
         path = path || '/myapi/news/1';
         const markupp = fetchPath(path);
-        const { cmd } = control_1.request2cmd(path);
+        const { cmd } = (0, control_1.request2cmd)(path);
         const nav = document.getElementById('nav');
         const main = document.getElementById('main');
         const child = main.firstElementChild;
@@ -522,7 +582,7 @@ define("demo/src/browser", ["require", "exports", "demo/src/control"], function 
             return await resp.text();
         }
         catch (err) {
-            return control_1.renderToMarkup('', '', err + ' Maybe offline?');
+            return (0, control_1.renderToMarkup)('', '', err + ' Maybe offline?');
         }
     }
     function perftest1() {
@@ -531,11 +591,11 @@ define("demo/src/browser", ["require", "exports", "demo/src/control"], function 
         }
         else {
             if (started) {
-                control_1.mylog('stop');
+                (0, control_1.mylog)('stop');
                 started = 0;
             }
             else {
-                control_1.mylog('perftest1', control_1.config.perftest);
+                (0, control_1.mylog)('perftest1', control_1.config.perftest);
                 started = Date.now();
                 window.postMessage(-control_1.config.perftest, '*');
             }
@@ -546,7 +606,7 @@ define("demo/src/browser", ["require", "exports", "demo/src/control"], function 
         const func = control_1.config.perftest > 0 ? undefined :
             (str) => main.innerHTML = str;
         main.innerHTML = 'perftest ' + control_1.config.perftest + ' ...';
-        main.innerHTML = await control_1.perftest(undefined, func);
+        main.innerHTML = await (0, control_1.perftest)(undefined, func);
     }
 });
 define("demo/src/nodejs", ["require", "exports", "fs", "http", "https", "demo/src/control"], function (require, exports, fs, http, https, control_2) {
@@ -555,8 +615,8 @@ define("demo/src/nodejs", ["require", "exports", "fs", "http", "https", "demo/sr
     exports.nodejs = void 0;
     let indexStrs;
     function nodejs() {
-        control_2.mylog('nodejs');
-        control_2.updateConfig(process.argv.slice(2));
+        (0, control_2.mylog)('nodejs');
+        (0, control_2.updateConfig)(process.argv.slice(2));
         control_2.config.worker = 'node';
         if (control_2.config.perftest)
             doPerfTest();
@@ -567,18 +627,18 @@ define("demo/src/nodejs", ["require", "exports", "fs", "http", "https", "demo/sr
     function doPerfTest() {
         const news = fs.readFileSync('public/static/news.json', 'utf8');
         const json = JSON.parse(news);
-        control_2.perftest(json);
+        (0, control_2.perftest)(json);
         process.exit();
     }
     function doServer() {
         const indexStr = fs.readFileSync('public/index.html', 'utf8');
-        indexStrs = control_2.splitIndexMain(indexStr);
+        indexStrs = (0, control_2.splitIndexMain)(indexStr);
         const server = http.createServer(serverRequest).listen(control_2.config.port);
-        control_2.mylog('listening', server.address());
+        (0, control_2.mylog)('listening', server.address());
     }
     function serverRequest(req, res) {
         let url = req.url;
-        control_2.mylog('serverRequest', url);
+        (0, control_2.mylog)('serverRequest', url);
         if (!url)
             return;
         const pos = url.indexOf('?');
@@ -595,10 +655,12 @@ define("demo/src/nodejs", ["require", "exports", "fs", "http", "https", "demo/sr
         if (url.startsWith('/public/')) {
             fs.readFile('.' + url, null, (err, data) => {
                 if (err)
-                    control_2.mylog(err.message);
+                    (0, control_2.mylog)(err.message);
                 res.statusCode = 200;
                 res.setHeader('Date', new Date().toUTCString());
                 res.setHeader('Cache-Control', 'max-age=3600');
+                if (url === null || url === void 0 ? void 0 : url.endsWith('.js'))
+                    res.setHeader('Content-Type', 'application/javascript');
                 res.end(data);
             });
             return;
@@ -607,26 +669,26 @@ define("demo/src/nodejs", ["require", "exports", "fs", "http", "https", "demo/sr
             serveNews(url, res);
         }
         else {
-            control_2.mylog('unhandled url:', url);
+            (0, control_2.mylog)('unhandled url:', url);
             res.statusCode = 404;
             res.end();
         }
     }
     function serveNews(path, res) {
-        const { cmd, arg, req } = control_2.request2cmd(path);
+        const { cmd, arg, req } = (0, control_2.request2cmd)(path);
         res.statusCode = 200;
         res.setHeader('Date', new Date().toUTCString());
         res.setHeader('Cache-Control', 'max-age=600');
         res.setHeader('Content-Type', 'text/html');
-        res.write(indexStrs[0]);
+        res.write(indexStrs[0] + cmd + indexStrs[1]);
         function sendResp(data) {
-            res.write(control_2.renderToMarkup(cmd, arg, data));
-            res.end(indexStrs[2]);
+            res.write((0, control_2.renderToMarkup)(cmd, arg, data));
+            res.end(indexStrs[3]);
         }
         fetchJson(req, sendResp);
     }
     function fetchJson(url, sendResp) {
-        control_2.mylog('fetchJson', url);
+        (0, control_2.mylog)('fetchJson', url);
         https.get(url, clientRequest)
             .on('error', err => sendResp(err.message));
         function clientRequest(res2) {
@@ -665,39 +727,39 @@ define("demo/src/worker", ["require", "exports", "demo/src/control"], function (
     ];
     ;
     function sworker() {
-        control_3.mylog('sworker');
+        (0, control_3.mylog)('sworker');
         self.addEventListener('install', onInstall);
         self.addEventListener('activate', onActivate);
         self.addEventListener('fetch', onFetch);
     }
     exports.sworker = sworker;
     function cfworker() {
-        control_3.mylog('cfworker');
+        (0, control_3.mylog)('cfworker');
         self.addEventListener('fetch', onFetch);
         cfUpdateConfig();
-        control_3.setupIndexStrs(true);
+        (0, control_3.setupIndexStrs)(true);
     }
     exports.cfworker = cfworker;
     function worker() {
-        control_3.mylog('worker');
+        (0, control_3.mylog)('worker');
         self.addEventListener('message', onMessage);
-        control_3.setupIndexStrs(false);
+        (0, control_3.setupIndexStrs)(false);
     }
     exports.worker = worker;
     function onInstall(e) {
-        control_3.mylog('onInstall', e);
-        control_3.mylog('precache', PRE_CACHE);
-        e.waitUntil(caches.open(control_3.version).then(cache => cache.addAll(PRE_CACHE)).then(() => control_3.setupIndexStrs(false).then(() => self.skipWaiting())));
+        (0, control_3.mylog)('onInstall', e);
+        (0, control_3.mylog)('precache', PRE_CACHE);
+        e.waitUntil(caches.open(control_3.version).then(cache => cache.addAll(PRE_CACHE)).then(() => (0, control_3.setupIndexStrs)(false).then(() => self.skipWaiting())));
     }
     function onActivate(e) {
-        control_3.mylog('onActivate', e);
+        (0, control_3.mylog)('onActivate', e);
         e.waitUntil(self.clients.claim().then(() => caches.keys().then(keys => Promise.all(keys.filter(key => key !== control_3.version).map(name => caches.delete(name))))));
     }
     function onFetch(e) {
-        e.respondWith(control_3.cacheFetch(e.request, e));
+        e.respondWith((0, control_3.cacheFetch)(e.request, e));
     }
     function onMessage(e) {
-        control_3.cacheFetch(e.data)
+        (0, control_3.cacheFetch)(e.data)
             .then(res => res.text()
             .then(text => self.postMessage(text)));
     }
@@ -715,24 +777,24 @@ define("demo/src/main", ["require", "exports", "demo/src/control", "demo/src/nod
     Object.defineProperty(exports, "__esModule", { value: true });
     main();
     function main() {
-        control_4.mylog('main', control_4.version);
+        (0, control_4.mylog)('main', control_4.version);
         if ('Deno' in globalThis)
-            control_4.mylog('deno not implemented');
+            (0, control_4.mylog)('deno not implemented');
         else if ('window' in globalThis)
-            browser_1.browser();
+            (0, browser_1.browser)();
         else if (typeof process === 'object' && process.version)
-            nodejs_1.nodejs();
+            (0, nodejs_1.nodejs)();
         else if ('clients' in globalThis && 'skipWaiting' in globalThis)
-            worker_1.sworker();
+            (0, worker_1.sworker)();
         else if ('caches' in globalThis && 'default' in globalThis.caches)
-            worker_1.cfworker();
+            (0, worker_1.cfworker)();
         else if ('importScripts' in globalThis)
-            worker_1.worker();
+            (0, worker_1.worker)();
         else {
             console.error('unknown environment', globalThis);
             throw 'unknown environment ' + globalThis;
         }
-        control_4.mylog('config:', JSON.stringify(control_4.config));
+        (0, control_4.mylog)('config:', JSON.stringify(control_4.config));
     }
 });
 function define(name, params, func) {

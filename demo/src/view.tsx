@@ -5,6 +5,7 @@ export { mylog, renderToMarkup }
 import { h, renderToStaticMarkup } from '../../src/jsxrender';
 import { config } from '../../package.json';
 import type { HnUser, HnComment, HnItem } from './model';
+import type { HnSearchResults, HnSearchItem } from './model';
 
 let logs: string[] = [];
 
@@ -17,8 +18,40 @@ function renderToMarkup(cmd: string, arg: string, data: any) {
   const vnode = typeof data === 'string' ? ErrorView(data, arg) :
   cmd === 'user' ? UserView({ user: data }) :
   cmd === 'item' ? ItemView({ item: data }) :
+  cmd === 'search' ? SearchesView({ items: data, cmd: cmd }) :
   ItemsView({ items: data, cmd: cmd, page: Number.parseInt(arg) });
   return renderToStaticMarkup(vnode as any);
+}
+
+function SearchesView(props: { items: HnSearchResults, cmd: string }) {
+  return (
+      <ol className='ol'>
+        {props.items.hits.map(item => <li className='li'><SearchView item={item}/></li>)}
+      </ol>
+  );
+}
+
+function SearchView(props: { item: HnSearchItem }) {
+  const i = props.item;
+  const idomain = i.url && i.url.split('/', 3)[2];
+  const url = '/item/' + i.objectID;
+  const iurl = i.url || url; 
+  const iuser = i.author;
+  const icomments_count = i.num_comments;
+  const created = i.created_at.substring(0, 10);
+  const domain = idomain && <span className='smallgrey'>({idomain})</span>;
+  const points = i.points > 0 && <span>{i.points} points</span>;
+  const user = iuser && <span>by <UserNameView user={iuser}/></span>;
+  const comments = icomments_count > 0 &&
+  <span>| <Link href={url} cmd>{icomments_count} comments</Link></span>;
+  return (
+    <article>
+      <Link className='mainlink' href={iurl} cmd={!idomain}>{i.title}</Link> {domain}
+      <div className='smallgrey'>
+        {points} {user} {created} {comments}
+      </div>
+    </article>
+  );
 }
 
 function ItemsView(props: { items: HnItem[], cmd: string, page: number }) {
