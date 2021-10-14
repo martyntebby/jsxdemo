@@ -5,7 +5,8 @@ export { nodejs };
 import * as fs from 'fs';
 import * as http from 'http';
 import * as https from 'https';
-import { mylog, updateConfig, config, perftest, splitIndexMain, request2cmd, renderToMarkup } from './control';
+import { mylog, updateConfig, config, splitIndexMain, request2cmd, renderToMarkup } from './control';
+import { perftest } from './perftest';
 
 let indexStrs: string[];
 
@@ -100,8 +101,8 @@ function fetchJson(url: string, sendResp: (data: unknown) => void) {
           const json = JSON.parse(data);
           data = !json ? 'No data' : json.error ? json.error.toString() : json;
         }
-        catch(err: any) {
-          data = err.toString();
+        catch(err) {
+          data = '' + err;
         }
         sendResp(data);
       });

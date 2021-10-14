@@ -1,7 +1,8 @@
 /*
   Model of json output from https://api.hnpwa.com/v0/{cmd}/{arg}.json
 */
-export type { HnUser, HnContent, HnComment, HnItem, HnSearchItem, HnSearchResults }
+export type { HnUser, HnContent, HnComment, HnItem }
+export type { HnSearchItem, HnSearchResults }
 
 interface HnUser {
   id: string;

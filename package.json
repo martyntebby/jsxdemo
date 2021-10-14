@@ -1,6 +1,6 @@
 {
   "name": "jsxdemo",
-  "version": "0.9.9",
+  "version": "0.9.9a",
   "description": "Hacker News demo for jsxrender.",
   "homepage": "https://github.com/martyntebby/jsxdemo#readme",
   "main": "public/main.js",
@@ -9,6 +9,7 @@
     "url": "https://github.com/martyntebby/jsxdemo.git"
   },
   "config": {
+    "baseurl": "https://jsxdemo.westinca.com/public",
     "port": 3000,
     "dolog": false,
     "worker": "service",

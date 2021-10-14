@@ -3,7 +3,7 @@
   Re exports some view methods and handles config info from package.json.
 */
 export { cacheFetch, request2cmd, setupIndexStrs, splitIndexMain };
-export { updateConfig, perftest };
+export { updateConfig };
 export type { Mapped, ExtendableEvent };
 export { mylog, renderToMarkup } from './view';
 import { mylog, renderToMarkup } from './view';
@@ -12,8 +12,6 @@ import { config, version } from '../../package.json';
 
 const STATIC_TTL = 60 * 60 * 24;
 const DYNAMIC_TTL = 60 * 10;
-const BASE_URL = 'https://jsxdemo.westinca.com/public';
-const MAIN_SITE_INDEX = BASE_URL + '/index.html';
 
 type Mapped = { [key: string]: unknown; };
 
@@ -26,16 +24,16 @@ let indexStrs: string[] | undefined;
 
 declare var caches: CacheStorage & { default?: Cache; };
 
-async function getCache(): Promise<Cache | undefined> {
-  return caches.default || await caches.open(version);
+async function getCache(): Promise<Cache | undefined | false> {
+  return 'caches' in globalThis && (caches.default || await caches.open(version));
 }
 
 async function cacheFetch(request: RequestInfo, evt?: ExtendableEvent) {
   try {
     return await cacheFetch1(request, evt);
   }
-  catch(err: any) {
-    return new Response(err);
+  catch(err) {
+    return new Response(err as any);
   }
 }
 
@@ -66,7 +64,8 @@ async function cacheFetch1(request: RequestInfo, evt?: ExtendableEvent) {
   const resp3 = cmd ? await api2response(resp2, cmd, arg) : resp2;
   if(cache && resp3.ok &&
       (cmd === 'news' || cmd === 'newest' || arg === '1' ||
-      (config.worker !== 'cf' ? resp3.type === 'basic' : resp3.url === MAIN_SITE_INDEX))) {
+      (config.worker !== 'cf' ? resp3.type === 'basic'
+        : resp3.url === config.baseurl + '/index.html'))) {
     const p = cache.put(request, resp3.clone());
     evt?.waitUntil(p);
   }
@@ -102,7 +101,7 @@ async function setupIndexStrs(server?: boolean) {
   mylog('setupIndexStrs', server);
   if(!indexStrs) {
     if(server !== undefined) isServer = server;
-    const url = isServer ? MAIN_SITE_INDEX : '/public/index.html';
+    const url = (isServer ? config.baseurl : '/public') + '/index.html';
     const resp = await cacheFetch(url);
     if(resp.ok) {
       const index = await resp.text();
@@ -110,7 +109,7 @@ async function setupIndexStrs(server?: boolean) {
       if(!isServer) {
         const cache = await getCache();
         const html = indexStrs[0] + 'other' + indexStrs[1] + indexStrs[3];
-        cache?.put('./', html2response(html, STATIC_TTL));
+        if(cache) cache.put('./', html2response(html, STATIC_TTL));
       }
     }
   }
@@ -151,29 +150,4 @@ function updateConfig(args: string[]): void {
     const [key, value] = arg.split('=');
     if(key in config) (<Mapped>config)[key] = value ?? true;
   });
-}
-
-async function perftest(items?: any, func?: (str: string) => void): Promise<string> {
-  if(!items) {
-    const res = await cacheFetch(BASE_URL + '/static/news.json');
-    return perftest(await res.json(), func);
-  }
-  mylog('perftest', config.perftest);
-  const iterations = config.perftest < 0 ? -config.perftest
-    : config.perftest > 1 ? config.perftest : 10000;
-  return perfs(iterations, () => {
-    const str = renderToMarkup('news', '1', items);
-    if(func) func(str);
-  });
-}
-
-function perfs(iterations: number, func: () => void) {
-  const start = Date.now();
-  for(let i = iterations; i > 0; --i) func();
-  const end = Date.now();
-  const duration = (end - start) / 1000.0;
-  const tps = (iterations / duration).toFixed();
-  const str = 'iterations: ' + iterations + '  duration: ' + duration + '  tps: ' + tps;
-  mylog(str);
-  return str;
 }

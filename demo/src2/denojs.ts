@@ -31,7 +31,7 @@ async function doConn(conn: Deno.Conn) {
   const buf = new Uint8Array(4096);
   await conn.read(buf);
   const str = new TextDecoder().decode(buf);
-  mylog('doConn', str.substring(0, 10));
+  mylog('doConn', str.substring(0, 20));
   if(str.startsWith('GET ')) {
     const pos = str.indexOf(' ', 4);
     const path = str.substring(4, pos);

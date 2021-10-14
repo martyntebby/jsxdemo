@@ -1,4 +1,11 @@
 "use strict";
+var __asyncValues = (this && this.__asyncValues) || function (o) {
+    if (!Symbol.asyncIterator) throw new TypeError("Symbol.asyncIterator is not defined.");
+    var m = o[Symbol.asyncIterator], i;
+    return m ? m.call(o) : (o = typeof __values === "function" ? __values(o) : o[Symbol.iterator](), i = {}, verb("next"), verb("throw"), verb("return"), i[Symbol.asyncIterator] = function () { return this; }, i);
+    function verb(n) { i[n] = o[n] && function (v) { return new Promise(function (resolve, reject) { v = o[n](v), settle(resolve, reject, v.done, v.value); }); }; }
+    function settle(resolve, reject, d, v) { Promise.resolve(v).then(function(v) { resolve({ value: v, done: d }); }, reject); }
+};
 define("src/jsxrender", ["require", "exports"], function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -88,7 +95,7 @@ define("src/jsxrender", ["require", "exports"], function (require, exports) {
 });
 define("package", [], {
     "name": "jsxdemo",
-    "version": "0.9.9",
+    "version": "0.9.9a",
     "description": "Hacker News demo for jsxrender.",
     "homepage": "https://github.com/martyntebby/jsxdemo#readme",
     "main": "public/main.js",
@@ -97,6 +104,7 @@ define("package", [], {
         "url": "https://github.com/martyntebby/jsxdemo.git"
     },
     "config": {
+        "baseurl": "https://jsxdemo.westinca.com/public",
         "port": 3000,
         "dolog": false,
         "worker": "service",
@@ -310,20 +318,18 @@ define("demo/src/view", ["require", "exports", "src/jsxrender", "package"], func
 define("demo/src/control", ["require", "exports", "demo/src/view", "demo/src/view", "package", "package"], function (require, exports, view_1, view_2, package_json_2, package_json_3) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.version = exports.config = exports.renderToMarkup = exports.mylog = exports.perftest = exports.updateConfig = exports.splitIndexMain = exports.setupIndexStrs = exports.request2cmd = exports.cacheFetch = void 0;
+    exports.version = exports.config = exports.renderToMarkup = exports.mylog = exports.updateConfig = exports.splitIndexMain = exports.setupIndexStrs = exports.request2cmd = exports.cacheFetch = void 0;
     Object.defineProperty(exports, "mylog", { enumerable: true, get: function () { return view_1.mylog; } });
     Object.defineProperty(exports, "renderToMarkup", { enumerable: true, get: function () { return view_1.renderToMarkup; } });
     Object.defineProperty(exports, "config", { enumerable: true, get: function () { return package_json_2.config; } });
     Object.defineProperty(exports, "version", { enumerable: true, get: function () { return package_json_2.version; } });
     const STATIC_TTL = 60 * 60 * 24;
     const DYNAMIC_TTL = 60 * 10;
-    const BASE_URL = 'https://jsxdemo.westinca.com/public';
-    const MAIN_SITE_INDEX = BASE_URL + '/index.html';
     ;
     let isServer;
     let indexStrs;
     async function getCache() {
-        return caches.default || await caches.open(package_json_3.version);
+        return 'caches' in globalThis && (caches.default || await caches.open(package_json_3.version));
     }
     async function cacheFetch(request, evt) {
         try {
@@ -357,7 +363,8 @@ define("demo/src/control", ["require", "exports", "demo/src/view", "demo/src/vie
         const resp3 = cmd ? await api2response(resp2, cmd, arg) : resp2;
         if (cache && resp3.ok &&
             (cmd === 'news' || cmd === 'newest' || arg === '1' ||
-                (package_json_3.config.worker !== 'cf' ? resp3.type === 'basic' : resp3.url === MAIN_SITE_INDEX))) {
+                (package_json_3.config.worker !== 'cf' ? resp3.type === 'basic'
+                    : resp3.url === package_json_3.config.baseurl + '/index.html'))) {
             const p = cache.put(request, resp3.clone());
             evt === null || evt === void 0 ? void 0 : evt.waitUntil(p);
         }
@@ -390,7 +397,7 @@ define("demo/src/control", ["require", "exports", "demo/src/view", "demo/src/vie
         if (!indexStrs) {
             if (server !== undefined)
                 isServer = server;
-            const url = isServer ? MAIN_SITE_INDEX : '/public/index.html';
+            const url = (isServer ? package_json_3.config.baseurl : '/public') + '/index.html';
             const resp = await cacheFetch(url);
             if (resp.ok) {
                 const index = await resp.text();
@@ -398,7 +405,8 @@ define("demo/src/control", ["require", "exports", "demo/src/view", "demo/src/vie
                 if (!isServer) {
                     const cache = await getCache();
                     const html = indexStrs[0] + 'other' + indexStrs[1] + indexStrs[3];
-                    cache === null || cache === void 0 ? void 0 : cache.put('./', html2response(html, STATIC_TTL));
+                    if (cache)
+                        cache.put('./', html2response(html, STATIC_TTL));
                 }
             }
         }
@@ -441,127 +449,16 @@ define("demo/src/control", ["require", "exports", "demo/src/view", "demo/src/vie
         });
     }
     exports.updateConfig = updateConfig;
-    async function perftest(items, func) {
-        if (!items) {
-            const res = await cacheFetch(BASE_URL + '/static/news.json');
-            return perftest(await res.json(), func);
-        }
-        (0, view_2.mylog)('perftest', package_json_3.config.perftest);
-        const iterations = package_json_3.config.perftest < 0 ? -package_json_3.config.perftest
-            : package_json_3.config.perftest > 1 ? package_json_3.config.perftest : 10000;
-        return perfs(iterations, () => {
-            const str = (0, view_2.renderToMarkup)('news', '1', items);
-            if (func)
-                func(str);
-        });
-    }
-    exports.perftest = perftest;
-    function perfs(iterations, func) {
-        const start = Date.now();
-        for (let i = iterations; i > 0; --i)
-            func();
-        const end = Date.now();
-        const duration = (end - start) / 1000.0;
-        const tps = (iterations / duration).toFixed();
-        const str = 'iterations: ' + iterations + '  duration: ' + duration + '  tps: ' + tps;
-        (0, view_2.mylog)(str);
-        return str;
-    }
 });
-define("demo/src/browser", ["require", "exports", "demo/src/control"], function (require, exports, control_1) {
+define("demo/src/browser2", ["require", "exports", "demo/src/control"], function (require, exports, control_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.browser = void 0;
+    exports.fetchPath = exports.clientRequest = exports.enableSW = void 0;
     let sw = false;
-    let started = 0;
-    async function browser() {
-        (0, control_1.mylog)('browser');
-        if (!('fetch' in window)) {
-            swfail('Browser not supported.', 'Missing fetch.');
-            return;
-        }
-        const query = window.location.search;
-        if (query)
-            (0, control_1.updateConfig)(query.substring(1).split('&'));
-        const main = document.getElementById('main');
-        if (!main.firstElementChild)
-            clientRequest();
-        window.onmessage = onMessage;
-        window.onpopstate = onPopState;
-        document.body.onclick = onClick;
-        document.body.onsubmit = onSubmit;
-        startWorker();
+    function enableSW() {
+        sw = true;
     }
-    exports.browser = browser;
-    function startWorker() {
-        if (control_1.config.worker === 'service' && !control_1.config.perftest) {
-            if ('serviceWorker' in navigator) {
-                navigator.serviceWorker.register('sw.js')
-                    .then(reg => { sw = true; (0, control_1.mylog)(reg); }, err => swfail('ServiceWorker failed.', err));
-            }
-            else {
-                swfail('ServiceWorker unsupported.', '');
-            }
-        }
-    }
-    function swfail(summary, reason) {
-        (0, control_1.mylog)('sw failed:', summary, reason);
-        const error = document.getElementById('error');
-        error.outerHTML = (0, control_1.renderToMarkup)('', summary, reason +
-            '<br><br>Ensure cookies are enabled, the connection is secure,' +
-            ' the browser is not in private mode and is supported' +
-            ' (Chrome on Android, Safari on iOS).');
-    }
-    function onPopState(e) {
-        clientRequest(e.state);
-    }
-    function onClick(e) {
-        if (e.target instanceof HTMLAnchorElement) {
-            const cmd = e.target.dataset.cmd;
-            if (cmd !== undefined) {
-                e.preventDefault();
-                if (cmd === 'perftest')
-                    return perftest1();
-                started = 0;
-                const path = cmd || e.target.pathname;
-                window.history.pushState(path, '');
-                clientRequest(path);
-            }
-        }
-    }
-    function onSubmit(e) {
-        if (e.target instanceof HTMLFormElement) {
-            const cmd = e.target.dataset.cmd;
-            if (cmd !== undefined) {
-                e.preventDefault();
-                const path = '/myapi/search/' + e.target.query.value;
-                window.history.pushState(path, '');
-                clientRequest(path);
-            }
-        }
-    }
-    async function onMessage(e) {
-        if (!started)
-            return;
-        const count = e.data;
-        if (count > 0) {
-            const markupp = fetchPath('/myapi/ask/2');
-            const main = document.getElementById('main');
-            const markup = await markupp;
-            window.postMessage(count - 1, '*');
-            main.innerHTML = markup;
-        }
-        else {
-            const duration = (Date.now() - started) / 1000;
-            const iterations = -control_1.config.perftest;
-            const ips = (iterations / duration).toFixed();
-            const str = 'iterations: ' + iterations + ' duration: ' + duration + ' fps: ' + ips;
-            (0, control_1.mylog)(str);
-            const main = document.getElementById('main');
-            main.innerHTML = str;
-            started = 0;
-        }
-    }
+    exports.enableSW = enableSW;
     async function clientRequest(path) {
         path = path || '/myapi/news/1';
         const markupp = fetchPath(path);
@@ -575,6 +472,7 @@ define("demo/src/browser", ["require", "exports", "demo/src/control"], function 
         nav.className = cmd || 'other';
         window.scroll(0, 0);
     }
+    exports.clientRequest = clientRequest;
     async function fetchPath(path) {
         const func = sw ? fetch : control_1.cacheFetch;
         try {
@@ -585,40 +483,161 @@ define("demo/src/browser", ["require", "exports", "demo/src/control"], function 
             return (0, control_1.renderToMarkup)('', '', err + ' Maybe offline?');
         }
     }
-    function perftest1() {
-        if (control_1.config.perftest > 0) {
-            perftest2();
+    exports.fetchPath = fetchPath;
+});
+define("demo/src/perftest", ["require", "exports", "demo/src/control", "demo/src/browser2"], function (require, exports, control_2, browser2_1) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.perftestpost = exports.perftestgui = exports.perftest = void 0;
+    let started = 0;
+    async function perftest(items) {
+        (0, control_2.mylog)('perftest', control_2.config.perftest);
+        if (!items) {
+            const res = await (0, control_2.cacheFetch)(control_2.config.baseurl + '/static/news.json');
+            items = await res.json();
+        }
+        const start = Date.now();
+        for (let i = control_2.config.perftest; i > 0; --i) {
+            const str = (0, control_2.renderToMarkup)('news', '1', items);
+        }
+        return perfstr(start);
+    }
+    exports.perftest = perftest;
+    function perftestgui() {
+        (0, control_2.mylog)('perftestgui', control_2.config.perftest);
+        if (control_2.config.perftest > 0) {
+            perftestasync();
+            return;
+        }
+        if (started) {
+            (0, control_2.mylog)('stop');
+            started = 0;
+            return;
+        }
+        started = Date.now();
+        window.postMessage(-control_2.config.perftest, '*');
+    }
+    exports.perftestgui = perftestgui;
+    async function perftestasync() {
+        const main = document.getElementById('main');
+        main.innerHTML = 'perftest ' + control_2.config.perftest + ' ...';
+        main.innerHTML = await perftest();
+    }
+    async function perftestpost(count) {
+        if (!started)
+            return;
+        const main = document.getElementById('main');
+        if (count > 0) {
+            main.innerHTML = await (0, browser2_1.fetchPath)('/myapi/ask/2');
+            window.postMessage(count - 1, '*');
         }
         else {
-            if (started) {
-                (0, control_1.mylog)('stop');
-                started = 0;
-            }
-            else {
-                (0, control_1.mylog)('perftest1', control_1.config.perftest);
-                started = Date.now();
-                window.postMessage(-control_1.config.perftest, '*');
+            main.innerHTML = perfstr(started);
+            started = 0;
+        }
+    }
+    exports.perftestpost = perftestpost;
+    function perfstr(start) {
+        const duration = (Date.now() - start) / 1000;
+        const iterations = Math.abs(control_2.config.perftest);
+        const ips = (iterations / duration).toFixed();
+        const str = 'iterations: ' + iterations + ' duration: ' + duration + ' fps: ' + ips;
+        (0, control_2.mylog)(str);
+        return str;
+    }
+});
+define("demo/src/onevents", ["require", "exports", "demo/src/browser2", "demo/src/perftest"], function (require, exports, browser2_2, perftest_1) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.setupHandlers = void 0;
+    function setupHandlers() {
+        window.onmessage = onMessage;
+        window.onpopstate = onPopState;
+        document.body.onclick = onClick;
+        document.body.onsubmit = onSubmit;
+    }
+    exports.setupHandlers = setupHandlers;
+    function onPopState(e) {
+        (0, browser2_2.clientRequest)(e.state);
+    }
+    function onClick(e) {
+        if (e.target instanceof HTMLAnchorElement) {
+            const cmd = e.target.dataset.cmd;
+            if (cmd !== undefined) {
+                e.preventDefault();
+                if (cmd === 'perftest')
+                    return (0, perftest_1.perftestgui)();
+                const path = cmd || e.target.pathname;
+                window.history.pushState(path, '');
+                (0, browser2_2.clientRequest)(path);
             }
         }
     }
-    async function perftest2() {
-        const main = document.getElementById('main');
-        const func = control_1.config.perftest > 0 ? undefined :
-            (str) => main.innerHTML = str;
-        main.innerHTML = 'perftest ' + control_1.config.perftest + ' ...';
-        main.innerHTML = await (0, control_1.perftest)(undefined, func);
+    function onSubmit(e) {
+        if (e.target instanceof HTMLFormElement) {
+            const cmd = e.target.dataset.cmd;
+            if (cmd !== undefined) {
+                e.preventDefault();
+                const path = '/myapi/search/' + e.target.query.value;
+                window.history.pushState(path, '');
+                (0, browser2_2.clientRequest)(path);
+            }
+        }
+    }
+    async function onMessage(e) {
+        (0, perftest_1.perftestpost)(e.data);
     }
 });
-define("demo/src/nodejs", ["require", "exports", "fs", "http", "https", "demo/src/control"], function (require, exports, fs, http, https, control_2) {
+define("demo/src/browser", ["require", "exports", "demo/src/control", "demo/src/browser2", "demo/src/onevents"], function (require, exports, control_3, browser2_3, onevents_1) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.browser = void 0;
+    async function browser() {
+        (0, control_3.mylog)('browser');
+        if (!('fetch' in window)) {
+            swfail('Browser not supported.', 'Missing fetch.');
+            return;
+        }
+        const query = window.location.search;
+        if (query)
+            (0, control_3.updateConfig)(query.substring(1).split('&'));
+        const main = document.getElementById('main');
+        if (!main.firstElementChild)
+            (0, browser2_3.clientRequest)();
+        (0, onevents_1.setupHandlers)();
+        startWorker();
+    }
+    exports.browser = browser;
+    function startWorker() {
+        if (control_3.config.worker === 'service' && !control_3.config.perftest) {
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('sw.js')
+                    .then(reg => { (0, browser2_3.enableSW)(); (0, control_3.mylog)(reg); }, err => swfail('ServiceWorker failed.', err));
+            }
+            else {
+                swfail('ServiceWorker unsupported.', '');
+            }
+        }
+    }
+    function swfail(summary, reason) {
+        (0, control_3.mylog)('sw failed:', summary, reason);
+        const error = document.getElementById('error');
+        error.outerHTML = (0, control_3.renderToMarkup)('', summary, reason +
+            '<br><br>Ensure cookies are enabled, the connection is secure,' +
+            ' the browser is not in private mode and is supported' +
+            ' (Chrome on Android, Safari on iOS).');
+    }
+});
+define("demo/src/nodejs", ["require", "exports", "fs", "http", "https", "demo/src/control", "demo/src/perftest"], function (require, exports, fs, http, https, control_4, perftest_2) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.nodejs = void 0;
     let indexStrs;
     function nodejs() {
-        (0, control_2.mylog)('nodejs');
-        (0, control_2.updateConfig)(process.argv.slice(2));
-        control_2.config.worker = 'node';
-        if (control_2.config.perftest)
+        (0, control_4.mylog)('nodejs');
+        (0, control_4.updateConfig)(process.argv.slice(2));
+        control_4.config.worker = 'node';
+        if (control_4.config.perftest)
             doPerfTest();
         else
             doServer();
@@ -627,18 +646,18 @@ define("demo/src/nodejs", ["require", "exports", "fs", "http", "https", "demo/sr
     function doPerfTest() {
         const news = fs.readFileSync('public/static/news.json', 'utf8');
         const json = JSON.parse(news);
-        (0, control_2.perftest)(json);
+        (0, perftest_2.perftest)(json);
         process.exit();
     }
     function doServer() {
         const indexStr = fs.readFileSync('public/index.html', 'utf8');
-        indexStrs = (0, control_2.splitIndexMain)(indexStr);
-        const server = http.createServer(serverRequest).listen(control_2.config.port);
-        (0, control_2.mylog)('listening', server.address());
+        indexStrs = (0, control_4.splitIndexMain)(indexStr);
+        const server = http.createServer(serverRequest).listen(control_4.config.port);
+        (0, control_4.mylog)('listening', server.address());
     }
     function serverRequest(req, res) {
         let url = req.url;
-        (0, control_2.mylog)('serverRequest', url);
+        (0, control_4.mylog)('serverRequest', url);
         if (!url)
             return;
         const pos = url.indexOf('?');
@@ -655,7 +674,7 @@ define("demo/src/nodejs", ["require", "exports", "fs", "http", "https", "demo/sr
         if (url.startsWith('/public/')) {
             fs.readFile('.' + url, null, (err, data) => {
                 if (err)
-                    (0, control_2.mylog)(err.message);
+                    (0, control_4.mylog)(err.message);
                 res.statusCode = 200;
                 res.setHeader('Date', new Date().toUTCString());
                 res.setHeader('Cache-Control', 'max-age=3600');
@@ -669,26 +688,26 @@ define("demo/src/nodejs", ["require", "exports", "fs", "http", "https", "demo/sr
             serveNews(url, res);
         }
         else {
-            (0, control_2.mylog)('unhandled url:', url);
+            (0, control_4.mylog)('unhandled url:', url);
             res.statusCode = 404;
             res.end();
         }
     }
     function serveNews(path, res) {
-        const { cmd, arg, req } = (0, control_2.request2cmd)(path);
+        const { cmd, arg, req } = (0, control_4.request2cmd)(path);
         res.statusCode = 200;
         res.setHeader('Date', new Date().toUTCString());
         res.setHeader('Cache-Control', 'max-age=600');
         res.setHeader('Content-Type', 'text/html');
         res.write(indexStrs[0] + cmd + indexStrs[1]);
         function sendResp(data) {
-            res.write((0, control_2.renderToMarkup)(cmd, arg, data));
+            res.write((0, control_4.renderToMarkup)(cmd, arg, data));
             res.end(indexStrs[3]);
         }
         fetchJson(req, sendResp);
     }
     function fetchJson(url, sendResp) {
-        (0, control_2.mylog)('fetchJson', url);
+        (0, control_4.mylog)('fetchJson', url);
         https.get(url, clientRequest)
             .on('error', err => sendResp(err.message));
         function clientRequest(res2) {
@@ -705,7 +724,7 @@ define("demo/src/nodejs", ["require", "exports", "fs", "http", "https", "demo/sr
                         data = !json ? 'No data' : json.error ? json.error.toString() : json;
                     }
                     catch (err) {
-                        data = err.toString();
+                        data = '' + err;
                     }
                     sendResp(data);
                 });
@@ -713,7 +732,112 @@ define("demo/src/nodejs", ["require", "exports", "fs", "http", "https", "demo/sr
         }
     }
 });
-define("demo/src/worker", ["require", "exports", "demo/src/control"], function (require, exports, control_3) {
+define("demo/src2/denojs", ["require", "exports", "demo/src/control"], function (require, exports, control_5) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.denojs = void 0;
+    function denojs() {
+        (0, control_5.mylog)('*********************** Incorrect. Do not use. *************************');
+        (0, control_5.mylog)('denojs');
+        (0, control_5.updateConfig)(Deno.args);
+        control_5.config.worker = 'deno';
+        doListener(control_5.config.port);
+        (0, control_5.setupIndexStrs)(true);
+    }
+    exports.denojs = denojs;
+    async function doListener(port) {
+        var e_1, _a;
+        const listener = Deno.listen({ port });
+        (0, control_5.mylog)('listening', listener.addr);
+        try {
+            for (var listener_1 = __asyncValues(listener), listener_1_1; listener_1_1 = await listener_1.next(), !listener_1_1.done;) {
+                const conn = listener_1_1.value;
+                doConn(conn);
+            }
+        }
+        catch (e_1_1) { e_1 = { error: e_1_1 }; }
+        finally {
+            try {
+                if (listener_1_1 && !listener_1_1.done && (_a = listener_1.return)) await _a.call(listener_1);
+            }
+            finally { if (e_1) throw e_1.error; }
+        }
+    }
+    async function doConn(conn) {
+        const buf = new Uint8Array(4096);
+        await conn.read(buf);
+        const str = new TextDecoder().decode(buf);
+        (0, control_5.mylog)('doConn', str.substring(0, 20));
+        if (str.startsWith('GET ')) {
+            const pos = str.indexOf(' ', 4);
+            const path = str.substring(4, pos);
+            await doGet(path, conn);
+        }
+        conn.close();
+    }
+    async function doGet(path, conn) {
+        (0, control_5.mylog)('doGet', path);
+        const pos = path.indexOf('?');
+        if (pos > 0)
+            path = path.substring(0, pos);
+        if (path === '/') {
+            const status = 301;
+            const headers = [['Location', '/public/']];
+            const res = new Response(null, { headers, status });
+            await writeResponse(res, conn);
+        }
+        else if (path.startsWith('/public/')) {
+            await doFile('.' + path, conn);
+        }
+        else if (path.startsWith('/myapi/')) {
+            await doApi(path, conn);
+        }
+    }
+    async function doFile(path, conn) {
+        let type = 'text/html';
+        if (path === './public/')
+            path = './public/index.html';
+        if (path.endsWith('.js'))
+            type = 'application/javascript';
+        if (path.endsWith('.json'))
+            type = 'application/json';
+        if (path.endsWith('.png'))
+            type = 'image/png';
+        const stat = await Deno.stat(path);
+        const ok = stat.isFile;
+        const status = ok ? 200 : 404;
+        const statusText = ok ? 'OK' : 'File Not Found';
+        const headers = [
+            ['Date', new Date().toUTCString()],
+            ['Content-Type', type],
+            ['Content-Length', stat.size.toString()],
+            ['Cache-Control', 'max-age=3600']
+        ];
+        const res = new Response(null, { headers, status, statusText });
+        await writeResponse(res, conn);
+        if (ok) {
+            const file = await Deno.open(path);
+            await Deno.copy(file, conn);
+            file.close();
+        }
+    }
+    async function doApi(path, conn) {
+        const res = await (0, control_5.cacheFetch)(path);
+        await writeResponse(res, conn);
+    }
+    async function writeResponse(res, conn) {
+        const encoder = new TextEncoder();
+        conn.write(encoder.encode(`HTTP/1.0 ${res.status} ${res.statusText}\r\n`));
+        res.headers.forEach((value, key, parent) => {
+            const str = key + ': ' + value + '\r\n';
+            conn.write(encoder.encode(str));
+        });
+        conn.write(encoder.encode('\r\n'));
+        const body = new Uint8Array(await res.arrayBuffer());
+        await conn.write(body);
+    }
+});
+define("demo/src/worker", ["require", "exports", "demo/src/control"], function (require, exports, control_6) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.sworker = exports.cfworker = exports.worker = void 0;
@@ -727,59 +851,59 @@ define("demo/src/worker", ["require", "exports", "demo/src/control"], function (
     ];
     ;
     function sworker() {
-        (0, control_3.mylog)('sworker');
+        (0, control_6.mylog)('sworker');
         self.addEventListener('install', onInstall);
         self.addEventListener('activate', onActivate);
         self.addEventListener('fetch', onFetch);
     }
     exports.sworker = sworker;
     function cfworker() {
-        (0, control_3.mylog)('cfworker');
+        (0, control_6.mylog)('cfworker');
         self.addEventListener('fetch', onFetch);
         cfUpdateConfig();
-        (0, control_3.setupIndexStrs)(true);
+        (0, control_6.setupIndexStrs)(true);
     }
     exports.cfworker = cfworker;
     function worker() {
-        (0, control_3.mylog)('worker');
+        (0, control_6.mylog)('worker');
         self.addEventListener('message', onMessage);
-        (0, control_3.setupIndexStrs)(false);
+        (0, control_6.setupIndexStrs)(false);
     }
     exports.worker = worker;
     function onInstall(e) {
-        (0, control_3.mylog)('onInstall', e);
-        (0, control_3.mylog)('precache', PRE_CACHE);
-        e.waitUntil(caches.open(control_3.version).then(cache => cache.addAll(PRE_CACHE)).then(() => (0, control_3.setupIndexStrs)(false).then(() => self.skipWaiting())));
+        (0, control_6.mylog)('onInstall', e);
+        (0, control_6.mylog)('precache', PRE_CACHE);
+        e.waitUntil(caches.open(control_6.version).then(cache => cache.addAll(PRE_CACHE)).then(() => (0, control_6.setupIndexStrs)(false).then(() => self.skipWaiting())));
     }
     function onActivate(e) {
-        (0, control_3.mylog)('onActivate', e);
-        e.waitUntil(self.clients.claim().then(() => caches.keys().then(keys => Promise.all(keys.filter(key => key !== control_3.version).map(name => caches.delete(name))))));
+        (0, control_6.mylog)('onActivate', e);
+        e.waitUntil(self.clients.claim().then(() => caches.keys().then(keys => Promise.all(keys.filter(key => key !== control_6.version).map(name => caches.delete(name))))));
     }
     function onFetch(e) {
-        e.respondWith((0, control_3.cacheFetch)(e.request, e));
+        e.respondWith((0, control_6.cacheFetch)(e.request, e));
     }
     function onMessage(e) {
-        (0, control_3.cacheFetch)(e.data)
+        (0, control_6.cacheFetch)(e.data)
             .then(res => res.text()
             .then(text => self.postMessage(text)));
     }
     function cfUpdateConfig() {
-        Object.keys(control_3.config).forEach(key => {
+        Object.keys(control_6.config).forEach(key => {
             const value = self[key.toUpperCase()];
             if (value != null)
-                control_3.config[key] = value;
+                control_6.config[key] = value;
         });
-        control_3.config.worker = 'cf';
+        control_6.config.worker = 'cf';
     }
 });
-define("demo/src/main", ["require", "exports", "demo/src/control", "demo/src/nodejs", "demo/src/browser", "demo/src/worker"], function (require, exports, control_4, nodejs_1, browser_1, worker_1) {
+define("demo/src/main", ["require", "exports", "demo/src/control", "demo/src/nodejs", "demo/src2/denojs", "demo/src/browser", "demo/src/worker"], function (require, exports, control_7, nodejs_1, denojs_1, browser_1, worker_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     main();
     function main() {
-        (0, control_4.mylog)('main', control_4.version);
+        (0, control_7.mylog)('main', control_7.version);
         if ('Deno' in globalThis)
-            (0, control_4.mylog)('deno not implemented');
+            (0, denojs_1.denojs)();
         else if ('window' in globalThis)
             (0, browser_1.browser)();
         else if (typeof process === 'object' && process.version)
@@ -794,7 +918,7 @@ define("demo/src/main", ["require", "exports", "demo/src/control", "demo/src/nod
             console.error('unknown environment', globalThis);
             throw 'unknown environment ' + globalThis;
         }
-        (0, control_4.mylog)('config:', JSON.stringify(control_4.config));
+        (0, control_7.mylog)('config:', JSON.stringify(control_7.config));
     }
 });
 function define(name, params, func) {
