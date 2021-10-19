@@ -1,18 +1,12 @@
 /*
   JSX to render the dynamic part of the UI.
 */
-export { mylog, renderToMarkup }
+export { renderToMarkup }
+import { getIndexes } from './indexes';
+import { config, resetLog } from './misc';
 import { h, renderToStaticMarkup } from '../../src/jsxrender';
-import { config } from '../../package.json';
 import type { HnUser, HnComment, HnItem } from './model';
 import type { HnSearchResults, HnSearchItem } from './model';
-
-let logs: string[] = [];
-
-function mylog(...args: any[]) {
-  console.log(...args);
-  if(config.dolog) logs.push(Date.now() + '  ' + args.join('  '));
-}
 
 function renderToMarkup(cmd: string, arg: string, data: any) {
   const vnode = typeof data === 'string' ? ErrorView(data, arg) :
@@ -20,7 +14,9 @@ function renderToMarkup(cmd: string, arg: string, data: any) {
   cmd === 'item' ? ItemView({ item: data }) :
   cmd === 'search' ? SearchesView({ items: data, cmd: cmd }) :
   ItemsView({ items: data, cmd: cmd, page: Number.parseInt(arg) });
-  return renderToStaticMarkup(vnode as any);
+  const str = renderToStaticMarkup(vnode as any);
+  const indexes = getIndexes();
+  return indexes ? indexes[0] + cmd + indexes[1] + str + indexes[2] : str;
 }
 
 function SearchesView(props: { items: HnSearchResults, cmd: string }) {
@@ -151,11 +147,11 @@ function PagerView(props: { cmd: string, page: number }) {
 }
 
 function LogsView() {
+  var logs = resetLog();
   return logs.length === 0 ? null : (
     <details>
       <summary>Logs</summary>
       <pre>{logs.join('\n')}</pre>
-      {logs = []}
     </details>
   );
 }

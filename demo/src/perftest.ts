@@ -2,8 +2,9 @@
   perftest
 */
 export { perftest, perftestgui, perftestpost };
-import { mylog, config, renderToMarkup, cacheFetch } from './control';
-import { fetchPath } from './browser2';
+import { mylog, config } from './misc';
+import { cacheFetch } from './control';
+import { renderToMarkup } from './view';
 
 let started = 0;
 
@@ -45,7 +46,8 @@ async function perftestpost(count: number) {
   if(!started) return;
   const main = document.getElementById('main')!;
   if(count > 0) {
-    main.innerHTML = await fetchPath('/myapi/ask/2');
+    const resp = await cacheFetch('/myapi/ask/2');
+    main.innerHTML = await resp.text();
     window.postMessage(count - 1, '*');
   }
   else {
@@ -58,7 +60,7 @@ function perfstr(start: number) {
   const duration = (Date.now() - start) / 1000;
   const iterations = Math.abs(config.perftest);
   const ips = (iterations / duration).toFixed();
-  const str = 'iterations: ' + iterations + ' duration: ' + duration + ' fps: ' + ips;
+  const str = 'iterations: ' + iterations + ' duration: ' + duration + ' ips: ' + ips;
   mylog(str);
   return str;
 }

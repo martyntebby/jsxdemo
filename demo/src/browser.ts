@@ -6,9 +6,10 @@
   registers service worker
 */
 export { browser };
-import { mylog, config, updateConfig, renderToMarkup } from './control';
-import { enableSW, clientRequest } from './browser2';
+import { mylog, config, updateConfig } from './misc';
+import { setDirect, clientRequest } from './browser2';
 import { setupHandlers } from './onevents';
+import { renderToMarkup } from './view';
 
 async function browser() {
   mylog('browser');
@@ -32,7 +33,8 @@ function startWorker() {
     if('serviceWorker' in navigator) {
       // using main.js does not get swapped out - probably because of self caching
       navigator.serviceWorker.register('sw.js')
-        .then(reg => {enableSW(); mylog(reg)}, err => swfail('ServiceWorker failed.', err));
+        .then(reg => { setDirect(); mylog(reg) },
+              err => swfail('ServiceWorker failed.', err));
     }
     else {
       swfail('ServiceWorker unsupported.', '');

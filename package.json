@@ -1,6 +1,6 @@
 {
   "name": "jsxdemo",
-  "version": "0.9.9a",
+  "version": "0.9.9b",
   "description": "Hacker News demo for jsxrender.",
   "homepage": "https://github.com/martyntebby/jsxdemo#readme",
   "main": "public/main.js",
@@ -30,7 +30,7 @@
   "devDependencies": {
     "typescript": "4.4.4",
     "@types/node": "14.17.21",
-    "@types/react": "^17.0.29",
+    "@types/react": "^17.0.30",
     "@types/react-dom": "^17.0.9",
     "jsxrender": "martyntebby/jsxrender"
   },

@@ -5,17 +5,22 @@
 //// <reference types="./denotypes"/>
 
 export { denojs };
-import { mylog, updateConfig, config, cacheFetch, setupIndexStrs } from '../src/control';
+import { mylog, updateConfig, config } from '../src/misc';
+import { setIndexHtml } from '../src/indexes';
+import { cacheFetch } from '../src/control';
 
 declare var Deno: any;
 
 function denojs() {
-  mylog('*********************** Incorrect. Do not use. *************************')
   mylog('denojs');
   updateConfig(Deno.args);
   config.worker = 'deno';
+
+  const decoder = new TextDecoder('utf-8');
+  const index = Deno.readFileSync('public/index.html');
+  setIndexHtml(decoder.decode(index));
+
   doListener(config.port);
-  setupIndexStrs(true);
 }
 
 async function doListener(port: number) {
@@ -42,9 +47,6 @@ async function doConn(conn: Deno.Conn) {
 
 // @ts-ignore
 async function doGet(path: string, conn: Deno.Conn) {
-  mylog('doGet', path);
-  const pos = path.indexOf('?');
-  if(pos > 0) path = path.substring(0, pos);
   if(path === '/') {
     const status = 301;
     const headers = [ ['Location', '/public/'] ];
@@ -62,6 +64,8 @@ async function doGet(path: string, conn: Deno.Conn) {
 // @ts-ignore
 async function doFile(path: string, conn: Deno.Conn) {
   let type = 'text/html';
+  const pos = path.indexOf('?');
+  if(pos > 0) path = path.substring(0, pos);
   if(path === './public/') path = './public/index.html';
   if(path.endsWith('.js')) type = 'application/javascript';
   if(path.endsWith('.json')) type = 'application/json';

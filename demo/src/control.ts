@@ -2,30 +2,39 @@
   Fetches data from hnapi or elsewhere and supplies as json or formatted html.
   Re exports some view methods and handles config info from package.json.
 */
-export { cacheFetch, request2cmd, setupIndexStrs, splitIndexMain };
-export { updateConfig };
-export type { Mapped, ExtendableEvent };
-export { mylog, renderToMarkup } from './view';
-import { mylog, renderToMarkup } from './view';
-export { config, version } from '../../package.json';
-import { config, version } from '../../package.json';
+export { startCtrl, cacheFetch, request2cmd  };
+import { getIndexHtml, setIndexHtml } from './indexes';
+import { config, version, mylog } from './misc';
+import type { ExtendableEvent } from './misc';
+import { renderToMarkup } from './view';
 
 const STATIC_TTL = 60 * 60 * 24;
 const DYNAMIC_TTL = 60 * 10;
 
-type Mapped = { [key: string]: unknown; };
-
-interface ExtendableEvent {
-  waitUntil(f: any): void;
-};
-
-let isServer: boolean | undefined;
-let indexStrs: string[] | undefined;
-
 declare var caches: CacheStorage & { default?: Cache; };
 
+let useCache = false;
+
+async function startCtrl(doCache: boolean, wrapHtml: boolean, baseurl: string) {
+  mylog('startCtrl', doCache, wrapHtml, baseurl);
+  if(!doCache && !wrapHtml) return;
+  useCache = doCache;
+  const url = (baseurl || '/public') + '/index.html';
+  const resp = await cacheFetch(url);
+  if(resp.ok) {
+    const index = await resp.text();
+    setIndexHtml(index);
+    const html = getIndexHtml();
+    if(!wrapHtml) setIndexHtml('');
+    const cache = await getCache();
+    if(cache) {
+      cache.put('./', html2response(html, STATIC_TTL));
+    }
+  }
+}
+
 async function getCache(): Promise<Cache | undefined | false> {
-  return 'caches' in globalThis && (caches.default || await caches.open(version));
+  return useCache && (caches.default || await caches.open(version));
 }
 
 async function cacheFetch(request: RequestInfo, evt?: ExtendableEvent) {
@@ -33,13 +42,13 @@ async function cacheFetch(request: RequestInfo, evt?: ExtendableEvent) {
     return await cacheFetch1(request, evt);
   }
   catch(err) {
+    mylog('Error', err);
     return new Response(err as any);
   }
 }
 
 async function cacheFetch1(request: RequestInfo, evt?: ExtendableEvent) {
   const reqstr = typeof request === 'string' ? request : request.url;
-//  mylog('cacheFetch', reqstr);
   const { cmd, arg, req } = request2cmd(request);
 
   // look in cache for static or not too old
@@ -74,11 +83,7 @@ async function cacheFetch1(request: RequestInfo, evt?: ExtendableEvent) {
 
 async function api2response(resp: Response, cmd: string, arg: string) {
   const data = await resp.json();
-  let html = renderToMarkup(cmd, arg, data);
-  if(isServer) {
-    const sections = await getIndexStrs();
-    if(sections) html = sections[0] + cmd + sections[1] + html + sections[3];
-  }
+  const html = renderToMarkup(cmd, arg, data);
   return html2response(html, DYNAMIC_TTL);
 }
 
@@ -93,43 +98,17 @@ function html2response(html: string, ttl: number) {
   return new Response(html, { headers: headers, status: 200, statusText: 'OK' });
 }
 
-async function getIndexStrs() {
-  return indexStrs || await setupIndexStrs();
-}
-
-async function setupIndexStrs(server?: boolean) {
-  mylog('setupIndexStrs', server);
-  if(!indexStrs) {
-    if(server !== undefined) isServer = server;
-    const url = (isServer ? config.baseurl : '/public') + '/index.html';
-    const resp = await cacheFetch(url);
-    if(resp.ok) {
-      const index = await resp.text();
-      indexStrs = splitIndexMain(index);
-      if(!isServer) {
-        const cache = await getCache();
-        const html = indexStrs[0] + 'other' + indexStrs[1] + indexStrs[3];
-        if(cache) cache.put('./', html2response(html, STATIC_TTL));
-      }
-    }
-  }
-  return indexStrs;
-}
-
-function splitIndexMain(text: string): string[] {
-  const nav = '<nav id="nav" class="">';
-  const pos0 = text.indexOf(nav) + nav.length - 2;
-  const main = '<main id="main">';
-  const pos1 = text.indexOf(main) + main.length;
-  const pos2 = text.indexOf('</main>', pos1);
-  return [ text.substring(0, pos0), text.substring(pos0, pos1),
-    text.substring(pos1, pos2), text.substring(pos2) ];
-}
-
 function request2cmd(request: RequestInfo) {
-  const path = typeof request === 'string' ? request
-    : new URL(request.url).pathname;
-  const strs = path.split('/');
+  let path: string;
+  if(typeof request === 'string') {
+    path = request;
+  }
+  else {
+    const url = new URL(request.url);
+    path = url.pathname + url.search;
+  }
+  const re = /\/|\?|&/;
+  const strs = path.split(re);
   const api = path === '/' || strs[1] === 'myapi';
   const cmd = !api ? '' : strs[2] || 'news';
   const arg = !api ? '' : strs[3] || '1';
@@ -139,15 +118,8 @@ function request2cmd(request: RequestInfo) {
 
 function cmd2url(cmd: string, arg: string) {
   switch(cmd) {
-    case 'search': return `https://hn.algolia.com/api/v1/search?query=${arg}&hitsPerPage=50&tags=story`;
+    case 'search': return `https://hn.algolia.com/api/v1/search?${arg}&hitsPerPage=50&tags=story`;
     case 'newest': return `https://node-hnapi.herokuapp.com/${cmd}?page=${arg}`;
     default: return `https://api.hnpwa.com/v0/${cmd}/${arg}.json`;
   }
-}
-
-function updateConfig(args: string[]): void {
-  args.forEach(arg => {
-    const [key, value] = arg.split('=');
-    if(key in config) (<Mapped>config)[key] = value ?? true;
-  });
 }

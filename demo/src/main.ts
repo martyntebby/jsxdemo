@@ -2,7 +2,7 @@
   Main entry point.
   Determines environment type and dispatchs to appropriate function.
 */
-import { mylog, version, config } from './control';
+import { mylog, version, config } from './misc';
 import { nodejs } from './nodejs';
 import { denojs } from '../src2/denojs';
 import { browser } from './browser';
@@ -12,7 +12,12 @@ main();
 
 function main() {
   mylog('main', version);
-  if('Deno' in globalThis) denojs(); // mylog('deno not implemented');
+  start();
+  mylog('config:', JSON.stringify(config));
+}
+
+function start() {
+  if('Deno' in globalThis) denojs();
   else if('window' in globalThis) browser();
   else if(typeof process === 'object' && process.version) nodejs();
   else if('clients' in globalThis && 'skipWaiting' in globalThis) sworker();
@@ -22,5 +27,4 @@ function main() {
     console.error('unknown environment', globalThis);
     throw 'unknown environment ' + globalThis;
   }
-  mylog('config:', JSON.stringify(config));
 }

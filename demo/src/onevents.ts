@@ -24,6 +24,7 @@ function onClick(e: Event) {
       if(cmd === 'perftest') return perftestgui();
       const path = cmd || e.target.pathname;
       window.history.pushState(path, '');
+      document.forms[0].reset();
       clientRequest(path);
     }
   }
@@ -34,7 +35,7 @@ function onSubmit(e: Event) {
     const cmd = e.target.dataset.cmd;
     if(cmd !== undefined) {
       e.preventDefault();
-      const path = '/myapi/search/' + e.target.query.value;
+      const path = e.target.action + '?query=' + e.target.query.value;
       window.history.pushState(path, '');
       clientRequest(path);
     }

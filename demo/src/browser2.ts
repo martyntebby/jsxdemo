@@ -1,15 +1,16 @@
 /*
   request data,
-  convert to html
   populate main div
 */
-export { enableSW, clientRequest, fetchPath };
-import { renderToMarkup, request2cmd, cacheFetch } from './control';
+export { setDirect, clientRequest };
+import { renderToMarkup } from './view';
+import { request2cmd, cacheFetch } from './control';
+import { mylog } from './misc';
 
-let sw = false;
+let direct = false;
 
-function enableSW() {
-  sw = true;
+function setDirect() {
+  direct = true;
 }
 
 async function clientRequest(path?: string) {
@@ -28,12 +29,13 @@ async function clientRequest(path?: string) {
 }
 
 async function fetchPath(path: string) {
-  const func = sw ? fetch : cacheFetch;
+  const func = direct ? fetch : cacheFetch;
   try {
     const resp = await func(path);
     return await resp.text();
   }
   catch(err) {
+    mylog('Error', err);
     return renderToMarkup('', '', err + ' Maybe offline?');
   }
 }

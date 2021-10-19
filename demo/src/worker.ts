@@ -9,8 +9,9 @@
 //// <reference lib="webworker"/>
 
 export { worker, cfworker, sworker };
-import type { Mapped, ExtendableEvent } from './control';
-import { config, version, mylog, cacheFetch, setupIndexStrs } from './control';
+import { config, version, mylog } from './misc';
+import type { Mapped, ExtendableEvent } from './misc';
+import { startCtrl, cacheFetch } from './control';
 
 const PRE_CACHE = [ 'index.html'
   ,'main.js'
@@ -28,6 +29,7 @@ interface FetchEvent extends ExtendableEvent {
   request: Request;
   respondWith(r: Promise<Response>): void;
 };
+
 interface ExtendableMessageEvent extends ExtendableEvent {
   readonly data: any;
 }
@@ -41,15 +43,15 @@ function sworker() {
 
 function cfworker() {
   mylog('cfworker');
-  self.addEventListener('fetch', onFetch);
   cfUpdateConfig();
-  setupIndexStrs(true);
+  startCtrl(true, true, config.baseurl);
+  self.addEventListener('fetch', onFetch);
 }
 
 function worker() {
   mylog('worker');
+  startCtrl(true, true, '');
   self.addEventListener('message', onMessage);
-  setupIndexStrs(false);
 }
 
 function onInstall(e: ExtendableEvent) {
@@ -57,7 +59,7 @@ function onInstall(e: ExtendableEvent) {
   mylog('precache', PRE_CACHE);
   e.waitUntil(caches.open(version).then(cache =>
     cache.addAll(PRE_CACHE)).then(() =>
-      setupIndexStrs(false).then(() =>
+      startCtrl(true, false, '').then(() =>
         self.skipWaiting())));
 }
 

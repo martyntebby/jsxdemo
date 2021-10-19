@@ -5,10 +5,11 @@ export { nodejs };
 import * as fs from 'fs';
 import * as http from 'http';
 import * as https from 'https';
-import { mylog, updateConfig, config, splitIndexMain, request2cmd, renderToMarkup } from './control';
+import { mylog, updateConfig, config } from './misc';
+import { request2cmd } from './control';
+import { renderToMarkup } from './view';
+import { setIndexHtml } from './indexes';
 import { perftest } from './perftest';
-
-let indexStrs: string[];
 
 function nodejs() {
   mylog('nodejs');
@@ -26,7 +27,7 @@ function doPerfTest() {
 
 function doServer() {
   const indexStr = fs.readFileSync('public/index.html', 'utf8');
-  indexStrs = splitIndexMain(indexStr);
+  setIndexHtml(indexStr);
   const server = http.createServer(serverRequest).listen(config.port);
   mylog('listening', server.address());
 }
@@ -35,8 +36,6 @@ function serverRequest(req: http.IncomingMessage, res: http.ServerResponse) {
   let url = req.url;
   mylog('serverRequest', url);
   if(!url) return;
-  const pos = url.indexOf('?');
-  if(pos > 0) url = url.substring(0, pos);
   if(url === '/') {
     res.statusCode = 301;
     res.setHeader('Location', '/public/');
@@ -46,6 +45,8 @@ function serverRequest(req: http.IncomingMessage, res: http.ServerResponse) {
   // hack - should handle with nginx, express, etc.
   if(url === '/public/') url = '/public/index.html';
   if(url.startsWith('/public/')) {
+    const pos = url.indexOf('?');
+    if(pos > 0) url = url.substring(0, pos);
     fs.readFile('.' + url, null, (err, data) => {
       if(err) mylog(err.message);
       res.statusCode = 200;
@@ -73,11 +74,9 @@ function serveNews(path: string, res: http.ServerResponse) {
   res.setHeader('Date', new Date().toUTCString());
   res.setHeader('Cache-Control', 'max-age=600');
   res.setHeader('Content-Type', 'text/html');
-  res.write(indexStrs[0] + cmd + indexStrs[1]);
 
   function sendResp(data: unknown) {
-    res.write(renderToMarkup(cmd, arg, data));
-    res.end(indexStrs[3]);
+    res.end(renderToMarkup(cmd, arg, data));
   }
 
   fetchJson(req, sendResp);
@@ -85,10 +84,10 @@ function serveNews(path: string, res: http.ServerResponse) {
 
 function fetchJson(url: string, sendResp: (data: unknown) => void) {
   mylog('fetchJson', url);
-  https.get(url, clientRequest)
+  https.get(url, clientRequest2)
     .on('error', err => sendResp(err.message));
 
-  function clientRequest(res2: http.IncomingMessage) {
+  function clientRequest2(res2: http.IncomingMessage) {
     if(res2.statusCode !== 200) {
       res2.resume();
       sendResp(res2.statusCode + ': ' + res2.statusMessage);
@@ -102,6 +101,7 @@ function fetchJson(url: string, sendResp: (data: unknown) => void) {
           data = !json ? 'No data' : json.error ? json.error.toString() : json;
         }
         catch(err) {
+          mylog('Error', err);
           data = '' + err;
         }
         sendResp(data);
