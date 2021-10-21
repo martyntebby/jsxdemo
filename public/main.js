@@ -1,14 +1,7 @@
 "use strict";
-var __asyncValues = (this && this.__asyncValues) || function (o) {
-    if (!Symbol.asyncIterator) throw new TypeError("Symbol.asyncIterator is not defined.");
-    var m = o[Symbol.asyncIterator], i;
-    return m ? m.call(o) : (o = typeof __values === "function" ? __values(o) : o[Symbol.iterator](), i = {}, verb("next"), verb("throw"), verb("return"), i[Symbol.asyncIterator] = function () { return this; }, i);
-    function verb(n) { i[n] = o[n] && function (v) { return new Promise(function (resolve, reject) { v = o[n](v), settle(resolve, reject, v.done, v.value); }); }; }
-    function settle(resolve, reject, d, v) { Promise.resolve(v).then(function(v) { resolve({ value: v, done: d }); }, reject); }
-};
 define("package", [], {
     "name": "jsxdemo",
-    "version": "0.9.9b",
+    "version": "0.9.9a",
     "description": "Hacker News demo for jsxrender.",
     "homepage": "https://github.com/martyntebby/jsxdemo#readme",
     "main": "public/main.js",
@@ -371,33 +364,39 @@ define("demo/src/view", ["require", "exports", "demo/src/indexes", "demo/src/mis
 define("demo/src/control", ["require", "exports", "demo/src/indexes", "demo/src/misc", "demo/src/view"], function (require, exports, indexes_2, misc_2, view_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.request2cmd = exports.cacheFetch = exports.startCtrl = void 0;
+    exports.request2cmd = exports.cacheFetch = exports.cacheRoot = exports.setupIndex = exports.enableCache = void 0;
     const STATIC_TTL = 60 * 60 * 24;
     const DYNAMIC_TTL = 60 * 10;
     let useCache = false;
-    async function startCtrl(doCache, wrapHtml, baseurl) {
-        (0, misc_2.mylog)('startCtrl', doCache, wrapHtml, baseurl);
-        if (!doCache && !wrapHtml)
-            return;
-        useCache = doCache;
-        const url = (baseurl || '/public') + '/index.html';
+    function enableCache() {
+        useCache = true;
+    }
+    exports.enableCache = enableCache;
+    async function getCache() {
+        return useCache && (caches.default || await caches.open(misc_2.version));
+    }
+    async function setupIndex() {
+        (0, misc_2.mylog)('setupIndex');
+        const url = misc_2.config.baseurl + '/index.html';
         const resp = await cacheFetch(url);
         if (resp.ok) {
             const index = await resp.text();
             (0, indexes_2.setIndexHtml)(index);
+        }
+        return resp.ok;
+    }
+    exports.setupIndex = setupIndex;
+    async function cacheRoot() {
+        if (await setupIndex()) {
+            (0, misc_2.mylog)('cacheRoot');
             const html = (0, indexes_2.getIndexHtml)();
-            if (!wrapHtml)
-                (0, indexes_2.setIndexHtml)('');
+            (0, indexes_2.setIndexHtml)('');
             const cache = await getCache();
-            if (cache) {
+            if (cache)
                 cache.put('./', html2response(html, STATIC_TTL));
-            }
         }
     }
-    exports.startCtrl = startCtrl;
-    async function getCache() {
-        return useCache && (caches.default || await caches.open(misc_2.version));
-    }
+    exports.cacheRoot = cacheRoot;
     async function cacheFetch(request, evt) {
         try {
             return await cacheFetch1(request, evt);
@@ -760,115 +759,10 @@ define("demo/src/nodejs", ["require", "exports", "fs", "http", "https", "demo/sr
         }
     }
 });
-define("demo/src2/denojs", ["require", "exports", "demo/src/misc", "demo/src/indexes", "demo/src/control"], function (require, exports, misc_7, indexes_4, control_4) {
+define("demo/src/worker", ["require", "exports", "demo/src/misc", "demo/src/control"], function (require, exports, misc_7, control_4) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.denojs = void 0;
-    function denojs() {
-        (0, misc_7.mylog)('denojs');
-        (0, misc_7.updateConfig)(Deno.args);
-        misc_7.config.worker = 'deno';
-        const decoder = new TextDecoder('utf-8');
-        const index = Deno.readFileSync('public/index.html');
-        (0, indexes_4.setIndexHtml)(decoder.decode(index));
-        doListener(misc_7.config.port);
-    }
-    exports.denojs = denojs;
-    async function doListener(port) {
-        var e_1, _a;
-        const listener = Deno.listen({ port });
-        (0, misc_7.mylog)('listening', listener.addr);
-        try {
-            for (var listener_1 = __asyncValues(listener), listener_1_1; listener_1_1 = await listener_1.next(), !listener_1_1.done;) {
-                const conn = listener_1_1.value;
-                doConn(conn);
-            }
-        }
-        catch (e_1_1) { e_1 = { error: e_1_1 }; }
-        finally {
-            try {
-                if (listener_1_1 && !listener_1_1.done && (_a = listener_1.return)) await _a.call(listener_1);
-            }
-            finally { if (e_1) throw e_1.error; }
-        }
-    }
-    async function doConn(conn) {
-        const buf = new Uint8Array(4096);
-        await conn.read(buf);
-        const str = new TextDecoder().decode(buf);
-        (0, misc_7.mylog)('doConn', str.substring(0, 20));
-        if (str.startsWith('GET ')) {
-            const pos = str.indexOf(' ', 4);
-            const path = str.substring(4, pos);
-            await doGet(path, conn);
-        }
-        conn.close();
-    }
-    async function doGet(path, conn) {
-        if (path === '/') {
-            const status = 301;
-            const headers = [['Location', '/public/']];
-            const res = new Response(null, { headers, status });
-            await writeResponse(res, conn);
-        }
-        else if (path.startsWith('/public/')) {
-            await doFile('.' + path, conn);
-        }
-        else if (path.startsWith('/myapi/')) {
-            await doApi(path, conn);
-        }
-    }
-    async function doFile(path, conn) {
-        let type = 'text/html';
-        const pos = path.indexOf('?');
-        if (pos > 0)
-            path = path.substring(0, pos);
-        if (path === './public/')
-            path = './public/index.html';
-        if (path.endsWith('.js'))
-            type = 'application/javascript';
-        if (path.endsWith('.json'))
-            type = 'application/json';
-        if (path.endsWith('.png'))
-            type = 'image/png';
-        const stat = await Deno.stat(path);
-        const ok = stat.isFile;
-        const status = ok ? 200 : 404;
-        const statusText = ok ? 'OK' : 'File Not Found';
-        const headers = [
-            ['Date', new Date().toUTCString()],
-            ['Content-Type', type],
-            ['Content-Length', stat.size.toString()],
-            ['Cache-Control', 'max-age=3600']
-        ];
-        const res = new Response(null, { headers, status, statusText });
-        await writeResponse(res, conn);
-        if (ok) {
-            const file = await Deno.open(path);
-            await Deno.copy(file, conn);
-            file.close();
-        }
-    }
-    async function doApi(path, conn) {
-        const res = await (0, control_4.cacheFetch)(path);
-        await writeResponse(res, conn);
-    }
-    async function writeResponse(res, conn) {
-        const encoder = new TextEncoder();
-        conn.write(encoder.encode(`HTTP/1.0 ${res.status} ${res.statusText}\r\n`));
-        res.headers.forEach((value, key, parent) => {
-            const str = key + ': ' + value + '\r\n';
-            conn.write(encoder.encode(str));
-        });
-        conn.write(encoder.encode('\r\n'));
-        const body = new Uint8Array(await res.arrayBuffer());
-        await conn.write(body);
-    }
-});
-define("demo/src/worker", ["require", "exports", "demo/src/misc", "demo/src/control"], function (require, exports, misc_8, control_5) {
-    "use strict";
-    Object.defineProperty(exports, "__esModule", { value: true });
-    exports.sworker = exports.cfworker = exports.worker = void 0;
+    exports.sworker = exports.cfworker = void 0;
     const PRE_CACHE = ['index.html',
         'main.js',
         'static/app.css',
@@ -879,63 +773,55 @@ define("demo/src/worker", ["require", "exports", "demo/src/misc", "demo/src/cont
     ];
     ;
     function sworker() {
-        (0, misc_8.mylog)('sworker');
+        (0, misc_7.mylog)('sworker');
+        misc_7.config.baseurl = '/public';
+        (0, control_4.enableCache)();
         self.addEventListener('install', onInstall);
         self.addEventListener('activate', onActivate);
         self.addEventListener('fetch', onFetch);
     }
     exports.sworker = sworker;
     function cfworker() {
-        (0, misc_8.mylog)('cfworker');
+        (0, misc_7.mylog)('cfworker');
+        misc_7.config.worker = 'cf';
         cfUpdateConfig();
-        (0, control_5.startCtrl)(true, true, misc_8.config.baseurl);
+        (0, control_4.enableCache)();
+        (0, control_4.setupIndex)();
         self.addEventListener('fetch', onFetch);
     }
     exports.cfworker = cfworker;
-    function worker() {
-        (0, misc_8.mylog)('worker');
-        (0, control_5.startCtrl)(true, true, '');
-        self.addEventListener('message', onMessage);
-    }
-    exports.worker = worker;
     function onInstall(e) {
-        (0, misc_8.mylog)('onInstall', e);
-        (0, misc_8.mylog)('precache', PRE_CACHE);
-        e.waitUntil(caches.open(misc_8.version).then(cache => cache.addAll(PRE_CACHE)).then(() => (0, control_5.startCtrl)(true, false, '').then(() => self.skipWaiting())));
+        (0, misc_7.mylog)('onInstall', e);
+        (0, misc_7.mylog)('precache', PRE_CACHE);
+        e.waitUntil(caches.open(misc_7.version).then(cache => cache.addAll(PRE_CACHE)).then(() => (0, control_4.cacheRoot)().then(() => self.skipWaiting())));
     }
     function onActivate(e) {
-        (0, misc_8.mylog)('onActivate', e);
-        e.waitUntil(self.clients.claim().then(() => caches.keys().then(keys => Promise.all(keys.filter(key => key !== misc_8.version).map(name => caches.delete(name))))));
+        (0, misc_7.mylog)('onActivate', e);
+        e.waitUntil(self.clients.claim().then(() => caches.keys().then(keys => Promise.all(keys.filter(key => key !== misc_7.version).map(name => caches.delete(name))))));
     }
     function onFetch(e) {
-        e.respondWith((0, control_5.cacheFetch)(e.request, e));
-    }
-    function onMessage(e) {
-        (0, control_5.cacheFetch)(e.data)
-            .then(res => res.text()
-            .then(text => self.postMessage(text)));
+        e.respondWith((0, control_4.cacheFetch)(e.request, e));
     }
     function cfUpdateConfig() {
-        Object.keys(misc_8.config).forEach(key => {
+        Object.keys(misc_7.config).forEach(key => {
             const value = self[key.toUpperCase()];
             if (value != null)
-                misc_8.config[key] = value;
+                misc_7.config[key] = value;
         });
-        misc_8.config.worker = 'cf';
     }
 });
-define("demo/src/main", ["require", "exports", "demo/src/misc", "demo/src/nodejs", "demo/src2/denojs", "demo/src/browser", "demo/src/worker"], function (require, exports, misc_9, nodejs_1, denojs_1, browser_1, worker_1) {
+define("demo/src/main", ["require", "exports", "demo/src/misc", "demo/src/nodejs", "demo/src/browser", "demo/src/worker"], function (require, exports, misc_8, nodejs_1, browser_1, worker_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     main();
     function main() {
-        (0, misc_9.mylog)('main', misc_9.version);
+        (0, misc_8.mylog)('main', misc_8.version);
         start();
-        (0, misc_9.mylog)('config:', JSON.stringify(misc_9.config));
+        (0, misc_8.mylog)('config:', JSON.stringify(misc_8.config));
     }
     function start() {
         if ('Deno' in globalThis)
-            (0, denojs_1.denojs)();
+            (0, misc_8.mylog)('Deno not supported');
         else if ('window' in globalThis)
             (0, browser_1.browser)();
         else if (typeof process === 'object' && process.version)
@@ -944,8 +830,6 @@ define("demo/src/main", ["require", "exports", "demo/src/misc", "demo/src/nodejs
             (0, worker_1.sworker)();
         else if ('caches' in globalThis && 'default' in globalThis.caches)
             (0, worker_1.cfworker)();
-        else if ('importScripts' in globalThis)
-            (0, worker_1.worker)();
         else {
             console.error('unknown environment', globalThis);
             throw 'unknown environment ' + globalThis;

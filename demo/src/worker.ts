@@ -1,5 +1,5 @@
 /*
-  Web, Service and Cloudflare workers that
+  Service and Cloudflare workers that
   pre caches static files,
   deletes old caches,
   render json to html,
@@ -8,10 +8,10 @@
 
 //// <reference lib="webworker"/>
 
-export { worker, cfworker, sworker };
+export { cfworker, sworker };
 import { config, version, mylog } from './misc';
 import type { Mapped, ExtendableEvent } from './misc';
-import { startCtrl, cacheFetch } from './control';
+import { enableCache, setupIndex, cacheRoot, cacheFetch } from './control';
 
 const PRE_CACHE = [ 'index.html'
   ,'main.js'
@@ -30,12 +30,10 @@ interface FetchEvent extends ExtendableEvent {
   respondWith(r: Promise<Response>): void;
 };
 
-interface ExtendableMessageEvent extends ExtendableEvent {
-  readonly data: any;
-}
-
 function sworker() {
   mylog('sworker');
+  config.baseurl = '/public';
+  enableCache();
   self.addEventListener('install', onInstall);
   self.addEventListener('activate', onActivate);
   self.addEventListener('fetch', onFetch);
@@ -43,15 +41,11 @@ function sworker() {
 
 function cfworker() {
   mylog('cfworker');
+  config.worker = 'cf';
   cfUpdateConfig();
-  startCtrl(true, true, config.baseurl);
+  enableCache();
+  setupIndex();
   self.addEventListener('fetch', onFetch);
-}
-
-function worker() {
-  mylog('worker');
-  startCtrl(true, true, '');
-  self.addEventListener('message', onMessage);
 }
 
 function onInstall(e: ExtendableEvent) {
@@ -59,7 +53,7 @@ function onInstall(e: ExtendableEvent) {
   mylog('precache', PRE_CACHE);
   e.waitUntil(caches.open(version).then(cache =>
     cache.addAll(PRE_CACHE)).then(() =>
-      startCtrl(true, false, '').then(() =>
+      cacheRoot().then(() =>
         self.skipWaiting())));
 }
 
@@ -76,16 +70,9 @@ function onFetch(e: FetchEvent) {
   e.respondWith(cacheFetch(e.request, e));
 }
 
-function onMessage(e: ExtendableMessageEvent) {
-  cacheFetch(e.data)
-  .then(res => res.text()
-    .then(text => (<Worker><unknown>self).postMessage(text)));
-}
-
 function cfUpdateConfig() {
   Object.keys(config).forEach(key => {
     const value = self[key.toUpperCase()];
     if(value != null) (<Mapped>config)[key] = value;
   });
-  config.worker = 'cf';
 }

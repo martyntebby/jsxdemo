@@ -2,7 +2,7 @@
   Fetches data from hnapi or elsewhere and supplies as json or formatted html.
   Re exports some view methods and handles config info from package.json.
 */
-export { startCtrl, cacheFetch, request2cmd  };
+export { enableCache, setupIndex, cacheRoot, cacheFetch, request2cmd  };
 import { getIndexHtml, setIndexHtml } from './indexes';
 import { config, version, mylog } from './misc';
 import type { ExtendableEvent } from './misc';
@@ -15,26 +15,33 @@ declare var caches: CacheStorage & { default?: Cache; };
 
 let useCache = false;
 
-async function startCtrl(doCache: boolean, wrapHtml: boolean, baseurl: string) {
-  mylog('startCtrl', doCache, wrapHtml, baseurl);
-  if(!doCache && !wrapHtml) return;
-  useCache = doCache;
-  const url = (baseurl || '/public') + '/index.html';
-  const resp = await cacheFetch(url);
-  if(resp.ok) {
-    const index = await resp.text();
-    setIndexHtml(index);
-    const html = getIndexHtml();
-    if(!wrapHtml) setIndexHtml('');
-    const cache = await getCache();
-    if(cache) {
-      cache.put('./', html2response(html, STATIC_TTL));
-    }
-  }
+function enableCache() {
+  useCache = true;
 }
 
 async function getCache(): Promise<Cache | undefined | false> {
   return useCache && (caches.default || await caches.open(version));
+}
+
+async function setupIndex() {
+  mylog('setupIndex');
+  const url = config.baseurl + '/index.html';
+  const resp = await cacheFetch(url);
+  if(resp.ok) {
+    const index = await resp.text();
+    setIndexHtml(index);
+  }
+  return resp.ok;
+}
+
+async function cacheRoot() {
+  if(await setupIndex()) {
+    mylog('cacheRoot');
+    const html = getIndexHtml();
+    setIndexHtml('');
+    const cache = await getCache();
+    if(cache) cache.put('./', html2response(html, STATIC_TTL));
+  }
 }
 
 async function cacheFetch(request: RequestInfo, evt?: ExtendableEvent) {
