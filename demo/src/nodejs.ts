@@ -6,19 +6,20 @@ import * as fs from 'fs';
 import * as http from 'http';
 import * as https from 'https';
 import { mylog, updateConfig, config } from './misc';
-import { request2cmd } from './control';
+import { path2cmd } from './control';
 import { renderToMarkup } from './view';
 import { setIndexHtml } from './indexes';
-import { perftest } from './perftest';
+import { perftest, tests } from './tests';
 
 function nodejs() {
   mylog('nodejs');
   updateConfig(process.argv.slice(2));
   config.worker = 'node';
-  if(config.perftest) doPerfTest(); else doServer();
+  if(config.tests) doTests(); else doServer();
 }
 
-function doPerfTest() {
+function doTests() {
+  tests();
   const news = fs.readFileSync('public/static/news.json', 'utf8');
   const json = JSON.parse(news);
   perftest(json);
@@ -42,22 +43,10 @@ function serverRequest(req: http.IncomingMessage, res: http.ServerResponse) {
     res.end();
     return;
   }
-  // hack - should handle with nginx, express, etc.
-  if(url === '/public/') url = '/public/index.html';
   if(url.startsWith('/public/')) {
-    const pos = url.indexOf('?');
-    if(pos > 0) url = url.substring(0, pos);
-    fs.readFile('.' + url, null, (err, data) => {
-      if(err) mylog(err.message);
-      res.statusCode = 200;
-      res.setHeader('Date', new Date().toUTCString());
-      res.setHeader('Cache-Control', 'max-age=3600');
-      if(url?.endsWith('.js')) res.setHeader('Content-Type', 'application/javascript');
-      res.end(data);
-    });
-    return;
+    serveFile(url, res);
   }
-  if(url.startsWith('/myapi/')) {
+  else if(url.startsWith('/myapi/')) {
     serveNews(url, res);
   }
   else {
@@ -67,19 +56,33 @@ function serverRequest(req: http.IncomingMessage, res: http.ServerResponse) {
   }
 }
 
-function serveNews(path: string, res: http.ServerResponse) {
-  const { cmd, arg, req } = request2cmd(path);
+// hack - should handle with nginx, express, etc.
+function serveFile(url: string, res: http.ServerResponse) {
+  const pos = url.indexOf('?');
+  if(pos > 0) url = url.substring(0, pos);
+  if(url === '/public/') url = '/public/index.html';
+  fs.readFile('.' + url, null, (err, data) => {
+    if(err) mylog(err.message);
+    const type = url.endsWith('.js') ? 'application/javascript' : '';
+    setHeaders(res, 3600, type);
+    res.end(data);
+  });
+}
 
+function serveNews(path: string, res: http.ServerResponse) {
+  setHeaders(res, 600, 'text/html');
+  const { cmd, arg, url } = path2cmd(path);
+  function sendResp(data: unknown) {
+    res.end(renderToMarkup(data, cmd, arg));
+  }
+  fetchJson(url, sendResp);
+}
+
+function setHeaders(res: http.ServerResponse, ttl: number, type: string) {
   res.statusCode = 200;
   res.setHeader('Date', new Date().toUTCString());
-  res.setHeader('Cache-Control', 'max-age=600');
-  res.setHeader('Content-Type', 'text/html');
-
-  function sendResp(data: unknown) {
-    res.end(renderToMarkup(cmd, arg, data));
-  }
-
-  fetchJson(req, sendResp);
+  res.setHeader('Cache-Control', 'max-age=' + ttl);
+  if(type) res.setHeader('Content-Type', type);
 }
 
 function fetchJson(url: string, sendResp: (data: unknown) => void) {

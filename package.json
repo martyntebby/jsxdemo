@@ -13,7 +13,7 @@
     "port": 3000,
     "dolog": false,
     "worker": "service",
-    "perftest": 0
+    "tests": 0
   },
   "scripts": {
     "install": "ln -sf node_modules/jsxrender/src .",
@@ -21,17 +21,17 @@
     "watch": "tsc -b . -w --listEmittedFiles",
     "clean": "rm -rf dist",
     "start": "node .",
-    "perf": "node . perftest=10000",
-    "deno": "deno run --allow-net --allow-read public/main.js",
-    "test": "echo none"
+    "test": "node . tests=1",
+    "perf": "node . tests=10000",
+    "deno": "deno run --allow-net --allow-read public/main.js"
   },
   "author": "Martyn Tebby",
   "license": "ISC",
   "devDependencies": {
     "typescript": "4.4.4",
     "@types/node": "14.17.21",
-    "@types/react": "^17.0.30",
-    "@types/react-dom": "^17.0.9",
+    "@types/react": "^17.0.33",
+    "@types/react-dom": "^17.0.10",
     "jsxrender": "martyntebby/jsxrender"
   },
   "dependencies": {}

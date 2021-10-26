@@ -29,7 +29,7 @@ async function browser() {
 }
 
 function startWorker() {
-  if(config.worker === 'service' && !config.perftest) {
+  if(config.worker === 'service' && !config.tests) {
     if('serviceWorker' in navigator) {
       // using main.js does not get swapped out - probably because of self caching
       navigator.serviceWorker.register('sw.js')
@@ -45,8 +45,9 @@ function startWorker() {
 function swfail(summary: string, reason: string) {
   mylog('sw failed:', summary, reason);
   const error = document.getElementById('error')!;
-  error.outerHTML = renderToMarkup('', summary, reason +
+  const details = reason +
     '<br><br>Ensure cookies are enabled, the connection is secure,' +
     ' the browser is not in private mode and is supported' +
-    ' (Chrome on Android, Safari on iOS).');
+    ' (Chrome on Android, Safari on iOS).';
+  error.outerHTML = renderToMarkup(details, 'error', summary);
 }

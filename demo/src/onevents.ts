@@ -3,13 +3,17 @@
 */
 export { setupHandlers };
 import { clientRequest } from './browser2';
-import { perftestgui, perftestpost } from './perftest';
+import { perftestgui, perftestpost } from './tests';
 
 function setupHandlers() {
   window.onmessage = onMessage;
   window.onpopstate = onPopState;
   document.body.onclick = onClick;
   document.body.onsubmit = onSubmit;
+}
+
+function onMessage(e: MessageEvent) {
+  perftestpost(e.data);
 }
 
 function onPopState(e: PopStateEvent) {
@@ -40,8 +44,4 @@ function onSubmit(e: Event) {
       clientRequest(path);
     }
   }
-}
-
-async function onMessage(e: MessageEvent) {
-  perftestpost(e.data);
 }

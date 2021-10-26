@@ -2,7 +2,7 @@
   Fetches data from hnapi or elsewhere and supplies as json or formatted html.
   Re exports some view methods and handles config info from package.json.
 */
-export { enableCache, setupIndex, cacheRoot, cacheFetch, request2cmd  };
+export { enableCache, setupIndex, cacheRoot, cacheFetch, path2cmd };
 import { getIndexHtml, setIndexHtml } from './indexes';
 import { config, version, mylog } from './misc';
 import type { ExtendableEvent } from './misc';
@@ -55,8 +55,7 @@ async function cacheFetch(request: RequestInfo, evt?: ExtendableEvent) {
 }
 
 async function cacheFetch1(request: RequestInfo, evt?: ExtendableEvent) {
-  const reqstr = typeof request === 'string' ? request : request.url;
-  const { cmd, arg, req } = request2cmd(request);
+  const { cmd, arg, url } = path2cmd(request);
 
   // look in cache for static or not too old
   const cache = await getCache();
@@ -73,7 +72,7 @@ async function cacheFetch1(request: RequestInfo, evt?: ExtendableEvent) {
   // fetch - if error return old version
   const ttl = cmd ? DYNAMIC_TTL : STATIC_TTL;
   const init: RequestInit = { cf: { cacheTtl: ttl } } as any;
-  const resp2 = await fetch(req || request, init);
+  const resp2 = await fetch(url || request, init);
   if(!resp2.ok) return cached || resp2;
 
   // convert and maybe cache
@@ -90,13 +89,13 @@ async function cacheFetch1(request: RequestInfo, evt?: ExtendableEvent) {
 
 async function api2response(resp: Response, cmd: string, arg: string) {
   const data = await resp.json();
-  const html = renderToMarkup(cmd, arg, data);
+  const html = renderToMarkup(data, cmd, arg);
   return html2response(html, DYNAMIC_TTL);
 }
 
 function html2response(html: string, ttl: number) {
   const headers = [
-    //['Link', '</public/main.js>; rel=preload; as=script'], //, </public/app.css>; rel=preload; as=style'],
+    //['Link', '</public/main.js>; rel=preload; as=script'],
     ['Date', new Date().toUTCString()],
     ['Content-Type', 'text/html'],
     ['Content-Length', html.length.toString()],
@@ -105,7 +104,7 @@ function html2response(html: string, ttl: number) {
   return new Response(html, { headers: headers, status: 200, statusText: 'OK' });
 }
 
-function request2cmd(request: RequestInfo) {
+function path2cmd(request: RequestInfo, log?: boolean) {
   let path: string;
   if(typeof request === 'string') {
     path = request;
@@ -119,13 +118,16 @@ function request2cmd(request: RequestInfo) {
   const api = path === '/' || strs[1] === 'myapi';
   const cmd = !api ? '' : strs[2] || 'news';
   const arg = !api ? '' : strs[3] || '1';
-  const req = !api ? '' : cmd2url(cmd, arg);
-  return { cmd, arg, req };
+  const url = !api ? '' : cmd2url(cmd, arg);
+  const ret = { cmd, arg, url };
+  if(log) mylog('path2cmd', path, ret);
+  return ret;
 }
 
 function cmd2url(cmd: string, arg: string) {
   switch(cmd) {
-    case 'search': return `https://hn.algolia.com/api/v1/search?${arg}&hitsPerPage=50&tags=story`;
+//    case 'search': return `https://hn.algolia.com/api/v1/search?${arg}&hitsPerPage=50&tags=story`;
+    case 'search': return `https://hn.algolia.com/api/v1/search?${arg}&tags=story`;
     case 'newest': return `https://node-hnapi.herokuapp.com/${cmd}?page=${arg}`;
     default: return `https://api.hnpwa.com/v0/${cmd}/${arg}.json`;
   }

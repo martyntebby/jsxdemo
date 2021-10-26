@@ -4,7 +4,7 @@
 */
 export { setDirect, clientRequest };
 import { renderToMarkup } from './view';
-import { request2cmd, cacheFetch } from './control';
+import { path2cmd, cacheFetch } from './control';
 import { mylog } from './misc';
 
 let direct = false;
@@ -16,7 +16,7 @@ function setDirect() {
 async function clientRequest(path?: string) {
   path = path || '/myapi/news/1';
   const markupp = fetchPath(path);
-  const { cmd } = request2cmd(path);
+  const { cmd } = path2cmd(path);
 
   const nav = document.getElementById('nav')!;
   const main = document.getElementById('main')!;
@@ -36,6 +36,7 @@ async function fetchPath(path: string) {
   }
   catch(err) {
     mylog('Error', err);
-    return renderToMarkup('', '', err + ' Maybe offline?');
+    const details = err + ' Maybe offline?';
+    return renderToMarkup(details, 'error', '');
   }
 }

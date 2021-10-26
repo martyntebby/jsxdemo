@@ -14,7 +14,7 @@ define("package", [], {
         "port": 3000,
         "dolog": false,
         "worker": "service",
-        "perftest": 0
+        "tests": 0
     },
     "scripts": {
         "install": "ln -sf node_modules/jsxrender/src .",
@@ -22,17 +22,17 @@ define("package", [], {
         "watch": "tsc -b . -w --listEmittedFiles",
         "clean": "rm -rf dist",
         "start": "node .",
-        "perf": "node . perftest=10000",
-        "deno": "deno run --allow-net --allow-read public/main.js",
-        "test": "echo none"
+        "test": "node . tests=1",
+        "perf": "node . tests=10000",
+        "deno": "deno run --allow-net --allow-read public/main.js"
     },
     "author": "Martyn Tebby",
     "license": "ISC",
     "devDependencies": {
         "typescript": "4.4.4",
         "@types/node": "14.17.21",
-        "@types/react": "^17.0.30",
-        "@types/react-dom": "^17.0.9",
+        "@types/react": "^17.0.33",
+        "@types/react-dom": "^17.0.10",
         "jsxrender": "martyntebby/jsxrender"
     },
     "dependencies": {}
@@ -61,7 +61,7 @@ define("demo/src/misc", ["require", "exports", "package", "package"], function (
         args.forEach(arg => {
             const [key, value] = arg.split('=');
             if (key in package_json_2.config)
-                package_json_2.config[key] = value !== null && value !== void 0 ? value : true;
+                package_json_2.config[key] = value ?? true;
         });
     }
     exports.updateConfig = updateConfig;
@@ -190,46 +190,66 @@ define("demo/src/view", ["require", "exports", "demo/src/indexes", "demo/src/mis
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.renderToMarkup = void 0;
-    function renderToMarkup(cmd, arg, data) {
-        const vnode = typeof data === 'string' ? ErrorView(data, arg) :
-            cmd === 'user' ? UserView({ user: data }) :
-                cmd === 'item' ? ItemView({ item: data }) :
-                    cmd === 'search' ? SearchesView({ items: data, cmd: cmd }) :
-                        ItemsView({ items: data, cmd: cmd, page: Number.parseInt(arg) });
+    function renderToMarkup(data, cmd, arg) {
+        const vnode = renderToJSX(data, cmd, arg);
         const str = (0, jsxrender_1.renderToStaticMarkup)(vnode);
         const indexes = (0, indexes_1.getIndexes)();
         return indexes ? indexes[0] + cmd + indexes[1] + str + indexes[2] : str;
     }
     exports.renderToMarkup = renderToMarkup;
-    function SearchesView(props) {
-        return ((0, jsxrender_1.h)("ol", { className: 'ol' }, props.items.hits.map(item => (0, jsxrender_1.h)("li", { className: 'li' },
-            (0, jsxrender_1.h)(SearchView, { item: item })))));
+    function renderToJSX(data, cmd, arg) {
+        switch (cmd) {
+            case '':
+            case 'error': return MsgView(data, arg, cmd);
+            case 'user': return UserView({ user: data });
+            case 'item': return ItemView({ item: data });
+            case 'search': return SearchesView({ res: data });
+        }
+        return ItemsView({ items: data, cmd: cmd, page: Number.parseInt(arg) });
     }
-    function SearchView(props) {
+    function SearchesView(props) {
+        const props2 = {
+            items: props.res.hits,
+            cmd: 'search',
+            page: props.res.page,
+            pageSize: props.res.hitsPerPage,
+            query: props.res.query,
+        };
+        (0, misc_1.mylog)('SearchesView', props2);
+        return ItemsView(props2);
+    }
+    function ItemsView(props) {
+        const size = props.pageSize || 30;
+        return ((0, jsxrender_1.h)("div", null,
+            (0, jsxrender_1.h)("ol", { start: (props.page - 1) * size + 1, className: 'ol' }, props.items.map(item => (0, jsxrender_1.h)("li", { className: 'li' },
+                (0, jsxrender_1.h)(ItemView, { item: item })))),
+            props.page > 0 && PagerView(props)));
+    }
+    function ItemView(props) {
         const i = props.item;
-        const idomain = i.url && i.url.split('/', 3)[2];
-        const url = '/item/' + i.objectID;
-        const iurl = i.url || url;
-        const iuser = i.author;
-        const icomments_count = i.num_comments;
-        const created = i.created_at.substring(0, 10);
+        const url = '/item/' + (i.id || i.objectID);
+        const iurl = !i.url || i.url.startsWith('item?id=') ? url : i.url;
+        const iuser = i.user || i.author;
+        const icount = i.comments_count || i.num_comments;
+        const idomain = i.domain || i.url?.split('/', 3)[2];
+        const idate = i.time_ago || i.created_at?.substring(0, 10);
         const domain = idomain && (0, jsxrender_1.h)("span", { className: 'smallgrey' },
             "(",
             idomain,
             ")");
-        const points = i.points > 0 && (0, jsxrender_1.h)("span", null,
+        const points = !!i.points && (0, jsxrender_1.h)("span", null,
             i.points,
             " points");
         const user = iuser && (0, jsxrender_1.h)("span", null,
             "by ",
             (0, jsxrender_1.h)(UserNameView, { user: iuser }));
-        const comments = icomments_count > 0 &&
+        const comments = !!icount &&
             (0, jsxrender_1.h)("span", null,
                 "| ",
                 (0, jsxrender_1.h)(Link, { href: url, cmd: true },
-                    icomments_count,
+                    icount,
                     " comments"));
-        return ((0, jsxrender_1.h)("article", null,
+        return ((0, jsxrender_1.h)("article", { className: i.comments && 'inset' },
             (0, jsxrender_1.h)(Link, { className: 'mainlink', href: iurl, cmd: !idomain }, i.title),
             " ",
             domain,
@@ -238,45 +258,7 @@ define("demo/src/view", ["require", "exports", "demo/src/indexes", "demo/src/mis
                 " ",
                 user,
                 " ",
-                created,
-                " ",
-                comments)));
-    }
-    function ItemsView(props) {
-        return ((0, jsxrender_1.h)("div", null,
-            (0, jsxrender_1.h)("ol", { start: (props.page - 1) * 30 + 1, className: 'ol' }, props.items.map(item => (0, jsxrender_1.h)("li", { className: 'li' },
-                (0, jsxrender_1.h)(ItemView, { item: item })))),
-            PagerView(props)));
-    }
-    function ItemView(props) {
-        const i = props.item;
-        const url = i.domain ? i.url : '/' + i.url.replace('?id=', '/');
-        const domain = i.domain && (0, jsxrender_1.h)("span", { className: 'smallgrey' },
-            "(",
-            i.domain,
-            ")");
-        const points = i.points > 0 && (0, jsxrender_1.h)("span", null,
-            i.points,
-            " points");
-        const user = i.user && (0, jsxrender_1.h)("span", null,
-            "by ",
-            (0, jsxrender_1.h)(UserNameView, { user: i.user }));
-        const comments = i.comments_count > 0 &&
-            (0, jsxrender_1.h)("span", null,
-                "| ",
-                (0, jsxrender_1.h)(Link, { href: '/item/' + i.id, cmd: true },
-                    i.comments_count,
-                    " comments"));
-        return ((0, jsxrender_1.h)("article", { className: i.comments && 'inset' },
-            (0, jsxrender_1.h)(Link, { className: 'mainlink', href: url, cmd: !i.domain }, i.title),
-            " ",
-            domain,
-            (0, jsxrender_1.h)("div", { className: 'smallgrey' },
-                points,
-                " ",
-                user,
-                " ",
-                i.time_ago,
+                idate,
                 " ",
                 comments),
             i.content && (0, jsxrender_1.h)("p", null),
@@ -324,8 +306,8 @@ define("demo/src/view", ["require", "exports", "demo/src/indexes", "demo/src/mis
     function PagerView(props) {
         const nolink = props.page > 1 ? undefined : 'nolink';
         const prev = (0, jsxrender_1.h)(Link, { href: `/${props.cmd}/${props.page - 1}`, cmd: true, className: nolink }, "\u2190 prev");
-        const next = (0, jsxrender_1.h)(Link, { href: `/${props.cmd}/${props.page + 1}`, cmd: true, prefetch: !misc_1.config.perftest }, "next \u2192");
-        const style = misc_1.config.perftest ? `color:hsl(${++color},100%,50%)` : 'pointer-events:none';
+        const next = (0, jsxrender_1.h)(Link, { href: `/${props.cmd}/${props.page + 1}`, cmd: true, prefetch: !misc_1.config.tests }, "next \u2192");
+        const style = misc_1.config.tests ? `color:hsl(${++color},100%,50%)` : 'pointer-events:none';
         const page = (0, jsxrender_1.h)("a", { style: style, "data-cmd": 'perftest' },
             "page ",
             props.page);
@@ -353,18 +335,16 @@ define("demo/src/view", ["require", "exports", "demo/src/indexes", "demo/src/mis
             prefetch,
             a) : a;
     }
-    function ErrorView(err, summary) {
-        const open = !summary;
-        summary = summary || 'Error';
-        return (0, jsxrender_1.h)("details", { open: open, className: 'error' },
-            (0, jsxrender_1.h)("summary", null, summary),
-            err);
+    function MsgView(details, summary, className) {
+        return ((0, jsxrender_1.h)("details", { open: !summary, className: className },
+            (0, jsxrender_1.h)("summary", null, summary || 'Error'),
+            details));
     }
 });
 define("demo/src/control", ["require", "exports", "demo/src/indexes", "demo/src/misc", "demo/src/view"], function (require, exports, indexes_2, misc_2, view_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.request2cmd = exports.cacheFetch = exports.cacheRoot = exports.setupIndex = exports.enableCache = void 0;
+    exports.path2cmd = exports.cacheFetch = exports.cacheRoot = exports.setupIndex = exports.enableCache = void 0;
     const STATIC_TTL = 60 * 60 * 24;
     const DYNAMIC_TTL = 60 * 10;
     let useCache = false;
@@ -408,8 +388,7 @@ define("demo/src/control", ["require", "exports", "demo/src/indexes", "demo/src/
     }
     exports.cacheFetch = cacheFetch;
     async function cacheFetch1(request, evt) {
-        const reqstr = typeof request === 'string' ? request : request.url;
-        const { cmd, arg, req } = request2cmd(request);
+        const { cmd, arg, url } = path2cmd(request);
         const cache = await getCache();
         const cached = cache && await cache.match(request);
         if (cached) {
@@ -424,7 +403,7 @@ define("demo/src/control", ["require", "exports", "demo/src/indexes", "demo/src/
         }
         const ttl = cmd ? DYNAMIC_TTL : STATIC_TTL;
         const init = { cf: { cacheTtl: ttl } };
-        const resp2 = await fetch(req || request, init);
+        const resp2 = await fetch(url || request, init);
         if (!resp2.ok)
             return cached || resp2;
         const resp3 = cmd ? await api2response(resp2, cmd, arg) : resp2;
@@ -433,13 +412,13 @@ define("demo/src/control", ["require", "exports", "demo/src/indexes", "demo/src/
                 (misc_2.config.worker !== 'cf' ? resp3.type === 'basic'
                     : resp3.url === misc_2.config.baseurl + '/index.html'))) {
             const p = cache.put(request, resp3.clone());
-            evt === null || evt === void 0 ? void 0 : evt.waitUntil(p);
+            evt?.waitUntil(p);
         }
         return resp3;
     }
     async function api2response(resp, cmd, arg) {
         const data = await resp.json();
-        const html = (0, view_1.renderToMarkup)(cmd, arg, data);
+        const html = (0, view_1.renderToMarkup)(data, cmd, arg);
         return html2response(html, DYNAMIC_TTL);
     }
     function html2response(html, ttl) {
@@ -451,7 +430,7 @@ define("demo/src/control", ["require", "exports", "demo/src/indexes", "demo/src/
         ];
         return new Response(html, { headers: headers, status: 200, statusText: 'OK' });
     }
-    function request2cmd(request) {
+    function path2cmd(request, log) {
         let path;
         if (typeof request === 'string') {
             path = request;
@@ -465,13 +444,16 @@ define("demo/src/control", ["require", "exports", "demo/src/indexes", "demo/src/
         const api = path === '/' || strs[1] === 'myapi';
         const cmd = !api ? '' : strs[2] || 'news';
         const arg = !api ? '' : strs[3] || '1';
-        const req = !api ? '' : cmd2url(cmd, arg);
-        return { cmd, arg, req };
+        const url = !api ? '' : cmd2url(cmd, arg);
+        const ret = { cmd, arg, url };
+        if (log)
+            (0, misc_2.mylog)('path2cmd', path, ret);
+        return ret;
     }
-    exports.request2cmd = request2cmd;
+    exports.path2cmd = path2cmd;
     function cmd2url(cmd, arg) {
         switch (cmd) {
-            case 'search': return `https://hn.algolia.com/api/v1/search?${arg}&hitsPerPage=50&tags=story`;
+            case 'search': return `https://hn.algolia.com/api/v1/search?${arg}&tags=story`;
             case 'newest': return `https://node-hnapi.herokuapp.com/${cmd}?page=${arg}`;
             default: return `https://api.hnpwa.com/v0/${cmd}/${arg}.json`;
         }
@@ -489,7 +471,7 @@ define("demo/src/browser2", ["require", "exports", "demo/src/view", "demo/src/co
     async function clientRequest(path) {
         path = path || '/myapi/news/1';
         const markupp = fetchPath(path);
-        const { cmd } = (0, control_1.request2cmd)(path);
+        const { cmd } = (0, control_1.path2cmd)(path);
         const nav = document.getElementById('nav');
         const main = document.getElementById('main');
         const child = main.firstElementChild;
@@ -508,31 +490,55 @@ define("demo/src/browser2", ["require", "exports", "demo/src/view", "demo/src/co
         }
         catch (err) {
             (0, misc_3.mylog)('Error', err);
-            return (0, view_2.renderToMarkup)('', '', err + ' Maybe offline?');
+            const details = err + ' Maybe offline?';
+            return (0, view_2.renderToMarkup)(details, 'error', '');
         }
     }
 });
-define("demo/src/perftest", ["require", "exports", "demo/src/misc", "demo/src/control", "demo/src/view"], function (require, exports, misc_4, control_2, view_3) {
+define("demo/src/tests", ["require", "exports", "demo/src/misc", "demo/src/control", "demo/src/view"], function (require, exports, misc_4, control_2, view_3) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.perftestpost = exports.perftestgui = exports.perftest = void 0;
+    exports.perftestpost = exports.perftestgui = exports.perftest = exports.tests = void 0;
     let started = 0;
+    function tests() {
+        (0, misc_4.mylog)('tests');
+        (0, misc_4.mylog)('config', JSON.stringify(misc_4.config));
+        pathtest(false);
+        (0, misc_4.mylog)('finished');
+    }
+    exports.tests = tests;
+    function myassert(test, ...args) {
+        console.assert(test, ...args);
+    }
+    function pathtest(log = true) {
+        (0, misc_4.mylog)('pathtest');
+        const empty = (0, control_2.path2cmd)('', log);
+        const myapi = (0, control_2.path2cmd)('/myapi', log);
+        const search = (0, control_2.path2cmd)('/myapi/search?query=abc&page=3', log);
+        myassert('' === empty.cmd);
+        myassert('' === empty.arg);
+        myassert('' === empty.url);
+        myassert('news' === myapi.cmd);
+        myassert('1' === myapi.arg);
+        myassert(!!myapi.url);
+        myassert('search' === search.cmd);
+    }
     async function perftest(items) {
-        (0, misc_4.mylog)('perftest', misc_4.config.perftest);
+        (0, misc_4.mylog)('perftest', misc_4.config.tests);
         if (!items) {
             const res = await (0, control_2.cacheFetch)(misc_4.config.baseurl + '/static/news.json');
             items = await res.json();
         }
         const start = Date.now();
-        for (let i = misc_4.config.perftest; i > 0; --i) {
-            const str = (0, view_3.renderToMarkup)('news', '1', items);
+        for (let i = misc_4.config.tests; i > 0; --i) {
+            const str = (0, view_3.renderToMarkup)(items, 'news', '1');
         }
         return perfstr(start);
     }
     exports.perftest = perftest;
     function perftestgui() {
-        (0, misc_4.mylog)('perftestgui', misc_4.config.perftest);
-        if (misc_4.config.perftest > 0) {
+        (0, misc_4.mylog)('perftestgui', misc_4.config.tests);
+        if (misc_4.config.tests > 0) {
             perftestasync();
             return;
         }
@@ -542,12 +548,12 @@ define("demo/src/perftest", ["require", "exports", "demo/src/misc", "demo/src/co
             return;
         }
         started = Date.now();
-        window.postMessage(-misc_4.config.perftest, '*');
+        perftestpost(-misc_4.config.tests);
     }
     exports.perftestgui = perftestgui;
     async function perftestasync() {
         const main = document.getElementById('main');
-        main.innerHTML = 'perftest ' + misc_4.config.perftest + ' ...';
+        main.innerHTML = 'perftest ' + misc_4.config.tests + ' ...';
         main.innerHTML = await perftest();
     }
     async function perftestpost(count) {
@@ -567,14 +573,14 @@ define("demo/src/perftest", ["require", "exports", "demo/src/misc", "demo/src/co
     exports.perftestpost = perftestpost;
     function perfstr(start) {
         const duration = (Date.now() - start) / 1000;
-        const iterations = Math.abs(misc_4.config.perftest);
+        const iterations = Math.abs(misc_4.config.tests);
         const ips = (iterations / duration).toFixed();
-        const str = 'iterations: ' + iterations + ' duration: ' + duration + ' ips: ' + ips;
+        const str = 'iterations: ' + iterations + ', duration: ' + duration + ', ips: ' + ips;
         (0, misc_4.mylog)(str);
         return str;
     }
 });
-define("demo/src/onevents", ["require", "exports", "demo/src/browser2", "demo/src/perftest"], function (require, exports, browser2_1, perftest_1) {
+define("demo/src/onevents", ["require", "exports", "demo/src/browser2", "demo/src/tests"], function (require, exports, browser2_1, tests_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.setupHandlers = void 0;
@@ -585,6 +591,9 @@ define("demo/src/onevents", ["require", "exports", "demo/src/browser2", "demo/sr
         document.body.onsubmit = onSubmit;
     }
     exports.setupHandlers = setupHandlers;
+    function onMessage(e) {
+        (0, tests_1.perftestpost)(e.data);
+    }
     function onPopState(e) {
         (0, browser2_1.clientRequest)(e.state);
     }
@@ -594,7 +603,7 @@ define("demo/src/onevents", ["require", "exports", "demo/src/browser2", "demo/sr
             if (cmd !== undefined) {
                 e.preventDefault();
                 if (cmd === 'perftest')
-                    return (0, perftest_1.perftestgui)();
+                    return (0, tests_1.perftestgui)();
                 const path = cmd || e.target.pathname;
                 window.history.pushState(path, '');
                 document.forms[0].reset();
@@ -612,9 +621,6 @@ define("demo/src/onevents", ["require", "exports", "demo/src/browser2", "demo/sr
                 (0, browser2_1.clientRequest)(path);
             }
         }
-    }
-    async function onMessage(e) {
-        (0, perftest_1.perftestpost)(e.data);
     }
 });
 define("demo/src/browser", ["require", "exports", "demo/src/misc", "demo/src/browser2", "demo/src/onevents", "demo/src/view"], function (require, exports, misc_5, browser2_2, onevents_1, view_4) {
@@ -638,7 +644,7 @@ define("demo/src/browser", ["require", "exports", "demo/src/misc", "demo/src/bro
     }
     exports.browser = browser;
     function startWorker() {
-        if (misc_5.config.worker === 'service' && !misc_5.config.perftest) {
+        if (misc_5.config.worker === 'service' && !misc_5.config.tests) {
             if ('serviceWorker' in navigator) {
                 navigator.serviceWorker.register('sw.js')
                     .then(reg => { (0, browser2_2.setDirect)(); (0, misc_5.mylog)(reg); }, err => swfail('ServiceWorker failed.', err));
@@ -651,13 +657,14 @@ define("demo/src/browser", ["require", "exports", "demo/src/misc", "demo/src/bro
     function swfail(summary, reason) {
         (0, misc_5.mylog)('sw failed:', summary, reason);
         const error = document.getElementById('error');
-        error.outerHTML = (0, view_4.renderToMarkup)('', summary, reason +
+        const details = reason +
             '<br><br>Ensure cookies are enabled, the connection is secure,' +
             ' the browser is not in private mode and is supported' +
-            ' (Chrome on Android, Safari on iOS).');
+            ' (Chrome on Android, Safari on iOS).';
+        error.outerHTML = (0, view_4.renderToMarkup)(details, 'error', summary);
     }
 });
-define("demo/src/nodejs", ["require", "exports", "fs", "http", "https", "demo/src/misc", "demo/src/control", "demo/src/view", "demo/src/indexes", "demo/src/perftest"], function (require, exports, fs, http, https, misc_6, control_3, view_5, indexes_3, perftest_2) {
+define("demo/src/nodejs", ["require", "exports", "fs", "http", "https", "demo/src/misc", "demo/src/control", "demo/src/view", "demo/src/indexes", "demo/src/tests"], function (require, exports, fs, http, https, misc_6, control_3, view_5, indexes_3, tests_2) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.nodejs = void 0;
@@ -665,16 +672,17 @@ define("demo/src/nodejs", ["require", "exports", "fs", "http", "https", "demo/sr
         (0, misc_6.mylog)('nodejs');
         (0, misc_6.updateConfig)(process.argv.slice(2));
         misc_6.config.worker = 'node';
-        if (misc_6.config.perftest)
-            doPerfTest();
+        if (misc_6.config.tests)
+            doTests();
         else
             doServer();
     }
     exports.nodejs = nodejs;
-    function doPerfTest() {
+    function doTests() {
+        (0, tests_2.tests)();
         const news = fs.readFileSync('public/static/news.json', 'utf8');
         const json = JSON.parse(news);
-        (0, perftest_2.perftest)(json);
+        (0, tests_2.perftest)(json);
         process.exit();
     }
     function doServer() {
@@ -694,25 +702,10 @@ define("demo/src/nodejs", ["require", "exports", "fs", "http", "https", "demo/sr
             res.end();
             return;
         }
-        if (url === '/public/')
-            url = '/public/index.html';
         if (url.startsWith('/public/')) {
-            const pos = url.indexOf('?');
-            if (pos > 0)
-                url = url.substring(0, pos);
-            fs.readFile('.' + url, null, (err, data) => {
-                if (err)
-                    (0, misc_6.mylog)(err.message);
-                res.statusCode = 200;
-                res.setHeader('Date', new Date().toUTCString());
-                res.setHeader('Cache-Control', 'max-age=3600');
-                if (url === null || url === void 0 ? void 0 : url.endsWith('.js'))
-                    res.setHeader('Content-Type', 'application/javascript');
-                res.end(data);
-            });
-            return;
+            serveFile(url, res);
         }
-        if (url.startsWith('/myapi/')) {
+        else if (url.startsWith('/myapi/')) {
             serveNews(url, res);
         }
         else {
@@ -721,16 +714,34 @@ define("demo/src/nodejs", ["require", "exports", "fs", "http", "https", "demo/sr
             res.end();
         }
     }
+    function serveFile(url, res) {
+        const pos = url.indexOf('?');
+        if (pos > 0)
+            url = url.substring(0, pos);
+        if (url === '/public/')
+            url = '/public/index.html';
+        fs.readFile('.' + url, null, (err, data) => {
+            if (err)
+                (0, misc_6.mylog)(err.message);
+            const type = url.endsWith('.js') ? 'application/javascript' : '';
+            setHeaders(res, 3600, type);
+            res.end(data);
+        });
+    }
     function serveNews(path, res) {
-        const { cmd, arg, req } = (0, control_3.request2cmd)(path);
+        setHeaders(res, 600, 'text/html');
+        const { cmd, arg, url } = (0, control_3.path2cmd)(path);
+        function sendResp(data) {
+            res.end((0, view_5.renderToMarkup)(data, cmd, arg));
+        }
+        fetchJson(url, sendResp);
+    }
+    function setHeaders(res, ttl, type) {
         res.statusCode = 200;
         res.setHeader('Date', new Date().toUTCString());
-        res.setHeader('Cache-Control', 'max-age=600');
-        res.setHeader('Content-Type', 'text/html');
-        function sendResp(data) {
-            res.end((0, view_5.renderToMarkup)(cmd, arg, data));
-        }
-        fetchJson(req, sendResp);
+        res.setHeader('Cache-Control', 'max-age=' + ttl);
+        if (type)
+            res.setHeader('Content-Type', type);
     }
     function fetchJson(url, sendResp) {
         (0, misc_6.mylog)('fetchJson', url);

@@ -3,77 +3,73 @@
 */
 export { renderToMarkup }
 import { getIndexes } from './indexes';
-import { config, resetLog } from './misc';
+import { config, mylog, resetLog } from './misc';
 import { h, renderToStaticMarkup } from '../../src/jsxrender';
 import type { HnUser, HnComment, HnItem } from './model';
 import type { HnSearchResults, HnSearchItem } from './model';
 
-function renderToMarkup(cmd: string, arg: string, data: any) {
-  const vnode = typeof data === 'string' ? ErrorView(data, arg) :
-  cmd === 'user' ? UserView({ user: data }) :
-  cmd === 'item' ? ItemView({ item: data }) :
-  cmd === 'search' ? SearchesView({ items: data, cmd: cmd }) :
-  ItemsView({ items: data, cmd: cmd, page: Number.parseInt(arg) });
+function renderToMarkup(data: any, cmd: string, arg: string) {
+  const vnode = renderToJSX(data, cmd, arg);
   const str = renderToStaticMarkup(vnode as any);
   const indexes = getIndexes();
   return indexes ? indexes[0] + cmd + indexes[1] + str + indexes[2] : str;
 }
 
-function SearchesView(props: { items: HnSearchResults, cmd: string }) {
-  return (
-      <ol className='ol'>
-        {props.items.hits.map(item => <li className='li'><SearchView item={item}/></li>)}
-      </ol>
-  );
+function renderToJSX(data: any, cmd: string, arg: string) {
+  switch(cmd) {
+    case '':
+    case 'error': return MsgView(data, arg, cmd);
+    case 'user': return UserView({ user: data });
+    case 'item': return ItemView({ item: data });
+    case 'search': return SearchesView({ res: data });
+  }
+  return ItemsView({ items: data, cmd: cmd, page: Number.parseInt(arg) });
 }
 
-function SearchView(props: { item: HnSearchItem }) {
-  const i = props.item;
-  const idomain = i.url && i.url.split('/', 3)[2];
-  const url = '/item/' + i.objectID;
-  const iurl = i.url || url; 
-  const iuser = i.author;
-  const icomments_count = i.num_comments;
-  const created = i.created_at.substring(0, 10);
-  const domain = idomain && <span className='smallgrey'>({idomain})</span>;
-  const points = i.points > 0 && <span>{i.points} points</span>;
-  const user = iuser && <span>by <UserNameView user={iuser}/></span>;
-  const comments = icomments_count > 0 &&
-  <span>| <Link href={url} cmd>{icomments_count} comments</Link></span>;
-  return (
-    <article>
-      <Link className='mainlink' href={iurl} cmd={!idomain}>{i.title}</Link> {domain}
-      <div className='smallgrey'>
-        {points} {user} {created} {comments}
-      </div>
-    </article>
-  );
+function SearchesView(props: { res: HnSearchResults }) {
+  const props2 = {
+    items: props.res.hits,
+    cmd: 'search',
+    page: props.res.page,
+    pageSize: props.res.hitsPerPage,
+    query: props.res.query,
+  };
+  mylog('SearchesView', props2);
+  return ItemsView(props2);
 }
 
-function ItemsView(props: { items: HnItem[], cmd: string, page: number }) {
+function ItemsView(props: { items: HnItem[] | HnSearchItem[], cmd: string,
+    page: number, pageSize?: number }) {
+  const size = props.pageSize || 30;
   return (
     <div>
-      <ol start={(props.page - 1) * 30 + 1} className='ol'>
+      <ol start={(props.page - 1) * size + 1} className='ol'>
         {props.items.map(item => <li className='li'><ItemView item={item}/></li>)}
       </ol>
-      {PagerView(props)}
+      {props.page > 0 && PagerView(props)}
     </div>
   );
 }
 
-function ItemView(props: { item: HnItem }) {
-  const i = props.item;
-  const url = i.domain ? i.url : '/' + i.url.replace('?id=', '/');
-  const domain = i.domain && <span className='smallgrey'>({i.domain})</span>;
-  const points = i.points > 0 && <span>{i.points} points</span>;
-  const user = i.user && <span>by <UserNameView user={i.user}/></span>;
-  const comments = i.comments_count > 0 &&
-  <span>| <Link href={'/item/' + i.id} cmd>{i.comments_count} comments</Link></span>;
+function ItemView(props: { item: HnItem | HnSearchItem}) {
+  const i: Partial<HnItem> & Partial<HnSearchItem> = props.item as any;
+  const url = '/item/' + (i.id || i.objectID);
+  const iurl = !i.url || i.url.startsWith('item?id=') ? url : i.url;
+  const iuser = i.user || i.author;
+  const icount = i.comments_count || i.num_comments;
+  const idomain = i.domain || i.url?.split('/', 3)[2];
+  const idate = i.time_ago || i.created_at?.substring(0, 10);
+
+  const domain = idomain && <span className='smallgrey'>({idomain})</span>;
+  const points = !!i.points && <span>{i.points} points</span>;
+  const user = iuser && <span>by <UserNameView user={iuser}/></span>;
+  const comments = !!icount &&
+  <span>| <Link href={url} cmd>{icount} comments</Link></span>;
   return (
     <article className={i.comments && 'inset'}>
-      <Link className='mainlink' href={url} cmd={!i.domain}>{i.title}</Link> {domain}
+      <Link className='mainlink' href={iurl} cmd={!idomain}>{i.title}</Link> {domain}
       <div className='smallgrey'>
-        {points} {user} {i.time_ago} {comments}
+        {points} {user} {idate} {comments}
       </div>
       {i.content && <p/>}
       {i.content}
@@ -136,8 +132,8 @@ function PagerView(props: { cmd: string, page: number }) {
   const prev = <Link href={`/${props.cmd}/${props.page - 1}`} cmd
     className={nolink}>&larr; prev</Link>;
   const next = <Link href={`/${props.cmd}/${props.page + 1}`} cmd
-    prefetch={!config.perftest}>next &rarr;</Link>;
-  const style = config.perftest ? `color:hsl(${++color},100%,50%)` : 'pointer-events:none';
+    prefetch={!config.tests}>next &rarr;</Link>;
+  const style = config.tests ? `color:hsl(${++color},100%,50%)` : 'pointer-events:none';
   const page = <a style={style as any} data-cmd='perftest'>page {props.page}</a>;
   return (
     <div className='pager'>
@@ -166,8 +162,11 @@ function Link(props: { href: string, className?: string,
   return props.prefetch ? <span>{prefetch}{a}</span> : a;
 }
 
-function ErrorView(err: string, summary?: string) {
-  const open = !summary;
-  summary = summary || 'Error';
-  return <details open={open} className='error'><summary>{summary}</summary>{err}</details>;
+function MsgView(details: string, summary: string, className: string) {
+  return (
+    <details open={!summary} className={className}>
+      <summary>{summary || 'Error'}</summary>
+      {details}
+    </details>
+  );
 }

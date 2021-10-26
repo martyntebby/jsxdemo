@@ -15,10 +15,8 @@ function denojs() {
   mylog('denojs');
   updateConfig(Deno.args);
   config.worker = 'deno';
-
-  const decoder = new TextDecoder('utf-8');
   const index = Deno.readFileSync('public/index.html');
-  setIndexHtml(decoder.decode(index));
+  setIndexHtml(new TextDecoder().decode(index));
 
   doListener(config.port);
 }
