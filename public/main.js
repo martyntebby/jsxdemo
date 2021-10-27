@@ -52,7 +52,7 @@ define("demo/src/misc", ["require", "exports", "package", "package"], function (
     }
     exports.mylog = mylog;
     function resetLog() {
-        var l = logs;
+        const l = logs;
         logs = [];
         return l;
     }
@@ -211,11 +211,10 @@ define("demo/src/view", ["require", "exports", "demo/src/indexes", "demo/src/mis
         const props2 = {
             items: props.res.hits,
             cmd: 'search',
-            page: props.res.page,
+            page: props.res.page + 1,
             pageSize: props.res.hitsPerPage,
             query: props.res.query,
         };
-        (0, misc_1.mylog)('SearchesView', props2);
         return ItemsView(props2);
     }
     function ItemsView(props) {
@@ -223,7 +222,7 @@ define("demo/src/view", ["require", "exports", "demo/src/indexes", "demo/src/mis
         return ((0, jsxrender_1.h)("div", null,
             (0, jsxrender_1.h)("ol", { start: (props.page - 1) * size + 1, className: 'ol' }, props.items.map(item => (0, jsxrender_1.h)("li", { className: 'li' },
                 (0, jsxrender_1.h)(ItemView, { item: item })))),
-            props.page > 0 && PagerView(props)));
+            props.cmd !== 'search' && PagerView(props)));
     }
     function ItemView(props) {
         const i = props.item;
@@ -321,7 +320,7 @@ define("demo/src/view", ["require", "exports", "demo/src/indexes", "demo/src/mis
             (0, jsxrender_1.h)(LogsView, null)));
     }
     function LogsView() {
-        var logs = (0, misc_1.resetLog)();
+        const logs = (0, misc_1.resetLog)();
         return logs.length === 0 ? null : ((0, jsxrender_1.h)("details", null,
             (0, jsxrender_1.h)("summary", null, "Logs"),
             (0, jsxrender_1.h)("pre", null, logs.join('\n'))));
@@ -439,7 +438,7 @@ define("demo/src/control", ["require", "exports", "demo/src/indexes", "demo/src/
             const url = new URL(request.url);
             path = url.pathname + url.search;
         }
-        const re = /\/|\?|&/;
+        const re = /\/|\?/;
         const strs = path.split(re);
         const api = path === '/' || strs[1] === 'myapi';
         const cmd = !api ? '' : strs[2] || 'news';
@@ -453,7 +452,7 @@ define("demo/src/control", ["require", "exports", "demo/src/indexes", "demo/src/
     exports.path2cmd = path2cmd;
     function cmd2url(cmd, arg) {
         switch (cmd) {
-            case 'search': return `https://hn.algolia.com/api/v1/search?${arg}&tags=story`;
+            case 'search': return `https://hn.algolia.com/api/v1/search_by_date?${arg}&hitsPerPage=50&tags=story`;
             case 'newest': return `https://node-hnapi.herokuapp.com/${cmd}?page=${arg}`;
             default: return `https://api.hnpwa.com/v0/${cmd}/${arg}.json`;
         }

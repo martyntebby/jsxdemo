@@ -20,7 +20,7 @@ function mylog(...args: any[]) {
 }
 
 function resetLog() {
-  var l = logs;
+  const l = logs;
   logs = [];
   return l;
 }

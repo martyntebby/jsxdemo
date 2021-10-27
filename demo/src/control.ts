@@ -113,7 +113,7 @@ function path2cmd(request: RequestInfo, log?: boolean) {
     const url = new URL(request.url);
     path = url.pathname + url.search;
   }
-  const re = /\/|\?|&/;
+  const re = /\/|\?/;
   const strs = path.split(re);
   const api = path === '/' || strs[1] === 'myapi';
   const cmd = !api ? '' : strs[2] || 'news';
@@ -126,8 +126,7 @@ function path2cmd(request: RequestInfo, log?: boolean) {
 
 function cmd2url(cmd: string, arg: string) {
   switch(cmd) {
-//    case 'search': return `https://hn.algolia.com/api/v1/search?${arg}&hitsPerPage=50&tags=story`;
-    case 'search': return `https://hn.algolia.com/api/v1/search?${arg}&tags=story`;
+    case 'search': return `https://hn.algolia.com/api/v1/search_by_date?${arg}&hitsPerPage=50&tags=story`;
     case 'newest': return `https://node-hnapi.herokuapp.com/${cmd}?page=${arg}`;
     default: return `https://api.hnpwa.com/v0/${cmd}/${arg}.json`;
   }

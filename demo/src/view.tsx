@@ -30,11 +30,10 @@ function SearchesView(props: { res: HnSearchResults }) {
   const props2 = {
     items: props.res.hits,
     cmd: 'search',
-    page: props.res.page,
+    page: props.res.page + 1,
     pageSize: props.res.hitsPerPage,
     query: props.res.query,
   };
-  mylog('SearchesView', props2);
   return ItemsView(props2);
 }
 
@@ -46,7 +45,7 @@ function ItemsView(props: { items: HnItem[] | HnSearchItem[], cmd: string,
       <ol start={(props.page - 1) * size + 1} className='ol'>
         {props.items.map(item => <li className='li'><ItemView item={item}/></li>)}
       </ol>
-      {props.page > 0 && PagerView(props)}
+      {props.cmd !== 'search' && PagerView(props)}
     </div>
   );
 }
@@ -143,7 +142,7 @@ function PagerView(props: { cmd: string, page: number }) {
 }
 
 function LogsView() {
-  var logs = resetLog();
+  const logs = resetLog();
   return logs.length === 0 ? null : (
     <details>
       <summary>Logs</summary>
