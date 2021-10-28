@@ -34,15 +34,13 @@ body {
   margin: 0.5rem 0.3rem;
 }
 #nav > form {
-  margin: 0.3rem 0.3rem;
+  flex-grow: 1;
+  text-align: center;
+  align-self: center;
 }
 #nav > a.intro {
   font-weight: bold;
   color: purple;
-}
-#nav > a:last-child {
-  flex-grow: 1;
-  text-align: right;
 }
 .intro>.intro, .news>.news, .newest>.newest, .show>.show, .ask>.ask, .jobs>.jobs {
   text-decoration: underline;

@@ -30,7 +30,7 @@ define("package", [], {
     "license": "ISC",
     "devDependencies": {
         "typescript": "4.4.4",
-        "@types/node": "14.17.21",
+        "@types/node": "16.11.6",
         "@types/react": "^17.0.33",
         "@types/react-dom": "^17.0.10",
         "jsxrender": "martyntebby/jsxrender"
