@@ -1,3 +1,9 @@
+@media (max-width: 20rem) {
+  .optional {
+    display: none;
+  }
+}
+
 body {
   margin: 0;
   overflow-y: scroll;
@@ -28,6 +34,7 @@ body {
   background: orange;
   padding: 0 0.5rem;
   display: flex;
+  justify-content: space-between;
   box-shadow: 0 1px 2px rgba(0,0,0,0.1);
 }
 #nav > a {

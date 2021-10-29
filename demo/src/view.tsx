@@ -67,7 +67,7 @@ function ItemView(props: { item: HnItem | HnSearchItem}) {
   return (
     <article className={i.comments && 'inset'}>
       <Link className='mainlink' href={iurl} cmd={!idomain}>{i.title}</Link> {domain}
-      <div className='smallgrey'>
+      <div className='smallgrey optional'>
         {points} {user} {idate} {comments}
       </div>
       {i.content && <p/>}

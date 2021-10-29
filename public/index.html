@@ -11,6 +11,12 @@
   <meta name="description" content="Sample Hacker News app using jsxrender"/>
   <meta name="theme-color" content="orange"/>
   <style>
+@media (max-width: 20rem) {
+  .optional {
+    display: none;
+  }
+}
+
 body {
   margin: 0;
   overflow-y: scroll;
@@ -41,6 +47,7 @@ body {
   background: orange;
   padding: 0 0.5rem;
   display: flex;
+  justify-content: space-between;
   box-shadow: 0 1px 2px rgba(0,0,0,0.1);
 }
 #nav > a {
@@ -106,16 +113,16 @@ a:hover {
 </head>
 <body>
   <nav id="nav" class="">
-    <a href="/public/index.html" class="mainlink" target="_self"
+    <a href="/public/index.html" class="mainlink optional" target="_self"
       onclick="event.preventDefault(); window.history.back()">&lArr;</a>
-    <a href="/public/index.html" class="intro" target="_self"
+    <a href="/public/index.html" class="intro optional" target="_self"
       data-cmd="/public/static/intro.html">JSX</a>
     <a href="/myapi/news/1"   class="news"   target="_self" data-cmd>top</a>
     <a href="/myapi/newest/1" class="newest" target="_self" data-cmd>new</a>
     <a href="/myapi/show/1"   class="show"   target="_self" data-cmd>show</a>
     <a href="/myapi/ask/1"    class="ask"    target="_self" data-cmd>ask</a>
     <a href="/myapi/jobs/1"   class="jobs"   target="_self" data-cmd>jobs</a>
-    <form action="/myapi/search" class="search" target="_self" data-cmd>
+    <form action="/myapi/search" class="search optional" target="_self" data-cmd>
       <input type="search" placeholder="search" name="query">
     </form>
     <a href="https://github.com/martyntebby/jsxdemo" class="mainlink">about</a>

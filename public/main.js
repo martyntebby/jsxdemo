@@ -1,7 +1,7 @@
 "use strict";
 define("package", [], {
     "name": "jsxdemo",
-    "version": "0.9.9a",
+    "version": "0.9.9b",
     "description": "Hacker News demo for jsxrender.",
     "homepage": "https://github.com/martyntebby/jsxdemo#readme",
     "main": "public/main.js",
@@ -252,7 +252,7 @@ define("demo/src/view", ["require", "exports", "demo/src/indexes", "demo/src/mis
             (0, jsxrender_1.h)(Link, { className: 'mainlink', href: iurl, cmd: !idomain }, i.title),
             " ",
             domain,
-            (0, jsxrender_1.h)("div", { className: 'smallgrey' },
+            (0, jsxrender_1.h)("div", { className: 'smallgrey optional' },
                 points,
                 " ",
                 user,
