@@ -3,7 +3,7 @@
   Re exports some view methods and handles config info from package.json.
 */
 export { enableCache, setupIndex, cacheRoot, cacheFetch, path2cmd };
-import { getIndexHtml, setIndexHtml } from './indexes';
+import { getIndexes, getIndexHtml, setIndexHtml, setIndexResp } from './indexes';
 import { config, version, mylog } from './misc';
 import type { ExtendableEvent } from './misc';
 import { renderToMarkup } from './view';
@@ -26,22 +26,17 @@ async function getCache(): Promise<Cache | undefined | false> {
 async function setupIndex() {
   mylog('setupIndex');
   const url = config.baseurl + '/index.html';
-  const resp = await cacheFetch(url);
-  if(resp.ok) {
-    const index = await resp.text();
-    setIndexHtml(index);
-  }
-  return resp.ok;
+  const resp = cacheFetch(url);
+  setIndexResp(resp);
 }
 
 async function cacheRoot() {
-  if(await setupIndex()) {
-    mylog('cacheRoot');
-    const html = getIndexHtml();
-    setIndexHtml('');
-    const cache = await getCache();
-    if(cache) cache.put('./', html2response(html, STATIC_TTL));
-  }
+  setupIndex();
+  mylog('cacheRoot');
+  const html = await getIndexHtml();
+  setIndexHtml('');
+  const cache = await getCache();
+  if(cache && html) cache.put('./', html2response(html, STATIC_TTL));
 }
 
 async function cacheFetch(request: RequestInfo, evt?: ExtendableEvent) {
@@ -88,8 +83,9 @@ async function cacheFetch1(request: RequestInfo, evt?: ExtendableEvent) {
 }
 
 async function api2response(resp: Response, cmd: string, arg: string) {
-  const data = await resp.json();
-  const html = renderToMarkup(data, cmd, arg);
+  const data = resp.json();
+  const indexes = getIndexes();
+  const html = renderToMarkup(await data, cmd, arg, await indexes);
   return html2response(html, DYNAMIC_TTL);
 }
 

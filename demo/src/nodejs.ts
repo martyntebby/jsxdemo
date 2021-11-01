@@ -11,6 +11,8 @@ import { renderToMarkup } from './view';
 import { setIndexHtml } from './indexes';
 import { perftest, tests } from './tests';
 
+let indexes: string[];
+
 function nodejs() {
   mylog('nodejs');
   updateConfig(process.argv.slice(2));
@@ -28,7 +30,7 @@ function doTests() {
 
 function doServer() {
   const indexStr = fs.readFileSync('public/index.html', 'utf8');
-  setIndexHtml(indexStr);
+  indexes = setIndexHtml(indexStr);
   const server = http.createServer(serverRequest).listen(config.port);
   mylog('listening', server.address());
 }
@@ -73,7 +75,7 @@ function serveNews(path: string, res: http.ServerResponse) {
   setHeaders(res, 600, 'text/html');
   const { cmd, arg, url } = path2cmd(path);
   function sendResp(data: unknown) {
-    res.end(renderToMarkup(data, cmd, arg));
+    res.end(renderToMarkup(data, cmd, arg, indexes));
   }
   fetchJson(url, sendResp);
 }

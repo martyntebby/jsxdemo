@@ -1,24 +1,26 @@
 /*
   handles index.html
 */
-export { getIndexes, getIndexHtml, setIndexHtml };
+export { getIndexes, getIndexHtml, setIndexHtml, setIndexResp };
 
-let indexes: string[] | undefined;
+const EMPTY_INDEXES = ['index not set'];
+let indexes: Promise<string[]> | string[] = EMPTY_INDEXES;
 
-function getIndexes() {
-  return indexes;
+async function getIndexes() {
+  return await indexes;
 }
 
-function getIndexHtml() {
-  return indexes![0] + indexes![1] + indexes![2];
+async function getIndexHtml() {
+  const indexes = await getIndexes();
+  return indexes.length > 1 ? indexes[0] + indexes[1] + indexes[2] : '';
 }
 
 function setIndexHtml(text: string) {
-  indexes = splitIndexMain(text);
+  return indexes = splitIndexMain(text);
 }
 
 function splitIndexMain(text: string) {
-  if(!text) return;
+  if(!text) return EMPTY_INDEXES;
   const nav = '<nav id="nav" class="">';
   const pos0 = text.indexOf(nav) + nav.length - 2;
   const main = '<main id="main">';
@@ -26,4 +28,14 @@ function splitIndexMain(text: string) {
   const pos2 = text.indexOf('</main>', pos1);
   return [ text.substring(0, pos0), text.substring(pos0, pos1),
     text.substring(pos2) ];
+}
+
+function setIndexResp(respp: Promise<Response>) {
+  indexes = setIndexResp2(respp);
+}
+
+async function setIndexResp2(respp: Promise<Response>) {
+  const resp = await respp;
+  const index = resp.ok ? await resp.text() : '';
+  return setIndexHtml(index);
 }

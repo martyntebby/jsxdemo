@@ -2,17 +2,15 @@
   JSX to render the dynamic part of the UI.
 */
 export { renderToMarkup }
-import { getIndexes } from './indexes';
 import { config, mylog, resetLog } from './misc';
 import { h, renderToStaticMarkup } from '../../src/jsxrender';
 import type { HnUser, HnComment, HnItem } from './model';
 import type { HnSearchResults, HnSearchItem } from './model';
 
-function renderToMarkup(data: any, cmd: string, arg: string) {
+function renderToMarkup(data: any, cmd: string, arg: string, indexes?: string[]) {
   const vnode = renderToJSX(data, cmd, arg);
   const str = renderToStaticMarkup(vnode as any);
-  const indexes = getIndexes();
-  return indexes ? indexes[0] + cmd + indexes[1] + str + indexes[2] : str;
+  return indexes && indexes.length === 3 ? indexes[0] + cmd + indexes[1] + str + indexes[2] : str;
 }
 
 function renderToJSX(data: any, cmd: string, arg: string) {
@@ -55,15 +53,14 @@ function ItemView(props: { item: HnItem | HnSearchItem}) {
   const url = '/item/' + (i.id || i.objectID);
   const iurl = !i.url || i.url.startsWith('item?id=') ? url : i.url;
   const iuser = i.user || i.author;
-  const icount = i.comments_count || i.num_comments;
+  const icount = i.comments_count || i.num_comments || 0;
   const idomain = i.domain || i.url?.split('/', 3)[2];
   const idate = i.time_ago || i.created_at?.substring(0, 10);
 
   const domain = idomain && <span className='smallgrey'>({idomain})</span>;
   const points = !!i.points && <span>{i.points} points</span>;
   const user = iuser && <span>by <UserNameView user={iuser}/></span>;
-  const comments = !!icount &&
-  <span>| <Link href={url} cmd>{icount} comments</Link></span>;
+  const comments = <span>| <Link href={url} cmd>{icount} comments</Link></span>;
   return (
     <article className={i.comments && 'inset'}>
       <Link className='mainlink' href={iurl} cmd={!idomain}>{i.title}</Link> {domain}

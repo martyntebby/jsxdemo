@@ -66,35 +66,6 @@ define("demo/src/misc", ["require", "exports", "package", "package"], function (
     }
     exports.updateConfig = updateConfig;
 });
-define("demo/src/indexes", ["require", "exports"], function (require, exports) {
-    "use strict";
-    Object.defineProperty(exports, "__esModule", { value: true });
-    exports.setIndexHtml = exports.getIndexHtml = exports.getIndexes = void 0;
-    let indexes;
-    function getIndexes() {
-        return indexes;
-    }
-    exports.getIndexes = getIndexes;
-    function getIndexHtml() {
-        return indexes[0] + indexes[1] + indexes[2];
-    }
-    exports.getIndexHtml = getIndexHtml;
-    function setIndexHtml(text) {
-        indexes = splitIndexMain(text);
-    }
-    exports.setIndexHtml = setIndexHtml;
-    function splitIndexMain(text) {
-        if (!text)
-            return;
-        const nav = '<nav id="nav" class="">';
-        const pos0 = text.indexOf(nav) + nav.length - 2;
-        const main = '<main id="main">';
-        const pos1 = text.indexOf(main) + main.length;
-        const pos2 = text.indexOf('</main>', pos1);
-        return [text.substring(0, pos0), text.substring(pos0, pos1),
-            text.substring(pos2)];
-    }
-});
 define("src/jsxrender", ["require", "exports"], function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -186,15 +157,14 @@ define("demo/src/model", ["require", "exports"], function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
 });
-define("demo/src/view", ["require", "exports", "demo/src/indexes", "demo/src/misc", "src/jsxrender"], function (require, exports, indexes_1, misc_1, jsxrender_1) {
+define("demo/src/view", ["require", "exports", "demo/src/misc", "src/jsxrender"], function (require, exports, misc_1, jsxrender_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.renderToMarkup = void 0;
-    function renderToMarkup(data, cmd, arg) {
+    function renderToMarkup(data, cmd, arg, indexes) {
         const vnode = renderToJSX(data, cmd, arg);
         const str = (0, jsxrender_1.renderToStaticMarkup)(vnode);
-        const indexes = (0, indexes_1.getIndexes)();
-        return indexes ? indexes[0] + cmd + indexes[1] + str + indexes[2] : str;
+        return indexes && indexes.length === 3 ? indexes[0] + cmd + indexes[1] + str + indexes[2] : str;
     }
     exports.renderToMarkup = renderToMarkup;
     function renderToJSX(data, cmd, arg) {
@@ -229,7 +199,7 @@ define("demo/src/view", ["require", "exports", "demo/src/indexes", "demo/src/mis
         const url = '/item/' + (i.id || i.objectID);
         const iurl = !i.url || i.url.startsWith('item?id=') ? url : i.url;
         const iuser = i.user || i.author;
-        const icount = i.comments_count || i.num_comments;
+        const icount = i.comments_count || i.num_comments || 0;
         const idomain = i.domain || i.url?.split('/', 3)[2];
         const idate = i.time_ago || i.created_at?.substring(0, 10);
         const domain = idomain && (0, jsxrender_1.h)("span", { className: 'smallgrey' },
@@ -242,12 +212,11 @@ define("demo/src/view", ["require", "exports", "demo/src/indexes", "demo/src/mis
         const user = iuser && (0, jsxrender_1.h)("span", null,
             "by ",
             (0, jsxrender_1.h)(UserNameView, { user: iuser }));
-        const comments = !!icount &&
-            (0, jsxrender_1.h)("span", null,
-                "| ",
-                (0, jsxrender_1.h)(Link, { href: url, cmd: true },
-                    icount,
-                    " comments"));
+        const comments = (0, jsxrender_1.h)("span", null,
+            "| ",
+            (0, jsxrender_1.h)(Link, { href: url, cmd: true },
+                icount,
+                " comments"));
         return ((0, jsxrender_1.h)("article", { className: i.comments && 'inset' },
             (0, jsxrender_1.h)(Link, { className: 'mainlink', href: iurl, cmd: !idomain }, i.title),
             " ",
@@ -340,7 +309,47 @@ define("demo/src/view", ["require", "exports", "demo/src/indexes", "demo/src/mis
             details));
     }
 });
-define("demo/src/control", ["require", "exports", "demo/src/indexes", "demo/src/misc", "demo/src/view"], function (require, exports, indexes_2, misc_2, view_1) {
+define("demo/src/indexes", ["require", "exports"], function (require, exports) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.setIndexResp = exports.setIndexHtml = exports.getIndexHtml = exports.getIndexes = void 0;
+    const EMPTY_INDEXES = ['index not set'];
+    let indexes = EMPTY_INDEXES;
+    async function getIndexes() {
+        return await indexes;
+    }
+    exports.getIndexes = getIndexes;
+    async function getIndexHtml() {
+        const indexes = await getIndexes();
+        return indexes.length > 1 ? indexes[0] + indexes[1] + indexes[2] : '';
+    }
+    exports.getIndexHtml = getIndexHtml;
+    function setIndexHtml(text) {
+        return indexes = splitIndexMain(text);
+    }
+    exports.setIndexHtml = setIndexHtml;
+    function splitIndexMain(text) {
+        if (!text)
+            return EMPTY_INDEXES;
+        const nav = '<nav id="nav" class="">';
+        const pos0 = text.indexOf(nav) + nav.length - 2;
+        const main = '<main id="main">';
+        const pos1 = text.indexOf(main) + main.length;
+        const pos2 = text.indexOf('</main>', pos1);
+        return [text.substring(0, pos0), text.substring(pos0, pos1),
+            text.substring(pos2)];
+    }
+    function setIndexResp(respp) {
+        indexes = setIndexResp2(respp);
+    }
+    exports.setIndexResp = setIndexResp;
+    async function setIndexResp2(respp) {
+        const resp = await respp;
+        const index = resp.ok ? await resp.text() : '';
+        return setIndexHtml(index);
+    }
+});
+define("demo/src/control", ["require", "exports", "demo/src/indexes", "demo/src/misc", "demo/src/view"], function (require, exports, indexes_1, misc_2, view_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.path2cmd = exports.cacheFetch = exports.cacheRoot = exports.setupIndex = exports.enableCache = void 0;
@@ -357,23 +366,18 @@ define("demo/src/control", ["require", "exports", "demo/src/indexes", "demo/src/
     async function setupIndex() {
         (0, misc_2.mylog)('setupIndex');
         const url = misc_2.config.baseurl + '/index.html';
-        const resp = await cacheFetch(url);
-        if (resp.ok) {
-            const index = await resp.text();
-            (0, indexes_2.setIndexHtml)(index);
-        }
-        return resp.ok;
+        const resp = cacheFetch(url);
+        (0, indexes_1.setIndexResp)(resp);
     }
     exports.setupIndex = setupIndex;
     async function cacheRoot() {
-        if (await setupIndex()) {
-            (0, misc_2.mylog)('cacheRoot');
-            const html = (0, indexes_2.getIndexHtml)();
-            (0, indexes_2.setIndexHtml)('');
-            const cache = await getCache();
-            if (cache)
-                cache.put('./', html2response(html, STATIC_TTL));
-        }
+        setupIndex();
+        (0, misc_2.mylog)('cacheRoot');
+        const html = await (0, indexes_1.getIndexHtml)();
+        (0, indexes_1.setIndexHtml)('');
+        const cache = await getCache();
+        if (cache && html)
+            cache.put('./', html2response(html, STATIC_TTL));
     }
     exports.cacheRoot = cacheRoot;
     async function cacheFetch(request, evt) {
@@ -416,8 +420,9 @@ define("demo/src/control", ["require", "exports", "demo/src/indexes", "demo/src/
         return resp3;
     }
     async function api2response(resp, cmd, arg) {
-        const data = await resp.json();
-        const html = (0, view_1.renderToMarkup)(data, cmd, arg);
+        const data = resp.json();
+        const indexes = (0, indexes_1.getIndexes)();
+        const html = (0, view_1.renderToMarkup)(await data, cmd, arg, await indexes);
         return html2response(html, DYNAMIC_TTL);
     }
     function html2response(html, ttl) {
@@ -626,7 +631,7 @@ define("demo/src/browser", ["require", "exports", "demo/src/misc", "demo/src/bro
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.browser = void 0;
-    async function browser() {
+    function browser() {
         (0, misc_5.mylog)('browser');
         if (!('fetch' in window)) {
             swfail('Browser not supported.', 'Missing fetch.');
@@ -663,10 +668,11 @@ define("demo/src/browser", ["require", "exports", "demo/src/misc", "demo/src/bro
         error.outerHTML = (0, view_4.renderToMarkup)(details, 'error', summary);
     }
 });
-define("demo/src/nodejs", ["require", "exports", "fs", "http", "https", "demo/src/misc", "demo/src/control", "demo/src/view", "demo/src/indexes", "demo/src/tests"], function (require, exports, fs, http, https, misc_6, control_3, view_5, indexes_3, tests_2) {
+define("demo/src/nodejs", ["require", "exports", "fs", "http", "https", "demo/src/misc", "demo/src/control", "demo/src/view", "demo/src/indexes", "demo/src/tests"], function (require, exports, fs, http, https, misc_6, control_3, view_5, indexes_2, tests_2) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.nodejs = void 0;
+    let indexes;
     function nodejs() {
         (0, misc_6.mylog)('nodejs');
         (0, misc_6.updateConfig)(process.argv.slice(2));
@@ -686,7 +692,7 @@ define("demo/src/nodejs", ["require", "exports", "fs", "http", "https", "demo/sr
     }
     function doServer() {
         const indexStr = fs.readFileSync('public/index.html', 'utf8');
-        (0, indexes_3.setIndexHtml)(indexStr);
+        indexes = (0, indexes_2.setIndexHtml)(indexStr);
         const server = http.createServer(serverRequest).listen(misc_6.config.port);
         (0, misc_6.mylog)('listening', server.address());
     }
@@ -731,7 +737,7 @@ define("demo/src/nodejs", ["require", "exports", "fs", "http", "https", "demo/sr
         setHeaders(res, 600, 'text/html');
         const { cmd, arg, url } = (0, control_3.path2cmd)(path);
         function sendResp(data) {
-            res.end((0, view_5.renderToMarkup)(data, cmd, arg));
+            res.end((0, view_5.renderToMarkup)(data, cmd, arg, indexes));
         }
         fetchJson(url, sendResp);
     }

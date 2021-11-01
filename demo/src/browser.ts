@@ -11,7 +11,7 @@ import { setDirect, clientRequest } from './browser2';
 import { setupHandlers } from './onevents';
 import { renderToMarkup } from './view';
 
-async function browser() {
+function browser() {
   mylog('browser');
   if(!('fetch' in window)) {
     swfail('Browser not supported.', 'Missing fetch.');
