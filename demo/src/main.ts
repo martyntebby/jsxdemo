@@ -6,6 +6,7 @@ import { mylog, version, config } from './misc';
 import { nodejs } from './nodejs';
 import { browser } from './browser';
 import { sworker, cfworker } from './worker';
+//import { denojs } from '../src2/denojs';
 
 main();
 
