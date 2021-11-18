@@ -2,15 +2,14 @@
   tests
 */
 export { tests, perftest, perftestgui, perftestpost };
-import { mylog, config } from './misc';
-import { cacheFetch, path2cmd } from './control';
+import { mylog, config, path2cmd } from './misc';
+import { cacheFetch } from './control';
 import { renderToMarkup } from './view';
 
 let started = 0;
 
 function tests() {
   mylog('tests');
-  mylog('config', JSON.stringify(config));
   pathtest(false);
   mylog('finished');
 }
@@ -36,15 +35,11 @@ function pathtest(log = true) {
   myassert('search' === search.cmd);
 }
 
-async function perftest(items?: any): Promise<string> {
+function perftest(data: any) {
   mylog('perftest', config.tests);
-  if(!items) {
-    const res = await cacheFetch(config.baseurl + '/static/news.json');
-    items = await res.json();
-  }
   const start = Date.now();
   for(let i = config.tests; i > 0; --i) {
-    const str = renderToMarkup(items, 'news', '1');
+    const str = renderToMarkup(data, 'news', '1');
   }
   return perfstr(start);
 }
@@ -65,9 +60,11 @@ function perftestgui(): void {
 }
 
 async function perftestasync() {
+  const resp = await cacheFetch(config.baseurl + '/static/news.json');
+  const data = await resp.json();
   const main = document.getElementById('main')!;
   main.innerHTML = 'perftest ' + config.tests + ' ...';
-  main.innerHTML = await perftest();
+  main.innerHTML = perftest(data);
 }
 
 async function perftestpost(count: number) {

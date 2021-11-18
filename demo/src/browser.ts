@@ -6,48 +6,62 @@
   registers service worker
 */
 export { browser };
-import { mylog, config, updateConfig } from './misc';
-import { setDirect, clientRequest } from './browser2';
+import { mylog, updateConfig } from './misc';
+import { setWorker, fetchPaint } from './browser2';
 import { setupHandlers } from './onevents';
 import { renderToMarkup } from './view';
 
 function browser() {
   mylog('browser');
+  const nav = document.getElementById('nav')!;
+  nav.className = 'other';
+
   if(!('fetch' in window)) {
-    swfail('Browser not supported.', 'Missing fetch.');
+    showFail('Browser not supported.', 'Missing fetch.');
     return;
   }
 
   const query = window.location.search;
-  if(query) updateConfig(query.substring(1).split('&'));
+  const args = query ? query.substring(1).split('&') : [];
+  const config = updateConfig(args);
 
   const main = document.getElementById('main')!;
-  if(!main.firstElementChild) clientRequest();
+  if(!main.firstElementChild) fetchPaint();
 
   setupHandlers();
-  startWorker();
+  if(!config.tests) startWorker(true);
 }
 
-function startWorker() {
-  if(config.worker === 'service' && !config.tests) {
-    if('serviceWorker' in navigator) {
-      // using main.js does not get swapped out - probably because of self caching
-      navigator.serviceWorker.register('sw.js')
-        .then(reg => { setDirect(); mylog(reg) },
-              err => swfail('ServiceWorker failed.', err));
-    }
-    else {
-      swfail('ServiceWorker unsupported.', '');
-    }
-  }
-}
-
-function swfail(summary: string, reason: string) {
-  mylog('sw failed:', summary, reason);
-  const error = document.getElementById('error')!;
+function showFail(summary: string, reason: string) {
+  mylog('fail:', summary, reason);
   const details = reason +
     '<br><br>Ensure cookies are enabled, the connection is secure,' +
     ' the browser is not in private mode and is supported' +
     ' (Chrome on Android, Safari on iOS).';
-  error.outerHTML = renderToMarkup(details, 'error', summary);
+    const error = document.getElementById('error')!;
+    error.outerHTML = renderToMarkup(details, 'error', summary);
+}
+
+function startWorker(service?: boolean) {
+  const script = 'sw.js';
+  if(service) {
+    if('serviceWorker' in navigator) {
+      // using main.js does not get swapped out - probably because of self caching
+      navigator.serviceWorker.register(script)
+        .then(reg => { mylog(reg); setWorker(); },
+              err => { showFail('Service Worker failed.', err); startWorker(); });
+    }
+    else {
+      showFail('Service Worker not supported.', '');
+      startWorker();
+    }
+  }
+  else {
+    if(window.Worker) {
+      setWorker(new Worker(script));
+    }
+    else {
+      showFail('Worker not supported.', '');
+    }
+  }
 }

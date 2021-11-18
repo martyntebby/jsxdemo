@@ -1,6 +1,6 @@
 {
   "name": "jsxdemo",
-  "version": "0.9.9b",
+  "version": "0.9.9c",
   "description": "Hacker News demo for jsxrender.",
   "homepage": "https://github.com/martyntebby/jsxdemo#readme",
   "main": "public/main.js",
@@ -12,7 +12,7 @@
     "baseurl": "https://jsxdemo.westinca.com/public",
     "port": 3000,
     "dolog": false,
-    "worker": "service",
+    "worker": "",
     "tests": 0
   },
   "scripts": {
@@ -21,6 +21,7 @@
     "watch": "tsc -b . -w --listEmittedFiles",
     "clean": "rm -rf dist",
     "start": "node .",
+    "node": "node .",
     "test": "node . tests=1",
     "perf": "node . tests=10000",
     "deno": "deno run --allow-net --allow-read public/main.js"
@@ -28,10 +29,10 @@
   "author": "Martyn Tebby",
   "license": "ISC",
   "devDependencies": {
-    "typescript": "4.4.4",
-    "@types/node": "16.11.6",
-    "@types/react": "^17.0.33",
-    "@types/react-dom": "^17.0.10",
+    "typescript": "4.5.2",
+    "@types/node": "16.11.7",
+    "@types/react": "^17.0.35",
+    "@types/react-dom": "^17.0.11",
     "jsxrender": "martyntebby/jsxrender"
   },
   "dependencies": {}

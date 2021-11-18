@@ -5,19 +5,25 @@ export { nodejs };
 import * as fs from 'fs';
 import * as http from 'http';
 import * as https from 'https';
-import { mylog, updateConfig, config } from './misc';
-import { path2cmd } from './control';
+import { mylog, updateConfig, path2cmd } from './misc';
+import { newHeaders, modFilePath, fileResp, otherResp } from './server';
 import { renderToMarkup } from './view';
 import { setIndexHtml } from './indexes';
 import { perftest, tests } from './tests';
 
 let indexes: string[];
 
+interface MyResponse {
+  status: number;
+  statusText?: string;
+  headers?: http.OutgoingHttpHeaders;
+  body?: string;
+};
+
 function nodejs() {
   mylog('nodejs');
-  updateConfig(process.argv.slice(2));
-  config.worker = 'node';
-  if(config.tests) doTests(); else doServer();
+  const config = updateConfig(process.argv.slice(2), {worker: 'node'});
+  if(config.tests) doTests(); else doServer(config.port);
 }
 
 function doTests() {
@@ -28,89 +34,69 @@ function doTests() {
   process.exit();
 }
 
-function doServer() {
+function doServer(port: number) {
   const indexStr = fs.readFileSync('public/index.html', 'utf8');
   indexes = setIndexHtml(indexStr);
-  const server = http.createServer(serverRequest).listen(config.port);
+  const server = http.createServer(onRequest).listen(port);
   mylog('listening', server.address());
 }
 
-function serverRequest(req: http.IncomingMessage, res: http.ServerResponse) {
-  let url = req.url;
-  mylog('serverRequest', url);
-  if(!url) return;
-  if(url === '/') {
-    res.statusCode = 301;
-    res.setHeader('Location', '/public/');
-    res.end();
-    return;
+async function onRequest(req: http.IncomingMessage, res: http.ServerResponse) {
+  try {
+    const resp = await doGet('' + req.url);
+    // add some headers
+    res.writeHead(resp.status, resp.statusText, resp.headers);
+    res.write(resp.body);
   }
-  if(url.startsWith('/public/')) {
-    serveFile(url, res);
+  catch(err) {
+    res.statusCode = 500;
+    res.statusMessage = '' + err;
   }
-  else if(url.startsWith('/myapi/')) {
-    serveNews(url, res);
-  }
-  else {
-    mylog('unhandled url:', url);
-    res.statusCode = 404;
-    res.end();
-  }
+  res.end();
 }
 
-// hack - should handle with nginx, express, etc.
-function serveFile(url: string, res: http.ServerResponse) {
-  const pos = url.indexOf('?');
-  if(pos > 0) url = url.substring(0, pos);
-  if(url === '/public/') url = '/public/index.html';
-  fs.readFile('.' + url, null, (err, data) => {
-    if(err) mylog(err.message);
-    const type = url.endsWith('.js') ? 'application/javascript' : '';
-    setHeaders(res, 3600, type);
-    res.end(data);
+function doGet(path: string) {
+  mylog('doGet', path);
+  if(path.startsWith('/myapi/')) return doApi(path);
+  path = modFilePath(path);
+  if(path.startsWith('/public/')) return doFile('.' + path);
+  return otherResp(path) as MyResponse;
+}
+
+function doFile(path: string) {
+  return new Promise<MyResponse>((resolve, reject) => {
+    fs.readFile(path, null, (err, data) => {
+      if(err) mylog(err.message);
+      resolve(fileResp(path, data));
+    });
   });
 }
 
-function serveNews(path: string, res: http.ServerResponse) {
-  setHeaders(res, 600, 'text/html');
+async function doApi(path: string) {
   const { cmd, arg, url } = path2cmd(path);
-  function sendResp(data: unknown) {
-    res.end(renderToMarkup(data, cmd, arg, indexes));
+  const resp = await httpsGet(url);
+  if(resp.status === 200) {
+    const json = JSON.parse(resp.body!);
+    const data = !json ? 'No data' : json.error ? json.error.toString() : json;
+    const html = renderToMarkup(data, cmd, arg, indexes);
+    resp.headers = newHeaders(600, 'text/html', html.length);
+    resp.body = html;
   }
-  fetchJson(url, sendResp);
+  return resp;
 }
 
-function setHeaders(res: http.ServerResponse, ttl: number, type: string) {
-  res.statusCode = 200;
-  res.setHeader('Date', new Date().toUTCString());
-  res.setHeader('Cache-Control', 'max-age=' + ttl);
-  if(type) res.setHeader('Content-Type', type);
-}
-
-function fetchJson(url: string, sendResp: (data: unknown) => void) {
-  mylog('fetchJson', url);
-  https.get(url, clientRequest2)
-    .on('error', err => sendResp(err.message));
-
-  function clientRequest2(res2: http.IncomingMessage) {
-    if(res2.statusCode !== 200) {
-      res2.resume();
-      sendResp(res2.statusCode + ': ' + res2.statusMessage);
-    }
-    else {
-      let data = '';
-      res2.on('data', chunk => data += chunk);
-      res2.on('end', () => {
-        try {
-          const json = JSON.parse(data);
-          data = !json ? 'No data' : json.error ? json.error.toString() : json;
-        }
-        catch(err) {
-          mylog('Error', err);
-          data = '' + err;
-        }
-        sendResp(data);
-      });
-    }
-  }
+function httpsGet(url: string) {
+  return new Promise<MyResponse>((resolve, reject) => {
+    https.get(url, res => {
+      const resp = {
+        status: res.statusCode || 500,
+        statusText: res.statusMessage,
+        headers: res.headers,
+        body: '',
+      }
+      res.on('data', chunk => resp.body += chunk);
+      res.on('end', () => resolve(resp));
+    })
+    .on('error', err => reject(err.message));
+  });
 }

@@ -1,7 +1,7 @@
 "use strict";
 define("package", [], {
     "name": "jsxdemo",
-    "version": "0.9.9b",
+    "version": "0.9.9c",
     "description": "Hacker News demo for jsxrender.",
     "homepage": "https://github.com/martyntebby/jsxdemo#readme",
     "main": "public/main.js",
@@ -13,7 +13,7 @@ define("package", [], {
         "baseurl": "https://jsxdemo.westinca.com/public",
         "port": 3000,
         "dolog": false,
-        "worker": "service",
+        "worker": "",
         "tests": 0
     },
     "scripts": {
@@ -22,6 +22,7 @@ define("package", [], {
         "watch": "tsc -b . -w --listEmittedFiles",
         "clean": "rm -rf dist",
         "start": "node .",
+        "node": "node .",
         "test": "node . tests=1",
         "perf": "node . tests=10000",
         "deno": "deno run --allow-net --allow-read public/main.js"
@@ -29,21 +30,26 @@ define("package", [], {
     "author": "Martyn Tebby",
     "license": "ISC",
     "devDependencies": {
-        "typescript": "4.4.4",
-        "@types/node": "16.11.6",
-        "@types/react": "^17.0.33",
-        "@types/react-dom": "^17.0.10",
+        "typescript": "4.5.2",
+        "@types/node": "16.11.7",
+        "@types/react": "^17.0.35",
+        "@types/react-dom": "^17.0.11",
         "jsxrender": "martyntebby/jsxrender"
     },
     "dependencies": {}
 });
+define("demo/src/types", ["require", "exports"], function (require, exports) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    ;
+    ;
+});
 define("demo/src/misc", ["require", "exports", "package", "package"], function (require, exports, package_json_1, package_json_2) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.version = exports.config = exports.updateConfig = exports.resetLog = exports.mylog = void 0;
+    exports.version = exports.config = exports.path2cmd = exports.updateConfig = exports.resetLog = exports.mylog = void 0;
     Object.defineProperty(exports, "config", { enumerable: true, get: function () { return package_json_1.config; } });
     Object.defineProperty(exports, "version", { enumerable: true, get: function () { return package_json_1.version; } });
-    ;
     let logs = [];
     function mylog(...args) {
         console.log(...args);
@@ -57,14 +63,52 @@ define("demo/src/misc", ["require", "exports", "package", "package"], function (
         return l;
     }
     exports.resetLog = resetLog;
-    function updateConfig(args) {
+    function updateConfig(args, extra) {
+        if (Array.isArray(args))
+            updateConfig1(args);
+        else
+            updateConfig2(args, true);
+        if (extra)
+            updateConfig2(extra, false);
+        mylog('config', JSON.stringify(package_json_2.config));
+        return package_json_2.config;
+    }
+    exports.updateConfig = updateConfig;
+    function updateConfig1(args) {
         args.forEach(arg => {
             const [key, value] = arg.split('=');
             if (key in package_json_2.config)
                 package_json_2.config[key] = value ?? true;
         });
     }
-    exports.updateConfig = updateConfig;
+    function updateConfig2(env, upper) {
+        Object.keys(package_json_2.config).forEach(key => {
+            const key2 = upper ? key.toUpperCase() : key;
+            const value = env[key2];
+            if (value != null)
+                package_json_2.config[key] = value;
+        });
+    }
+    function path2cmd(path, log) {
+        const re = /\/|\?/;
+        const strs = path.split(re);
+        const api = path === '/' || strs[1] === 'myapi';
+        const cmd = !api ? '' : strs[2] || 'news';
+        const arg = !api ? '' : strs[3] || '1';
+        const url = !api ? '' : cmd2url(cmd, arg);
+        const ret = { cmd, arg, url };
+        if (log)
+            mylog('path2cmd', path, ret);
+        return ret;
+    }
+    exports.path2cmd = path2cmd;
+    function cmd2url(cmd, arg) {
+        switch (cmd) {
+            case 'search': return `https://hn.algolia.com/api/v1/search_by_date?${arg}&hitsPerPage=50&tags=story`;
+            case 'newest': return `https://node-hnapi.herokuapp.com/${cmd}?page=${arg}`;
+            default: return `https://api.hnpwa.com/v0/${cmd}/${arg}.json`;
+        }
+    }
 });
 define("src/jsxrender", ["require", "exports"], function (require, exports) {
     "use strict";
@@ -272,9 +316,10 @@ define("demo/src/view", ["require", "exports", "demo/src/misc", "src/jsxrender"]
     }
     let color = 0;
     function PagerView(props) {
+        const prefetch = misc_1.config.worker !== '' && misc_1.config.worker !== 'web' && !misc_1.config.tests;
         const nolink = props.page > 1 ? undefined : 'nolink';
         const prev = (0, jsxrender_1.h)(Link, { href: `/${props.cmd}/${props.page - 1}`, cmd: true, className: nolink }, "\u2190 prev");
-        const next = (0, jsxrender_1.h)(Link, { href: `/${props.cmd}/${props.page + 1}`, cmd: true, prefetch: !misc_1.config.tests }, "next \u2192");
+        const next = (0, jsxrender_1.h)(Link, { href: `/${props.cmd}/${props.page + 1}`, cmd: true, prefetch: prefetch }, "next \u2192");
         const style = misc_1.config.tests ? `color:hsl(${++color},100%,50%)` : 'pointer-events:none';
         const page = (0, jsxrender_1.h)("a", { style: style, "data-cmd": 'perftest' },
             "page ",
@@ -312,23 +357,22 @@ define("demo/src/view", ["require", "exports", "demo/src/misc", "src/jsxrender"]
 define("demo/src/indexes", ["require", "exports"], function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.setIndexResp = exports.setIndexHtml = exports.getIndexHtml = exports.getIndexes = void 0;
+    exports.setIndexResp = exports.setIndexHtml = exports.getIndexes = void 0;
     const EMPTY_INDEXES = ['index not set'];
     let indexes = EMPTY_INDEXES;
-    async function getIndexes() {
-        return await indexes;
+    function getIndexes() {
+        return indexes;
     }
     exports.getIndexes = getIndexes;
-    async function getIndexHtml() {
-        const indexes = await getIndexes();
-        return indexes.length > 1 ? indexes[0] + indexes[1] + indexes[2] : '';
-    }
-    exports.getIndexHtml = getIndexHtml;
     function setIndexHtml(text) {
-        return indexes = splitIndexMain(text);
+        return indexes = splitIndex(text);
     }
     exports.setIndexHtml = setIndexHtml;
-    function splitIndexMain(text) {
+    function setIndexResp(respp) {
+        indexes = setIndexResp2(respp);
+    }
+    exports.setIndexResp = setIndexResp;
+    function splitIndex(text) {
         if (!text)
             return EMPTY_INDEXES;
         const nav = '<nav id="nav" class="">';
@@ -339,50 +383,101 @@ define("demo/src/indexes", ["require", "exports"], function (require, exports) {
         return [text.substring(0, pos0), text.substring(pos0, pos1),
             text.substring(pos2)];
     }
-    function setIndexResp(respp) {
-        indexes = setIndexResp2(respp);
-    }
-    exports.setIndexResp = setIndexResp;
     async function setIndexResp2(respp) {
         const resp = await respp;
         const index = resp.ok ? await resp.text() : '';
         return setIndexHtml(index);
     }
 });
-define("demo/src/control", ["require", "exports", "demo/src/indexes", "demo/src/misc", "demo/src/view"], function (require, exports, indexes_1, misc_2, view_1) {
+define("demo/src/server", ["require", "exports"], function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.path2cmd = exports.cacheFetch = exports.cacheRoot = exports.setupIndex = exports.enableCache = void 0;
-    const STATIC_TTL = 60 * 60 * 24;
-    const DYNAMIC_TTL = 60 * 10;
+    exports.DYNAMIC_TTL = exports.STATIC_TTL = exports.htmlResp = exports.otherResp = exports.fileResp = exports.newHeaders = exports.modFilePath = exports.ext2type = void 0;
+    exports.STATIC_TTL = 60 * 60 * 24;
+    exports.DYNAMIC_TTL = 60 * 10;
+    function ext2type(path) {
+        if (path.endsWith('.js'))
+            return 'application/javascript';
+        if (path.endsWith('.json'))
+            return 'application/json';
+        if (path.endsWith('.png'))
+            return 'image/png';
+        return 'text/html';
+    }
+    exports.ext2type = ext2type;
+    function modFilePath(path) {
+        const pos = path.indexOf('?');
+        if (pos > 0)
+            path = path.substring(0, pos);
+        if (path === '/public/')
+            path = '/public/index.html';
+        if (path === '/favicon.ico')
+            path = '/public/static/favicon-32.png';
+        return path;
+    }
+    exports.modFilePath = modFilePath;
+    function newHeaders(ttl, type, len = 0) {
+        return {
+            'Date': new Date().toUTCString(),
+            'Cache-Control': 'max-age=' + ttl,
+            'Content-Type': type,
+            'Content-Length': '' + len,
+        };
+    }
+    exports.newHeaders = newHeaders;
+    function otherResp(path) {
+        const redirect = path === '/';
+        return {
+            status: redirect ? 301 : 406,
+            statusText: redirect ? 'Moved Permanently' : 'Not Acceptable',
+            headers: redirect ? { 'Location': '/public/' } : undefined,
+            body: undefined
+        };
+    }
+    exports.otherResp = otherResp;
+    function fileResp(path, data) {
+        const ok = !!data;
+        return {
+            status: ok ? 200 : 404,
+            statusText: ok ? 'OK' : 'File Not Found',
+            headers: ok ? newHeaders(3600, ext2type(path), data?.length) : undefined,
+            body: data?.toString(),
+        };
+    }
+    exports.fileResp = fileResp;
+    function htmlResp(html, ttl) {
+        const headers = newHeaders(ttl, 'text/html', html.length);
+        return new Response(html, { headers: headers, status: 200, statusText: 'OK' });
+    }
+    exports.htmlResp = htmlResp;
+});
+define("demo/src/control", ["require", "exports", "demo/src/indexes", "demo/src/misc", "demo/src/view", "demo/src/server"], function (require, exports, indexes_1, misc_2, view_1, server_1) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.cacheFetch = exports.enableCache = void 0;
     let useCache = false;
     function enableCache() {
         useCache = true;
     }
     exports.enableCache = enableCache;
-    async function getCache() {
-        return useCache && (caches.default || await caches.open(misc_2.version));
-    }
-    async function setupIndex() {
-        (0, misc_2.mylog)('setupIndex');
-        const url = misc_2.config.baseurl + '/index.html';
-        const resp = cacheFetch(url);
-        (0, indexes_1.setIndexResp)(resp);
-    }
-    exports.setupIndex = setupIndex;
-    async function cacheRoot() {
-        setupIndex();
-        (0, misc_2.mylog)('cacheRoot');
-        const html = await (0, indexes_1.getIndexHtml)();
-        (0, indexes_1.setIndexHtml)('');
-        const cache = await getCache();
-        if (cache && html)
-            cache.put('./', html2response(html, STATIC_TTL));
-    }
-    exports.cacheRoot = cacheRoot;
     async function cacheFetch(request, evt) {
+        const path = req2path(request);
         try {
-            return await cacheFetch1(request, evt);
+            const cache = await getCache();
+            const { cmd, arg, url } = (0, misc_2.path2cmd)(path);
+            const { cached, current } = await cacheMatch(cache, request, cmd);
+            if (cached && current)
+                return cached;
+            const ttl = cmd ? server_1.DYNAMIC_TTL : server_1.STATIC_TTL;
+            const resp2 = await fetchCF(url || request, ttl);
+            if (!resp2.ok)
+                return cached ?? resp2;
+            const resp3 = await api2resp(resp2, cmd, arg);
+            if (cache && cacheable(resp3, cmd, arg)) {
+                const p = cache.put(request, resp3.clone());
+                evt?.waitUntil(p);
+            }
+            return resp3;
         }
         catch (err) {
             (0, misc_2.mylog)('Error', err);
@@ -390,102 +485,80 @@ define("demo/src/control", ["require", "exports", "demo/src/indexes", "demo/src/
         }
     }
     exports.cacheFetch = cacheFetch;
-    async function cacheFetch1(request, evt) {
-        const { cmd, arg, url } = path2cmd(request);
-        const cache = await getCache();
-        const cached = cache && await cache.match(request);
-        if (cached) {
-            if (!cmd)
-                return cached;
-            const date = cached.headers.get('Date');
-            if (date) {
-                const diff = Date.now() - Date.parse(date);
-                if (diff < DYNAMIC_TTL * 1000)
-                    return cached;
-            }
-        }
-        const ttl = cmd ? DYNAMIC_TTL : STATIC_TTL;
-        const init = { cf: { cacheTtl: ttl } };
-        const resp2 = await fetch(url || request, init);
-        if (!resp2.ok)
-            return cached || resp2;
-        const resp3 = cmd ? await api2response(resp2, cmd, arg) : resp2;
-        if (cache && resp3.ok &&
-            (cmd === 'news' || cmd === 'newest' || arg === '1' ||
-                (misc_2.config.worker !== 'cf' ? resp3.type === 'basic'
-                    : resp3.url === misc_2.config.baseurl + '/index.html'))) {
-            const p = cache.put(request, resp3.clone());
-            evt?.waitUntil(p);
-        }
-        return resp3;
+    function getCache() {
+        const cache = useCache ? (caches.default || caches.open(misc_2.version)) : undefined;
+        return cache;
     }
-    async function api2response(resp, cmd, arg) {
+    function req2path(request) {
+        if (typeof request === 'string')
+            return request;
+        const url = new URL(request.url);
+        return url.pathname + url.search;
+    }
+    async function cacheMatch(cache, request, cmd) {
+        const cached = cache && await cache.match(request);
+        const current = !!cached && (!cmd ||
+            (Date.now() - (Date.parse(cached.headers.get('Date') ?? '')) < server_1.DYNAMIC_TTL * 1000));
+        return { cached, current };
+    }
+    function fetchCF(req, ttl) {
+        const init = { cf: { cacheTtl: ttl } };
+        return fetch(req, init);
+    }
+    async function api2resp(resp, cmd, arg) {
+        if (!cmd)
+            return resp;
         const data = resp.json();
         const indexes = (0, indexes_1.getIndexes)();
         const html = (0, view_1.renderToMarkup)(await data, cmd, arg, await indexes);
-        return html2response(html, DYNAMIC_TTL);
+        return (0, server_1.htmlResp)(html, server_1.DYNAMIC_TTL);
     }
-    function html2response(html, ttl) {
-        const headers = [
-            ['Date', new Date().toUTCString()],
-            ['Content-Type', 'text/html'],
-            ['Content-Length', html.length.toString()],
-            ['Cache-Control', 'max-age=' + ttl]
-        ];
-        return new Response(html, { headers: headers, status: 200, statusText: 'OK' });
-    }
-    function path2cmd(request, log) {
-        let path;
-        if (typeof request === 'string') {
-            path = request;
-        }
-        else {
-            const url = new URL(request.url);
-            path = url.pathname + url.search;
-        }
-        const re = /\/|\?/;
-        const strs = path.split(re);
-        const api = path === '/' || strs[1] === 'myapi';
-        const cmd = !api ? '' : strs[2] || 'news';
-        const arg = !api ? '' : strs[3] || '1';
-        const url = !api ? '' : cmd2url(cmd, arg);
-        const ret = { cmd, arg, url };
-        if (log)
-            (0, misc_2.mylog)('path2cmd', path, ret);
-        return ret;
-    }
-    exports.path2cmd = path2cmd;
-    function cmd2url(cmd, arg) {
-        switch (cmd) {
-            case 'search': return `https://hn.algolia.com/api/v1/search_by_date?${arg}&hitsPerPage=50&tags=story`;
-            case 'newest': return `https://node-hnapi.herokuapp.com/${cmd}?page=${arg}`;
-            default: return `https://api.hnpwa.com/v0/${cmd}/${arg}.json`;
-        }
+    function cacheable(resp3, cmd, arg) {
+        return (resp3.ok &&
+            (cmd === 'news' || cmd === 'newest' || arg === '1' ||
+                (misc_2.config.worker === 'cf'
+                    ? resp3.url === misc_2.config.baseurl + '/index.html'
+                    : resp3.type === 'basic')));
     }
 });
 define("demo/src/browser2", ["require", "exports", "demo/src/view", "demo/src/control", "demo/src/misc"], function (require, exports, view_2, control_1, misc_3) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.clientRequest = exports.setDirect = void 0;
+    exports.fetchPaint = exports.setWorker = void 0;
+    let cmd = '';
     let direct = false;
-    function setDirect() {
+    let worker;
+    function setWorker(work) {
+        (0, misc_3.mylog)('setWorker', work);
+        worker = work;
         direct = true;
+        if (worker) {
+            worker.onmessage = e => paint(e.data);
+        }
     }
-    exports.setDirect = setDirect;
-    async function clientRequest(path) {
+    exports.setWorker = setWorker;
+    async function fetchPaint(path) {
         path = path || '/myapi/news/1';
-        const markupp = fetchPath(path);
-        const { cmd } = (0, control_1.path2cmd)(path);
-        const nav = document.getElementById('nav');
+        cmd = (0, misc_3.path2cmd)(path).cmd;
         const main = document.getElementById('main');
         const child = main.firstElementChild;
         if (child)
             child.className = 'loading';
-        main.innerHTML = await markupp;
+        if (worker) {
+            worker.postMessage(path);
+        }
+        else {
+            paint(await fetchPath(path));
+        }
+    }
+    exports.fetchPaint = fetchPaint;
+    function paint(html) {
+        const nav = document.getElementById('nav');
+        const main = document.getElementById('main');
+        main.innerHTML = html;
         nav.className = cmd || 'other';
         window.scroll(0, 0);
     }
-    exports.clientRequest = clientRequest;
     async function fetchPath(path) {
         const func = direct ? fetch : control_1.cacheFetch;
         try {
@@ -506,7 +579,6 @@ define("demo/src/tests", ["require", "exports", "demo/src/misc", "demo/src/contr
     let started = 0;
     function tests() {
         (0, misc_4.mylog)('tests');
-        (0, misc_4.mylog)('config', JSON.stringify(misc_4.config));
         pathtest(false);
         (0, misc_4.mylog)('finished');
     }
@@ -516,9 +588,9 @@ define("demo/src/tests", ["require", "exports", "demo/src/misc", "demo/src/contr
     }
     function pathtest(log = true) {
         (0, misc_4.mylog)('pathtest');
-        const empty = (0, control_2.path2cmd)('', log);
-        const myapi = (0, control_2.path2cmd)('/myapi', log);
-        const search = (0, control_2.path2cmd)('/myapi/search?query=abc&page=3', log);
+        const empty = (0, misc_4.path2cmd)('', log);
+        const myapi = (0, misc_4.path2cmd)('/myapi', log);
+        const search = (0, misc_4.path2cmd)('/myapi/search?query=abc&page=3', log);
         myassert('' === empty.cmd);
         myassert('' === empty.arg);
         myassert('' === empty.url);
@@ -527,15 +599,11 @@ define("demo/src/tests", ["require", "exports", "demo/src/misc", "demo/src/contr
         myassert(!!myapi.url);
         myassert('search' === search.cmd);
     }
-    async function perftest(items) {
+    function perftest(data) {
         (0, misc_4.mylog)('perftest', misc_4.config.tests);
-        if (!items) {
-            const res = await (0, control_2.cacheFetch)(misc_4.config.baseurl + '/static/news.json');
-            items = await res.json();
-        }
         const start = Date.now();
         for (let i = misc_4.config.tests; i > 0; --i) {
-            const str = (0, view_3.renderToMarkup)(items, 'news', '1');
+            const str = (0, view_3.renderToMarkup)(data, 'news', '1');
         }
         return perfstr(start);
     }
@@ -556,9 +624,11 @@ define("demo/src/tests", ["require", "exports", "demo/src/misc", "demo/src/contr
     }
     exports.perftestgui = perftestgui;
     async function perftestasync() {
+        const resp = await (0, control_2.cacheFetch)(misc_4.config.baseurl + '/static/news.json');
+        const data = await resp.json();
         const main = document.getElementById('main');
         main.innerHTML = 'perftest ' + misc_4.config.tests + ' ...';
-        main.innerHTML = await perftest();
+        main.innerHTML = perftest(data);
     }
     async function perftestpost(count) {
         if (!started)
@@ -599,7 +669,7 @@ define("demo/src/onevents", ["require", "exports", "demo/src/browser2", "demo/sr
         (0, tests_1.perftestpost)(e.data);
     }
     function onPopState(e) {
-        (0, browser2_1.clientRequest)(e.state);
+        (0, browser2_1.fetchPaint)(e.state);
     }
     function onClick(e) {
         if (e.target instanceof HTMLAnchorElement) {
@@ -611,7 +681,7 @@ define("demo/src/onevents", ["require", "exports", "demo/src/browser2", "demo/sr
                 const path = cmd || e.target.pathname;
                 window.history.pushState(path, '');
                 document.forms[0].reset();
-                (0, browser2_1.clientRequest)(path);
+                (0, browser2_1.fetchPaint)(path);
             }
         }
     }
@@ -622,7 +692,7 @@ define("demo/src/onevents", ["require", "exports", "demo/src/browser2", "demo/sr
                 e.preventDefault();
                 const path = e.target.action + '?query=' + e.target.query.value;
                 window.history.pushState(path, '');
-                (0, browser2_1.clientRequest)(path);
+                (0, browser2_1.fetchPaint)(path);
             }
         }
     }
@@ -633,54 +703,67 @@ define("demo/src/browser", ["require", "exports", "demo/src/misc", "demo/src/bro
     exports.browser = void 0;
     function browser() {
         (0, misc_5.mylog)('browser');
+        const nav = document.getElementById('nav');
+        nav.className = 'other';
         if (!('fetch' in window)) {
-            swfail('Browser not supported.', 'Missing fetch.');
+            showFail('Browser not supported.', 'Missing fetch.');
             return;
         }
         const query = window.location.search;
-        if (query)
-            (0, misc_5.updateConfig)(query.substring(1).split('&'));
+        const args = query ? query.substring(1).split('&') : [];
+        const config = (0, misc_5.updateConfig)(args);
         const main = document.getElementById('main');
         if (!main.firstElementChild)
-            (0, browser2_2.clientRequest)();
+            (0, browser2_2.fetchPaint)();
         (0, onevents_1.setupHandlers)();
-        startWorker();
+        if (!config.tests)
+            startWorker(true);
     }
     exports.browser = browser;
-    function startWorker() {
-        if (misc_5.config.worker === 'service' && !misc_5.config.tests) {
-            if ('serviceWorker' in navigator) {
-                navigator.serviceWorker.register('sw.js')
-                    .then(reg => { (0, browser2_2.setDirect)(); (0, misc_5.mylog)(reg); }, err => swfail('ServiceWorker failed.', err));
-            }
-            else {
-                swfail('ServiceWorker unsupported.', '');
-            }
-        }
-    }
-    function swfail(summary, reason) {
-        (0, misc_5.mylog)('sw failed:', summary, reason);
-        const error = document.getElementById('error');
+    function showFail(summary, reason) {
+        (0, misc_5.mylog)('fail:', summary, reason);
         const details = reason +
             '<br><br>Ensure cookies are enabled, the connection is secure,' +
             ' the browser is not in private mode and is supported' +
             ' (Chrome on Android, Safari on iOS).';
+        const error = document.getElementById('error');
         error.outerHTML = (0, view_4.renderToMarkup)(details, 'error', summary);
     }
+    function startWorker(service) {
+        const script = 'sw.js';
+        if (service) {
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register(script)
+                    .then(reg => { (0, misc_5.mylog)(reg); (0, browser2_2.setWorker)(); }, err => { showFail('Service Worker failed.', err); startWorker(); });
+            }
+            else {
+                showFail('Service Worker not supported.', '');
+                startWorker();
+            }
+        }
+        else {
+            if (window.Worker) {
+                (0, browser2_2.setWorker)(new Worker(script));
+            }
+            else {
+                showFail('Worker not supported.', '');
+            }
+        }
+    }
 });
-define("demo/src/nodejs", ["require", "exports", "fs", "http", "https", "demo/src/misc", "demo/src/control", "demo/src/view", "demo/src/indexes", "demo/src/tests"], function (require, exports, fs, http, https, misc_6, control_3, view_5, indexes_2, tests_2) {
+define("demo/src/nodejs", ["require", "exports", "fs", "http", "https", "demo/src/misc", "demo/src/server", "demo/src/view", "demo/src/indexes", "demo/src/tests"], function (require, exports, fs, http, https, misc_6, server_2, view_5, indexes_2, tests_2) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.nodejs = void 0;
     let indexes;
+    ;
     function nodejs() {
         (0, misc_6.mylog)('nodejs');
-        (0, misc_6.updateConfig)(process.argv.slice(2));
-        misc_6.config.worker = 'node';
-        if (misc_6.config.tests)
+        const config = (0, misc_6.updateConfig)(process.argv.slice(2), { worker: 'node' });
+        if (config.tests)
             doTests();
         else
-            doServer();
+            doServer(config.port);
     }
     exports.nodejs = nodejs;
     function doTests() {
@@ -690,95 +773,74 @@ define("demo/src/nodejs", ["require", "exports", "fs", "http", "https", "demo/sr
         (0, tests_2.perftest)(json);
         process.exit();
     }
-    function doServer() {
+    function doServer(port) {
         const indexStr = fs.readFileSync('public/index.html', 'utf8');
         indexes = (0, indexes_2.setIndexHtml)(indexStr);
-        const server = http.createServer(serverRequest).listen(misc_6.config.port);
+        const server = http.createServer(onRequest).listen(port);
         (0, misc_6.mylog)('listening', server.address());
     }
-    function serverRequest(req, res) {
-        let url = req.url;
-        (0, misc_6.mylog)('serverRequest', url);
-        if (!url)
-            return;
-        if (url === '/') {
-            res.statusCode = 301;
-            res.setHeader('Location', '/public/');
-            res.end();
-            return;
+    async function onRequest(req, res) {
+        try {
+            const resp = await doGet('' + req.url);
+            res.writeHead(resp.status, resp.statusText, resp.headers);
+            res.write(resp.body);
         }
-        if (url.startsWith('/public/')) {
-            serveFile(url, res);
+        catch (err) {
+            res.statusCode = 500;
+            res.statusMessage = '' + err;
         }
-        else if (url.startsWith('/myapi/')) {
-            serveNews(url, res);
-        }
-        else {
-            (0, misc_6.mylog)('unhandled url:', url);
-            res.statusCode = 404;
-            res.end();
-        }
+        res.end();
     }
-    function serveFile(url, res) {
-        const pos = url.indexOf('?');
-        if (pos > 0)
-            url = url.substring(0, pos);
-        if (url === '/public/')
-            url = '/public/index.html';
-        fs.readFile('.' + url, null, (err, data) => {
-            if (err)
-                (0, misc_6.mylog)(err.message);
-            const type = url.endsWith('.js') ? 'application/javascript' : '';
-            setHeaders(res, 3600, type);
-            res.end(data);
+    function doGet(path) {
+        (0, misc_6.mylog)('doGet', path);
+        if (path.startsWith('/myapi/'))
+            return doApi(path);
+        path = (0, server_2.modFilePath)(path);
+        if (path.startsWith('/public/'))
+            return doFile('.' + path);
+        return (0, server_2.otherResp)(path);
+    }
+    function doFile(path) {
+        return new Promise((resolve, reject) => {
+            fs.readFile(path, null, (err, data) => {
+                if (err)
+                    (0, misc_6.mylog)(err.message);
+                resolve((0, server_2.fileResp)(path, data));
+            });
         });
     }
-    function serveNews(path, res) {
-        setHeaders(res, 600, 'text/html');
-        const { cmd, arg, url } = (0, control_3.path2cmd)(path);
-        function sendResp(data) {
-            res.end((0, view_5.renderToMarkup)(data, cmd, arg, indexes));
+    async function doApi(path) {
+        const { cmd, arg, url } = (0, misc_6.path2cmd)(path);
+        const resp = await httpsGet(url);
+        if (resp.status === 200) {
+            const json = JSON.parse(resp.body);
+            const data = !json ? 'No data' : json.error ? json.error.toString() : json;
+            const html = (0, view_5.renderToMarkup)(data, cmd, arg, indexes);
+            resp.headers = (0, server_2.newHeaders)(600, 'text/html', html.length);
+            resp.body = html;
         }
-        fetchJson(url, sendResp);
+        return resp;
     }
-    function setHeaders(res, ttl, type) {
-        res.statusCode = 200;
-        res.setHeader('Date', new Date().toUTCString());
-        res.setHeader('Cache-Control', 'max-age=' + ttl);
-        if (type)
-            res.setHeader('Content-Type', type);
-    }
-    function fetchJson(url, sendResp) {
-        (0, misc_6.mylog)('fetchJson', url);
-        https.get(url, clientRequest2)
-            .on('error', err => sendResp(err.message));
-        function clientRequest2(res2) {
-            if (res2.statusCode !== 200) {
-                res2.resume();
-                sendResp(res2.statusCode + ': ' + res2.statusMessage);
-            }
-            else {
-                let data = '';
-                res2.on('data', chunk => data += chunk);
-                res2.on('end', () => {
-                    try {
-                        const json = JSON.parse(data);
-                        data = !json ? 'No data' : json.error ? json.error.toString() : json;
-                    }
-                    catch (err) {
-                        (0, misc_6.mylog)('Error', err);
-                        data = '' + err;
-                    }
-                    sendResp(data);
-                });
-            }
-        }
+    function httpsGet(url) {
+        return new Promise((resolve, reject) => {
+            https.get(url, res => {
+                const resp = {
+                    status: res.statusCode || 500,
+                    statusText: res.statusMessage,
+                    headers: res.headers,
+                    body: '',
+                };
+                res.on('data', chunk => resp.body += chunk);
+                res.on('end', () => resolve(resp));
+            })
+                .on('error', err => reject(err.message));
+        });
     }
 });
-define("demo/src/worker", ["require", "exports", "demo/src/misc", "demo/src/control"], function (require, exports, misc_7, control_4) {
+define("demo/src/worker", ["require", "exports", "demo/src/misc", "demo/src/control", "demo/src/server", "demo/src/indexes"], function (require, exports, misc_7, control_3, server_3, indexes_3) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.sworker = exports.cfworker = void 0;
+    exports.cfworker = exports.sworker = exports.worker = void 0;
     const PRE_CACHE = ['index.html',
         'main.js',
         'static/app.css',
@@ -787,11 +849,17 @@ define("demo/src/worker", ["require", "exports", "demo/src/misc", "demo/src/cont
         'static/favicon-32.png',
         'static/favicon-256.png'
     ];
-    ;
+    function worker() {
+        (0, misc_7.mylog)('worker');
+        (0, misc_7.updateConfig)([], { baseurl: '/public/', worker: 'web' });
+        (0, control_3.enableCache)();
+        self.addEventListener('message', onMessage);
+    }
+    exports.worker = worker;
     function sworker() {
         (0, misc_7.mylog)('sworker');
-        misc_7.config.baseurl = '/public';
-        (0, control_4.enableCache)();
+        (0, misc_7.updateConfig)([], { baseurl: '/public/', worker: 'service' });
+        (0, control_3.enableCache)();
         self.addEventListener('install', onInstall);
         self.addEventListener('activate', onActivate);
         self.addEventListener('fetch', onFetch);
@@ -799,31 +867,46 @@ define("demo/src/worker", ["require", "exports", "demo/src/misc", "demo/src/cont
     exports.sworker = sworker;
     function cfworker() {
         (0, misc_7.mylog)('cfworker');
-        misc_7.config.worker = 'cf';
-        cfUpdateConfig();
-        (0, control_4.enableCache)();
-        (0, control_4.setupIndex)();
+        const config = (0, misc_7.updateConfig)(self, { worker: 'cf' });
+        (0, control_3.enableCache)();
+        (0, indexes_3.setIndexResp)((0, control_3.cacheFetch)(config.baseurl + '/index.html'));
         self.addEventListener('fetch', onFetch);
     }
     exports.cfworker = cfworker;
     function onInstall(e) {
         (0, misc_7.mylog)('onInstall', e);
-        (0, misc_7.mylog)('precache', PRE_CACHE);
-        e.waitUntil(caches.open(misc_7.version).then(cache => cache.addAll(PRE_CACHE)).then(() => (0, control_4.cacheRoot)().then(() => self.skipWaiting())));
+        e.waitUntil(preCache());
     }
     function onActivate(e) {
         (0, misc_7.mylog)('onActivate', e);
-        e.waitUntil(self.clients.claim().then(() => caches.keys().then(keys => Promise.all(keys.filter(key => key !== misc_7.version).map(name => caches.delete(name))))));
+        e.waitUntil(deleteOld());
     }
     function onFetch(e) {
-        e.respondWith((0, control_4.cacheFetch)(e.request, e));
+        e.respondWith((0, control_3.cacheFetch)(e.request, e));
     }
-    function cfUpdateConfig() {
-        Object.keys(misc_7.config).forEach(key => {
-            const value = self[key.toUpperCase()];
-            if (value != null)
-                misc_7.config[key] = value;
-        });
+    async function onMessage(e) {
+        const resp = await (0, control_3.cacheFetch)(e.data);
+        const html = await resp.text();
+        postMessage(html);
+    }
+    async function preCache() {
+        (0, misc_7.mylog)('preCache', PRE_CACHE);
+        const cache = await caches.open(misc_7.version);
+        await cache.addAll(PRE_CACHE);
+        const resp = await cache.match('index.html');
+        const index = await resp.text();
+        const indexes = (0, indexes_3.setIndexHtml)(index);
+        const html = indexes.join('');
+        (0, indexes_3.setIndexHtml)('');
+        await cache.put('./', (0, server_3.htmlResp)(html, server_3.STATIC_TTL));
+        await self.skipWaiting();
+    }
+    async function deleteOld() {
+        (0, misc_7.mylog)('deleteOld', misc_7.version);
+        await self.clients.claim();
+        const keys = await caches.keys();
+        const keys2 = keys.filter(key => key !== misc_7.version);
+        await Promise.all(keys2.map(name => caches.delete(name)));
     }
 });
 define("demo/src/main", ["require", "exports", "demo/src/misc", "demo/src/nodejs", "demo/src/browser", "demo/src/worker"], function (require, exports, misc_8, nodejs_1, browser_1, worker_1) {
@@ -832,10 +915,6 @@ define("demo/src/main", ["require", "exports", "demo/src/misc", "demo/src/nodejs
     main();
     function main() {
         (0, misc_8.mylog)('main', misc_8.version);
-        start();
-        (0, misc_8.mylog)('config:', JSON.stringify(misc_8.config));
-    }
-    function start() {
         if ('Deno' in globalThis)
             (0, misc_8.mylog)('Deno not supported');
         else if ('window' in globalThis)
@@ -846,6 +925,8 @@ define("demo/src/main", ["require", "exports", "demo/src/misc", "demo/src/nodejs
             (0, worker_1.sworker)();
         else if ('caches' in globalThis && 'default' in globalThis.caches)
             (0, worker_1.cfworker)();
+        else if ('importScripts' in globalThis)
+            (0, worker_1.worker)();
         else {
             console.error('unknown environment', globalThis);
             throw 'unknown environment ' + globalThis;

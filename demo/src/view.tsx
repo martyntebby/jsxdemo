@@ -2,7 +2,7 @@
   JSX to render the dynamic part of the UI.
 */
 export { renderToMarkup }
-import { config, mylog, resetLog } from './misc';
+import { config, resetLog } from './misc';
 import { h, renderToStaticMarkup } from '../../src/jsxrender';
 import type { HnUser, HnComment, HnItem } from './model';
 import type { HnSearchResults, HnSearchItem } from './model';
@@ -124,11 +124,12 @@ function UserView(props: { user: HnUser }) {
 let color = 0;
 
 function PagerView(props: { cmd: string, page: number }) {
+  const prefetch = config.worker !== '' && config.worker !== 'web' && !config.tests;
   const nolink = props.page > 1 ? undefined : 'nolink';
   const prev = <Link href={`/${props.cmd}/${props.page - 1}`} cmd
     className={nolink}>&larr; prev</Link>;
   const next = <Link href={`/${props.cmd}/${props.page + 1}`} cmd
-    prefetch={!config.tests}>next &rarr;</Link>;
+    prefetch={prefetch}>next &rarr;</Link>;
   const style = config.tests ? `color:hsl(${++color},100%,50%)` : 'pointer-events:none';
   const page = <a style={style as any} data-cmd='perftest'>page {props.page}</a>;
   return (

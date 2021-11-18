@@ -2,7 +2,7 @@
   browser event handlers
 */
 export { setupHandlers };
-import { clientRequest } from './browser2';
+import { fetchPaint } from './browser2';
 import { perftestgui, perftestpost } from './tests';
 
 function setupHandlers() {
@@ -17,7 +17,7 @@ function onMessage(e: MessageEvent) {
 }
 
 function onPopState(e: PopStateEvent) {
-  clientRequest(e.state);
+  fetchPaint(e.state);
 }
 
 function onClick(e: Event) {
@@ -29,7 +29,7 @@ function onClick(e: Event) {
       const path = cmd || e.target.pathname;
       window.history.pushState(path, '');
       document.forms[0].reset();
-      clientRequest(path);
+      fetchPaint(path);
     }
   }
 }
@@ -41,7 +41,7 @@ function onSubmit(e: Event) {
       e.preventDefault();
       const path = e.target.action + '?query=' + e.target.query.value;
       window.history.pushState(path, '');
-      clientRequest(path);
+      fetchPaint(path);
     }
   }
 }

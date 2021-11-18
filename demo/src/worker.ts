@@ -8,10 +8,12 @@
 
 //// <reference lib="webworker"/>
 
-export { cfworker, sworker };
-import { config, version, mylog } from './misc';
-import type { Mapped, ExtendableEvent } from './misc';
-import { enableCache, setupIndex, cacheRoot, cacheFetch } from './control';
+export { worker, sworker, cfworker };
+import { version, mylog, updateConfig } from './misc';
+import { enableCache, cacheFetch } from './control';
+import { STATIC_TTL, htmlResp } from './server';
+import { setIndexHtml, setIndexResp } from './indexes';
+import type { ExtendableEvent, FetchEvent } from './types';
 
 const PRE_CACHE = [ 'index.html'
   ,'main.js'
@@ -23,16 +25,18 @@ const PRE_CACHE = [ 'index.html'
 ];
 
 /// @ts-ignore
-declare var self: ServiceWorkerGlobalScope & Mapped;
+declare var self: ServiceWorkerGlobalScope;
 
-interface FetchEvent extends ExtendableEvent {
-  request: Request;
-  respondWith(r: Promise<Response>): void;
-};
+function worker() {
+  mylog('worker');
+  updateConfig([], {baseurl: '/public/', worker: 'web'});
+  enableCache();
+  self.addEventListener('message', onMessage);
+}
 
 function sworker() {
   mylog('sworker');
-  config.baseurl = '/public';
+  updateConfig([], {baseurl: '/public/', worker: 'service'});
   enableCache();
   self.addEventListener('install', onInstall);
   self.addEventListener('activate', onActivate);
@@ -41,38 +45,49 @@ function sworker() {
 
 function cfworker() {
   mylog('cfworker');
-  config.worker = 'cf';
-  cfUpdateConfig();
+  const config = updateConfig(self, {worker: 'cf'});
   enableCache();
-  setupIndex();
+  setIndexResp(cacheFetch(config.baseurl + '/index.html'));
   self.addEventListener('fetch', onFetch);
 }
 
 function onInstall(e: ExtendableEvent) {
   mylog('onInstall', e);
-  mylog('precache', PRE_CACHE);
-  e.waitUntil(caches.open(version).then(cache =>
-    cache.addAll(PRE_CACHE)).then(() =>
-      cacheRoot().then(() =>
-        self.skipWaiting())));
+  e.waitUntil(preCache());
 }
 
 function onActivate(e: ExtendableEvent) {
   mylog('onActivate', e);
-  e.waitUntil(self.clients.claim().then(() =>
-    caches.keys().then(keys =>
-      Promise.all(keys.filter(key =>
-        key !== version).map(name =>
-          caches.delete(name))))));
+  e.waitUntil(deleteOld());
 }
 
 function onFetch(e: FetchEvent) {
   e.respondWith(cacheFetch(e.request, e));
 }
 
-function cfUpdateConfig() {
-  Object.keys(config).forEach(key => {
-    const value = self[key.toUpperCase()];
-    if(value != null) (<Mapped>config)[key] = value;
-  });
+async function onMessage(e: MessageEvent) {
+  const resp = await cacheFetch(e.data);
+  const html = await resp.text();
+  postMessage(html);
+}
+
+async function preCache() {
+  mylog('preCache', PRE_CACHE);
+  const cache = await caches.open(version);
+  await cache.addAll(PRE_CACHE);
+  const resp = await cache.match('index.html');
+  const index = await resp!.text();
+  const indexes = setIndexHtml(index);
+  const html = indexes.join('');
+  setIndexHtml('');
+  await cache.put('./', htmlResp(html, STATIC_TTL));
+  await self.skipWaiting();
+}
+
+async function deleteOld() {
+  mylog('deleteOld', version);
+  await self.clients.claim();
+  const keys = await caches.keys();
+  const keys2 = keys.filter(key => key !== version);
+  await Promise.all(keys2.map(name => caches.delete(name)));
 }

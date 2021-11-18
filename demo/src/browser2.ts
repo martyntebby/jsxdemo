@@ -2,34 +2,53 @@
   request data,
   populate main div
 */
-export { setDirect, clientRequest };
+export { setWorker, fetchPaint };
 import { renderToMarkup } from './view';
-import { path2cmd, cacheFetch } from './control';
-import { mylog } from './misc';
+import { cacheFetch } from './control';
+import { mylog, path2cmd } from './misc';
+import type { FetchFunc } from './types';
 
+let cmd = '';
 let direct = false;
+let worker: Worker | undefined;
 
-function setDirect() {
+function setWorker(work?: Worker) {
+  mylog('setWorker', work);
+  worker = work;
   direct = true;
+  if(worker) {
+    worker.onmessage = e => paint(e.data);
+  }
 }
 
-async function clientRequest(path?: string) {
+async function fetchPaint(path?: string) {
   path = path || '/myapi/news/1';
-  const markupp = fetchPath(path);
-  const { cmd } = path2cmd(path);
+  cmd = path2cmd(path).cmd;
 
-  const nav = document.getElementById('nav')!;
   const main = document.getElementById('main')!;
   const child = main.firstElementChild;
   if(child) child.className = 'loading';
 
-  main.innerHTML = await markupp;
+  if(worker) {
+    worker.postMessage(path);
+  }
+  else {
+    paint(await fetchPath(path));
+  }
+}
+
+function paint(html: string) {
+  const nav = document.getElementById('nav')!;
+  const main = document.getElementById('main')!;
+//  requestAnimationFrame(() => {
+  main.innerHTML = html;
   nav.className = cmd || 'other';
   window.scroll(0, 0);
+//  });
 }
 
 async function fetchPath(path: string) {
-  const func = direct ? fetch : cacheFetch;
+  const func: FetchFunc = direct ? fetch : cacheFetch;
   try {
     const resp = await func(path);
     return await resp.text();
