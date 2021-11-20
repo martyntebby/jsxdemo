@@ -1,6 +1,6 @@
 {
   "name": "jsxdemo",
-  "version": "0.9.9c",
+  "version": "0.9.9d",
   "description": "Hacker News demo for jsxrender.",
   "homepage": "https://github.com/martyntebby/jsxdemo#readme",
   "main": "public/main.js",

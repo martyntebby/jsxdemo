@@ -3,7 +3,7 @@
 */
 export { setupHandlers };
 import { fetchPaint } from './browser2';
-import { perftestgui, perftestpost } from './tests';
+import { perfTestGui, perfTestPost } from './tests2';
 
 function setupHandlers() {
   window.onmessage = onMessage;
@@ -13,7 +13,7 @@ function setupHandlers() {
 }
 
 function onMessage(e: MessageEvent) {
-  perftestpost(e.data);
+  perfTestPost(e.data);
 }
 
 function onPopState(e: PopStateEvent) {
@@ -25,7 +25,7 @@ function onClick(e: Event) {
     const cmd = e.target.dataset.cmd;
     if(cmd !== undefined) {
       e.preventDefault();
-      if(cmd === 'perftest') return perftestgui();
+      if(cmd === 'perftest') return perfTestGui();
       const path = cmd || e.target.pathname;
       window.history.pushState(path, '');
       document.forms[0].reset();

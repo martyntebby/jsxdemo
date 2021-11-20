@@ -15,12 +15,12 @@ declare var Deno: any;
 function denojs() {
   mylog('denojs');
   const config = updateConfig(Deno.args, {worker: 'deno'});
-  const index = Deno.readFileSync('public/index.html');
-  setIndexHtml(new TextDecoder().decode(index));
   doServer(config.port);
 }
 
 async function doServer(port: number) {
+  const index = Deno.readFileSync('public/index.html');
+  setIndexHtml(new TextDecoder().decode(index));
   const listener = Deno.listen({ port });
   mylog('listening', listener.addr);
   for await(const conn of listener) {

@@ -46,7 +46,7 @@ function fileResp(path: string, data?: Uint8Array) {
     status: ok ? 200 : 404,
     statusText: ok ? 'OK' : 'File Not Found',
     headers: ok ? newHeaders(3600, ext2type(path), data?.length) : undefined,
-    body: data?.toString(),
+    body: data,
   }
 }
 

@@ -1,16 +1,18 @@
 /*
   tests
 */
-export { tests, perftest, perftestgui, perftestpost };
-import { mylog, config, path2cmd } from './misc';
-import { cacheFetch } from './control';
+export { tests, perfTest, perfStr };
+import { mylog, config, path2cmd, updateConfig } from './misc';
+import { getIndexes, setIndexHtml } from './indexes';
+import { modFilePath, fileResp, otherResp } from './server';
 import { renderToMarkup } from './view';
-
-let started = 0;
 
 function tests() {
   mylog('tests');
-  pathtest(false);
+  configTest();
+  pathTest(false);
+  indexTest();
+  serverTest();
   mylog('finished');
 }
 
@@ -18,8 +20,15 @@ function myassert(test: boolean, ...args: any[]) {
   console.assert(test, ...args);
 }
 
-function pathtest(log = true) {
-  mylog('pathtest');
+function configTest() {
+  mylog('configTest');
+  myassert(updateConfig(['worker=worker1']).worker === 'worker1');
+  myassert(updateConfig({WORKER:'worker2'}).worker === 'worker2');
+  myassert(updateConfig([], {worker:'worker3'}).worker === 'worker3');
+}
+
+function pathTest(log = true) {
+  mylog('pathTest');
   const empty = path2cmd('', log);
   const myapi = path2cmd('/myapi', log);
   const search = path2cmd('/myapi/search?query=abc&page=3', log);
@@ -35,53 +44,33 @@ function pathtest(log = true) {
   myassert('search' === search.cmd);
 }
 
-function perftest(data: any) {
+function indexTest() {
+  mylog('indexTest');
+  const init = getIndexes();
+  myassert(Array.isArray(init) && init.length === 1);
+  myassert(setIndexHtml('').length === 1);
+  myassert(setIndexHtml('abc').length === 3);
+}
+
+function serverTest() {
+  mylog('serverTest');
+  myassert(modFilePath('a?b') === 'a');
+  myassert(fileResp('abc').status === 404);
+  myassert(fileResp('abc.png', new Uint8Array(1)).headers?.['Content-Type'] === 'image/png');
+  myassert(otherResp('abc').status === 406);
+  myassert(otherResp('/').headers?.Location === '/public/');
+}
+
+function perfTest(data: any) {
   mylog('perftest', config.tests);
   const start = Date.now();
   for(let i = config.tests; i > 0; --i) {
     const str = renderToMarkup(data, 'news', '1');
   }
-  return perfstr(start);
+  return perfStr(start);
 }
 
-function perftestgui(): void {
-  mylog('perftestgui', config.tests);
-  if(config.tests > 0) {
-    perftestasync();
-    return;
-  }
-  if(started) {
-    mylog('stop');
-    started = 0;
-    return;
-  }
-  started = Date.now();
-  perftestpost(-config.tests);
-}
-
-async function perftestasync() {
-  const resp = await cacheFetch(config.baseurl + '/static/news.json');
-  const data = await resp.json();
-  const main = document.getElementById('main')!;
-  main.innerHTML = 'perftest ' + config.tests + ' ...';
-  main.innerHTML = perftest(data);
-}
-
-async function perftestpost(count: number) {
-  if(!started) return;
-  const main = document.getElementById('main')!;
-  if(count > 0) {
-    const resp = await cacheFetch('/myapi/ask/2');
-    main.innerHTML = await resp.text();
-    window.postMessage(count - 1, '*');
-  }
-  else {
-    main.innerHTML = perfstr(started);
-    started = 0;
-  }
-}
-
-function perfstr(start: number) {
+function perfStr(start: number) {
   const duration = (Date.now() - start) / 1000;
   const iterations = Math.abs(config.tests);
   const ips = (iterations / duration).toFixed();

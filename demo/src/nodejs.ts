@@ -9,7 +9,7 @@ import { mylog, updateConfig, path2cmd } from './misc';
 import { newHeaders, modFilePath, fileResp, otherResp } from './server';
 import { renderToMarkup } from './view';
 import { setIndexHtml } from './indexes';
-import { perftest, tests } from './tests';
+import { perfTest, tests } from './tests';
 
 let indexes: string[];
 
@@ -17,21 +17,21 @@ interface MyResponse {
   status: number;
   statusText?: string;
   headers?: http.OutgoingHttpHeaders;
-  body?: string;
+  body?: string | Uint8Array;
 };
 
 function nodejs() {
   mylog('nodejs');
   const config = updateConfig(process.argv.slice(2), {worker: 'node'});
-  if(config.tests) doTests(); else doServer(config.port);
+  if(config.tests) doTests(config.tests); else doServer(config.port);
 }
 
-function doTests() {
+function doTests(numTests: number) {
   tests();
+  if(numTests == 1) return;
   const news = fs.readFileSync('public/static/news.json', 'utf8');
   const json = JSON.parse(news);
-  perftest(json);
-  process.exit();
+  perfTest(json);
 }
 
 function doServer(port: number) {
@@ -76,7 +76,7 @@ async function doApi(path: string) {
   const { cmd, arg, url } = path2cmd(path);
   const resp = await httpsGet(url);
   if(resp.status === 200) {
-    const json = JSON.parse(resp.body!);
+    const json = JSON.parse(resp.body as string);
     const data = !json ? 'No data' : json.error ? json.error.toString() : json;
     const html = renderToMarkup(data, cmd, arg, indexes);
     resp.headers = newHeaders(600, 'text/html', html.length);

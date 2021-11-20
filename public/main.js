@@ -1,7 +1,7 @@
 "use strict";
 define("package", [], {
     "name": "jsxdemo",
-    "version": "0.9.9c",
+    "version": "0.9.9d",
     "description": "Hacker News demo for jsxrender.",
     "homepage": "https://github.com/martyntebby/jsxdemo#readme",
     "main": "public/main.js",
@@ -441,7 +441,7 @@ define("demo/src/server", ["require", "exports"], function (require, exports) {
             status: ok ? 200 : 404,
             statusText: ok ? 'OK' : 'File Not Found',
             headers: ok ? newHeaders(3600, ext2type(path), data?.length) : undefined,
-            body: data?.toString(),
+            body: data,
         };
     }
     exports.fileResp = fileResp;
@@ -572,22 +572,30 @@ define("demo/src/browser2", ["require", "exports", "demo/src/view", "demo/src/co
         }
     }
 });
-define("demo/src/tests", ["require", "exports", "demo/src/misc", "demo/src/control", "demo/src/view"], function (require, exports, misc_4, control_2, view_3) {
+define("demo/src/tests", ["require", "exports", "demo/src/misc", "demo/src/indexes", "demo/src/server", "demo/src/view"], function (require, exports, misc_4, indexes_2, server_2, view_3) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.perftestpost = exports.perftestgui = exports.perftest = exports.tests = void 0;
-    let started = 0;
+    exports.perfStr = exports.perfTest = exports.tests = void 0;
     function tests() {
         (0, misc_4.mylog)('tests');
-        pathtest(false);
+        configTest();
+        pathTest(false);
+        indexTest();
+        serverTest();
         (0, misc_4.mylog)('finished');
     }
     exports.tests = tests;
     function myassert(test, ...args) {
         console.assert(test, ...args);
     }
-    function pathtest(log = true) {
-        (0, misc_4.mylog)('pathtest');
+    function configTest() {
+        (0, misc_4.mylog)('configTest');
+        myassert((0, misc_4.updateConfig)(['worker=worker1']).worker === 'worker1');
+        myassert((0, misc_4.updateConfig)({ WORKER: 'worker2' }).worker === 'worker2');
+        myassert((0, misc_4.updateConfig)([], { worker: 'worker3' }).worker === 'worker3');
+    }
+    function pathTest(log = true) {
+        (0, misc_4.mylog)('pathTest');
         const empty = (0, misc_4.path2cmd)('', log);
         const myapi = (0, misc_4.path2cmd)('/myapi', log);
         const search = (0, misc_4.path2cmd)('/myapi/search?query=abc&page=3', log);
@@ -599,38 +607,68 @@ define("demo/src/tests", ["require", "exports", "demo/src/misc", "demo/src/contr
         myassert(!!myapi.url);
         myassert('search' === search.cmd);
     }
-    function perftest(data) {
+    function indexTest() {
+        (0, misc_4.mylog)('indexTest');
+        const init = (0, indexes_2.getIndexes)();
+        myassert(Array.isArray(init) && init.length === 1);
+        myassert((0, indexes_2.setIndexHtml)('').length === 1);
+        myassert((0, indexes_2.setIndexHtml)('abc').length === 3);
+    }
+    function serverTest() {
+        (0, misc_4.mylog)('serverTest');
+        myassert((0, server_2.modFilePath)('a?b') === 'a');
+        myassert((0, server_2.fileResp)('abc').status === 404);
+        myassert((0, server_2.fileResp)('abc.png', new Uint8Array(1)).headers?.['Content-Type'] === 'image/png');
+        myassert((0, server_2.otherResp)('abc').status === 406);
+        myassert((0, server_2.otherResp)('/').headers?.Location === '/public/');
+    }
+    function perfTest(data) {
         (0, misc_4.mylog)('perftest', misc_4.config.tests);
         const start = Date.now();
         for (let i = misc_4.config.tests; i > 0; --i) {
             const str = (0, view_3.renderToMarkup)(data, 'news', '1');
         }
-        return perfstr(start);
+        return perfStr(start);
     }
-    exports.perftest = perftest;
-    function perftestgui() {
-        (0, misc_4.mylog)('perftestgui', misc_4.config.tests);
-        if (misc_4.config.tests > 0) {
-            perftestasync();
+    exports.perfTest = perfTest;
+    function perfStr(start) {
+        const duration = (Date.now() - start) / 1000;
+        const iterations = Math.abs(misc_4.config.tests);
+        const ips = (iterations / duration).toFixed();
+        const str = 'iterations: ' + iterations + ', duration: ' + duration + ', ips: ' + ips;
+        (0, misc_4.mylog)(str);
+        return str;
+    }
+    exports.perfStr = perfStr;
+});
+define("demo/src/tests2", ["require", "exports", "demo/src/misc", "demo/src/control", "demo/src/tests"], function (require, exports, misc_5, control_2, tests_1) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.perfTestPost = exports.perfTestGui = void 0;
+    let started = 0;
+    function perfTestGui() {
+        (0, misc_5.mylog)('perftestgui', misc_5.config.tests);
+        if (misc_5.config.tests > 0) {
+            perfTestFast();
             return;
         }
         if (started) {
-            (0, misc_4.mylog)('stop');
+            (0, misc_5.mylog)('stop');
             started = 0;
             return;
         }
         started = Date.now();
-        perftestpost(-misc_4.config.tests);
+        perfTestPost(-misc_5.config.tests);
     }
-    exports.perftestgui = perftestgui;
-    async function perftestasync() {
-        const resp = await (0, control_2.cacheFetch)(misc_4.config.baseurl + '/static/news.json');
+    exports.perfTestGui = perfTestGui;
+    async function perfTestFast() {
+        const resp = await (0, control_2.cacheFetch)(misc_5.config.baseurl + '/static/news.json');
         const data = await resp.json();
         const main = document.getElementById('main');
-        main.innerHTML = 'perftest ' + misc_4.config.tests + ' ...';
-        main.innerHTML = perftest(data);
+        main.innerHTML = 'perftest ' + misc_5.config.tests + ' ...';
+        main.innerHTML = (0, tests_1.perfTest)(data);
     }
-    async function perftestpost(count) {
+    async function perfTestPost(count) {
         if (!started)
             return;
         const main = document.getElementById('main');
@@ -640,21 +678,13 @@ define("demo/src/tests", ["require", "exports", "demo/src/misc", "demo/src/contr
             window.postMessage(count - 1, '*');
         }
         else {
-            main.innerHTML = perfstr(started);
+            main.innerHTML = (0, tests_1.perfStr)(started);
             started = 0;
         }
     }
-    exports.perftestpost = perftestpost;
-    function perfstr(start) {
-        const duration = (Date.now() - start) / 1000;
-        const iterations = Math.abs(misc_4.config.tests);
-        const ips = (iterations / duration).toFixed();
-        const str = 'iterations: ' + iterations + ', duration: ' + duration + ', ips: ' + ips;
-        (0, misc_4.mylog)(str);
-        return str;
-    }
+    exports.perfTestPost = perfTestPost;
 });
-define("demo/src/onevents", ["require", "exports", "demo/src/browser2", "demo/src/tests"], function (require, exports, browser2_1, tests_1) {
+define("demo/src/onevents", ["require", "exports", "demo/src/browser2", "demo/src/tests2"], function (require, exports, browser2_1, tests2_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.setupHandlers = void 0;
@@ -666,7 +696,7 @@ define("demo/src/onevents", ["require", "exports", "demo/src/browser2", "demo/sr
     }
     exports.setupHandlers = setupHandlers;
     function onMessage(e) {
-        (0, tests_1.perftestpost)(e.data);
+        (0, tests2_1.perfTestPost)(e.data);
     }
     function onPopState(e) {
         (0, browser2_1.fetchPaint)(e.state);
@@ -677,7 +707,7 @@ define("demo/src/onevents", ["require", "exports", "demo/src/browser2", "demo/sr
             if (cmd !== undefined) {
                 e.preventDefault();
                 if (cmd === 'perftest')
-                    return (0, tests_1.perftestgui)();
+                    return (0, tests2_1.perfTestGui)();
                 const path = cmd || e.target.pathname;
                 window.history.pushState(path, '');
                 document.forms[0].reset();
@@ -697,12 +727,12 @@ define("demo/src/onevents", ["require", "exports", "demo/src/browser2", "demo/sr
         }
     }
 });
-define("demo/src/browser", ["require", "exports", "demo/src/misc", "demo/src/browser2", "demo/src/onevents", "demo/src/view"], function (require, exports, misc_5, browser2_2, onevents_1, view_4) {
+define("demo/src/browser", ["require", "exports", "demo/src/misc", "demo/src/browser2", "demo/src/onevents", "demo/src/view"], function (require, exports, misc_6, browser2_2, onevents_1, view_4) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.browser = void 0;
     function browser() {
-        (0, misc_5.mylog)('browser');
+        (0, misc_6.mylog)('browser');
         const nav = document.getElementById('nav');
         nav.className = 'other';
         if (!('fetch' in window)) {
@@ -711,7 +741,7 @@ define("demo/src/browser", ["require", "exports", "demo/src/misc", "demo/src/bro
         }
         const query = window.location.search;
         const args = query ? query.substring(1).split('&') : [];
-        const config = (0, misc_5.updateConfig)(args);
+        const config = (0, misc_6.updateConfig)(args);
         const main = document.getElementById('main');
         if (!main.firstElementChild)
             (0, browser2_2.fetchPaint)();
@@ -721,7 +751,7 @@ define("demo/src/browser", ["require", "exports", "demo/src/misc", "demo/src/bro
     }
     exports.browser = browser;
     function showFail(summary, reason) {
-        (0, misc_5.mylog)('fail:', summary, reason);
+        (0, misc_6.mylog)('fail:', summary, reason);
         const details = reason +
             '<br><br>Ensure cookies are enabled, the connection is secure,' +
             ' the browser is not in private mode and is supported' +
@@ -734,7 +764,7 @@ define("demo/src/browser", ["require", "exports", "demo/src/misc", "demo/src/bro
         if (service) {
             if ('serviceWorker' in navigator) {
                 navigator.serviceWorker.register(script)
-                    .then(reg => { (0, misc_5.mylog)(reg); (0, browser2_2.setWorker)(); }, err => { showFail('Service Worker failed.', err); startWorker(); });
+                    .then(reg => { (0, misc_6.mylog)(reg); (0, browser2_2.setWorker)(); }, err => { showFail('Service Worker failed.', err); startWorker(); });
             }
             else {
                 showFail('Service Worker not supported.', '');
@@ -751,33 +781,34 @@ define("demo/src/browser", ["require", "exports", "demo/src/misc", "demo/src/bro
         }
     }
 });
-define("demo/src/nodejs", ["require", "exports", "fs", "http", "https", "demo/src/misc", "demo/src/server", "demo/src/view", "demo/src/indexes", "demo/src/tests"], function (require, exports, fs, http, https, misc_6, server_2, view_5, indexes_2, tests_2) {
+define("demo/src/nodejs", ["require", "exports", "fs", "http", "https", "demo/src/misc", "demo/src/server", "demo/src/view", "demo/src/indexes", "demo/src/tests"], function (require, exports, fs, http, https, misc_7, server_3, view_5, indexes_3, tests_2) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.nodejs = void 0;
     let indexes;
     ;
     function nodejs() {
-        (0, misc_6.mylog)('nodejs');
-        const config = (0, misc_6.updateConfig)(process.argv.slice(2), { worker: 'node' });
+        (0, misc_7.mylog)('nodejs');
+        const config = (0, misc_7.updateConfig)(process.argv.slice(2), { worker: 'node' });
         if (config.tests)
-            doTests();
+            doTests(config.tests);
         else
             doServer(config.port);
     }
     exports.nodejs = nodejs;
-    function doTests() {
+    function doTests(numTests) {
         (0, tests_2.tests)();
+        if (numTests == 1)
+            return;
         const news = fs.readFileSync('public/static/news.json', 'utf8');
         const json = JSON.parse(news);
-        (0, tests_2.perftest)(json);
-        process.exit();
+        (0, tests_2.perfTest)(json);
     }
     function doServer(port) {
         const indexStr = fs.readFileSync('public/index.html', 'utf8');
-        indexes = (0, indexes_2.setIndexHtml)(indexStr);
+        indexes = (0, indexes_3.setIndexHtml)(indexStr);
         const server = http.createServer(onRequest).listen(port);
-        (0, misc_6.mylog)('listening', server.address());
+        (0, misc_7.mylog)('listening', server.address());
     }
     async function onRequest(req, res) {
         try {
@@ -792,31 +823,31 @@ define("demo/src/nodejs", ["require", "exports", "fs", "http", "https", "demo/sr
         res.end();
     }
     function doGet(path) {
-        (0, misc_6.mylog)('doGet', path);
+        (0, misc_7.mylog)('doGet', path);
         if (path.startsWith('/myapi/'))
             return doApi(path);
-        path = (0, server_2.modFilePath)(path);
+        path = (0, server_3.modFilePath)(path);
         if (path.startsWith('/public/'))
             return doFile('.' + path);
-        return (0, server_2.otherResp)(path);
+        return (0, server_3.otherResp)(path);
     }
     function doFile(path) {
         return new Promise((resolve, reject) => {
             fs.readFile(path, null, (err, data) => {
                 if (err)
-                    (0, misc_6.mylog)(err.message);
-                resolve((0, server_2.fileResp)(path, data));
+                    (0, misc_7.mylog)(err.message);
+                resolve((0, server_3.fileResp)(path, data));
             });
         });
     }
     async function doApi(path) {
-        const { cmd, arg, url } = (0, misc_6.path2cmd)(path);
+        const { cmd, arg, url } = (0, misc_7.path2cmd)(path);
         const resp = await httpsGet(url);
         if (resp.status === 200) {
             const json = JSON.parse(resp.body);
             const data = !json ? 'No data' : json.error ? json.error.toString() : json;
             const html = (0, view_5.renderToMarkup)(data, cmd, arg, indexes);
-            resp.headers = (0, server_2.newHeaders)(600, 'text/html', html.length);
+            resp.headers = (0, server_3.newHeaders)(600, 'text/html', html.length);
             resp.body = html;
         }
         return resp;
@@ -837,7 +868,7 @@ define("demo/src/nodejs", ["require", "exports", "fs", "http", "https", "demo/sr
         });
     }
 });
-define("demo/src/worker", ["require", "exports", "demo/src/misc", "demo/src/control", "demo/src/server", "demo/src/indexes"], function (require, exports, misc_7, control_3, server_3, indexes_3) {
+define("demo/src/worker", ["require", "exports", "demo/src/misc", "demo/src/control", "demo/src/server", "demo/src/indexes"], function (require, exports, misc_8, control_3, server_4, indexes_4) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.cfworker = exports.sworker = exports.worker = void 0;
@@ -850,15 +881,15 @@ define("demo/src/worker", ["require", "exports", "demo/src/misc", "demo/src/cont
         'static/favicon-256.png'
     ];
     function worker() {
-        (0, misc_7.mylog)('worker');
-        (0, misc_7.updateConfig)([], { baseurl: '/public/', worker: 'web' });
+        (0, misc_8.mylog)('worker');
+        (0, misc_8.updateConfig)([], { baseurl: '/public/', worker: 'web' });
         (0, control_3.enableCache)();
         self.addEventListener('message', onMessage);
     }
     exports.worker = worker;
     function sworker() {
-        (0, misc_7.mylog)('sworker');
-        (0, misc_7.updateConfig)([], { baseurl: '/public/', worker: 'service' });
+        (0, misc_8.mylog)('sworker');
+        (0, misc_8.updateConfig)([], { baseurl: '/public/', worker: 'service' });
         (0, control_3.enableCache)();
         self.addEventListener('install', onInstall);
         self.addEventListener('activate', onActivate);
@@ -866,19 +897,19 @@ define("demo/src/worker", ["require", "exports", "demo/src/misc", "demo/src/cont
     }
     exports.sworker = sworker;
     function cfworker() {
-        (0, misc_7.mylog)('cfworker');
-        const config = (0, misc_7.updateConfig)(self, { worker: 'cf' });
+        (0, misc_8.mylog)('cfworker');
+        const config = (0, misc_8.updateConfig)(self, { worker: 'cf' });
         (0, control_3.enableCache)();
-        (0, indexes_3.setIndexResp)((0, control_3.cacheFetch)(config.baseurl + '/index.html'));
+        (0, indexes_4.setIndexResp)((0, control_3.cacheFetch)(config.baseurl + '/index.html'));
         self.addEventListener('fetch', onFetch);
     }
     exports.cfworker = cfworker;
     function onInstall(e) {
-        (0, misc_7.mylog)('onInstall', e);
+        (0, misc_8.mylog)('onInstall', e);
         e.waitUntil(preCache());
     }
     function onActivate(e) {
-        (0, misc_7.mylog)('onActivate', e);
+        (0, misc_8.mylog)('onActivate', e);
         e.waitUntil(deleteOld());
     }
     function onFetch(e) {
@@ -890,33 +921,33 @@ define("demo/src/worker", ["require", "exports", "demo/src/misc", "demo/src/cont
         postMessage(html);
     }
     async function preCache() {
-        (0, misc_7.mylog)('preCache', PRE_CACHE);
-        const cache = await caches.open(misc_7.version);
+        (0, misc_8.mylog)('preCache', PRE_CACHE);
+        const cache = await caches.open(misc_8.version);
         await cache.addAll(PRE_CACHE);
         const resp = await cache.match('index.html');
         const index = await resp.text();
-        const indexes = (0, indexes_3.setIndexHtml)(index);
+        const indexes = (0, indexes_4.setIndexHtml)(index);
         const html = indexes.join('');
-        (0, indexes_3.setIndexHtml)('');
-        await cache.put('./', (0, server_3.htmlResp)(html, server_3.STATIC_TTL));
+        (0, indexes_4.setIndexHtml)('');
+        await cache.put('./', (0, server_4.htmlResp)(html, server_4.STATIC_TTL));
         await self.skipWaiting();
     }
     async function deleteOld() {
-        (0, misc_7.mylog)('deleteOld', misc_7.version);
+        (0, misc_8.mylog)('deleteOld', misc_8.version);
         await self.clients.claim();
         const keys = await caches.keys();
-        const keys2 = keys.filter(key => key !== misc_7.version);
+        const keys2 = keys.filter(key => key !== misc_8.version);
         await Promise.all(keys2.map(name => caches.delete(name)));
     }
 });
-define("demo/src/main", ["require", "exports", "demo/src/misc", "demo/src/nodejs", "demo/src/browser", "demo/src/worker"], function (require, exports, misc_8, nodejs_1, browser_1, worker_1) {
+define("demo/src/main", ["require", "exports", "demo/src/misc", "demo/src/nodejs", "demo/src/browser", "demo/src/worker"], function (require, exports, misc_9, nodejs_1, browser_1, worker_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     main();
     function main() {
-        (0, misc_8.mylog)('main', misc_8.version);
+        (0, misc_9.mylog)('main', misc_9.version);
         if ('Deno' in globalThis)
-            (0, misc_8.mylog)('Deno not supported');
+            (0, misc_9.mylog)('Deno not supported');
         else if ('window' in globalThis)
             (0, browser_1.browser)();
         else if (typeof process === 'object' && process.version)
