@@ -1,7 +1,7 @@
 "use strict";
 define("package", [], {
     "name": "jsxdemo",
-    "version": "0.9.9d",
+    "version": "0.9.9e",
     "description": "Hacker News demo for jsxrender.",
     "homepage": "https://github.com/martyntebby/jsxdemo#readme",
     "main": "public/main.js",
@@ -30,10 +30,10 @@ define("package", [], {
     "author": "Martyn Tebby",
     "license": "ISC",
     "devDependencies": {
-        "typescript": "4.5.2",
-        "@types/node": "16.11.7",
-        "@types/react": "^17.0.35",
-        "@types/react-dom": "^17.0.11",
+        "typescript": "4.8.4",
+        "@types/node": "18.8.3",
+        "@types/react": "^18.0.21",
+        "@types/react-dom": "^18.0.6",
         "jsxrender": "martyntebby/jsxrender"
     },
     "dependencies": {}
@@ -317,16 +317,12 @@ define("demo/src/view", ["require", "exports", "demo/src/misc", "src/jsxrender"]
     let color = 0;
     function PagerView(props) {
         const prefetch = misc_1.config.worker !== '' && misc_1.config.worker !== 'web' && !misc_1.config.tests;
-        const nolink = props.page > 1 ? undefined : 'nolink';
-        const prev = (0, jsxrender_1.h)(Link, { href: `/${props.cmd}/${props.page - 1}`, cmd: true, className: nolink }, "\u2190 prev");
         const next = (0, jsxrender_1.h)(Link, { href: `/${props.cmd}/${props.page + 1}`, cmd: true, prefetch: prefetch }, "next \u2192");
         const style = misc_1.config.tests ? `color:hsl(${++color},100%,50%)` : 'pointer-events:none';
         const page = (0, jsxrender_1.h)("a", { style: style, "data-cmd": 'perftest' },
             "page ",
             props.page);
         return ((0, jsxrender_1.h)("div", { className: 'pager' },
-            prev,
-            " ",
             page,
             " ",
             next,

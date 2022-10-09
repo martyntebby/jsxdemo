@@ -125,16 +125,13 @@ let color = 0;
 
 function PagerView(props: { cmd: string, page: number }) {
   const prefetch = config.worker !== '' && config.worker !== 'web' && !config.tests;
-  const nolink = props.page > 1 ? undefined : 'nolink';
-  const prev = <Link href={`/${props.cmd}/${props.page - 1}`} cmd
-    className={nolink}>&larr; prev</Link>;
   const next = <Link href={`/${props.cmd}/${props.page + 1}`} cmd
     prefetch={prefetch}>next &rarr;</Link>;
   const style = config.tests ? `color:hsl(${++color},100%,50%)` : 'pointer-events:none';
   const page = <a style={style as any} data-cmd='perftest'>page {props.page}</a>;
   return (
     <div className='pager'>
-      {prev} {page} {next} <LogsView/>
+      {page} {next} <LogsView/>
     </div>
   );
 }

@@ -1,7 +1,8 @@
 name = "jsxdemo"
-type = "javascript"
-zone_id = "$CF_ZONE_ID"
-account_id = "$CF_ACCOUNT_ID"
+main = "public/main.js"
+#type = "javascript"
+#zone_id = "$CF_ZONE_ID"
+#account_id = "$CLOUDFLARE_ACCOUNT_ID"
 routes = [
   "jsxdemo.westinca.com/myapi/*"
 ]
