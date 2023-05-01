@@ -8,15 +8,12 @@ import * as https from 'https';
 import { mylog, updateConfig, path2cmd } from './misc';
 import { newHeaders, modFilePath, fileResp, otherResp } from './server';
 import { renderToMarkup } from './view';
-import { setIndexHtml } from './indexes';
 import { perfTest, tests } from './tests';
-
-let indexes: string[];
 
 interface MyResponse {
   status: number;
   statusText?: string;
-  headers?: http.OutgoingHttpHeaders;
+  headers?: http.IncomingHttpHeaders;
   body?: string | Uint8Array;
 };
 
@@ -35,8 +32,6 @@ function doTests(numTests: number) {
 }
 
 function doServer(port: number) {
-  const indexStr = fs.readFileSync('public/index.html', 'utf8');
-  indexes = setIndexHtml(indexStr);
   const server = http.createServer(onRequest).listen(port);
   mylog('listening', server.address());
 }
@@ -78,7 +73,7 @@ async function doApi(path: string) {
   if(resp.status === 200) {
     const json = JSON.parse(resp.body as string);
     const data = !json ? 'No data' : json.error ? json.error.toString() : json;
-    const html = renderToMarkup(data, cmd, arg, indexes);
+    const html = renderToMarkup(data, cmd, arg);
     resp.headers = newHeaders(600, 'text/html', html.length);
     resp.body = html;
   }

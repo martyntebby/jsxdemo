@@ -3,7 +3,6 @@
 */
 export { tests, perfTest, perfStr };
 import { mylog, config, path2cmd, updateConfig } from './misc';
-import { getIndexes, setIndexHtml } from './indexes';
 import { modFilePath, fileResp, otherResp } from './server';
 import { renderToMarkup } from './view';
 
@@ -11,7 +10,6 @@ function tests() {
   mylog('tests');
   configTest();
   pathTest(false);
-  indexTest();
   serverTest();
   mylog('finished');
 }
@@ -44,13 +42,6 @@ function pathTest(log = true) {
   myassert('search' === search.cmd);
 }
 
-function indexTest() {
-  mylog('indexTest');
-  const init = getIndexes();
-  myassert(Array.isArray(init) && init.length === 1);
-  myassert(setIndexHtml('').length === 1);
-  myassert(setIndexHtml('abc').length === 3);
-}
 
 function serverTest() {
   mylog('serverTest');

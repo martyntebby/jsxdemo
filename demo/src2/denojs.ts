@@ -6,7 +6,6 @@
 
 export { denojs };
 import { mylog, updateConfig } from '../src/misc';
-import { setIndexHtml } from '../src/indexes';
 import { cacheFetch } from '../src/control';
 import { modFilePath, fileResp, otherResp } from '../src/server';
 
@@ -19,8 +18,6 @@ function denojs() {
 }
 
 async function doServer(port: number) {
-  const index = Deno.readFileSync('public/index.html');
-  setIndexHtml(new TextDecoder().decode(index));
   const listener = Deno.listen({ port });
   mylog('listening', listener.addr);
   for await(const conn of listener) {

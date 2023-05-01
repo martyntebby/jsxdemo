@@ -12,7 +12,8 @@ export { worker, sworker, cfworker };
 import { version, mylog, updateConfig } from './misc';
 import { enableCache, cacheFetch } from './control';
 import { STATIC_TTL, htmlResp } from './server';
-import { setIndexHtml, setIndexResp } from './indexes';
+import { indexes } from '../../dist/indexes';
+import { clearFull } from './view';
 import type { ExtendableEvent, FetchEvent } from './types';
 
 const PRE_CACHE = [ 'index.html'
@@ -38,6 +39,7 @@ function sworker() {
   mylog('sworker');
   updateConfig([], {baseurl: '/public/', worker: 'service'});
   enableCache();
+  clearFull();
   self.addEventListener('install', onInstall);
   self.addEventListener('activate', onActivate);
   self.addEventListener('fetch', onFetch);
@@ -47,7 +49,6 @@ function cfworker() {
   mylog('cfworker');
   const config = updateConfig(self, {worker: 'cf'});
   enableCache();
-  setIndexResp(cacheFetch(config.baseurl + '/index.html'));
   self.addEventListener('fetch', onFetch);
 }
 
@@ -77,9 +78,7 @@ async function preCache() {
   await cache.addAll(PRE_CACHE);
   const resp = await cache.match('index.html');
   const index = await resp!.text();
-  const indexes = setIndexHtml(index);
   const html = indexes.join('');
-  setIndexHtml('');
   await cache.put('./', htmlResp(html, STATIC_TTL));
   await self.skipWaiting();
 }

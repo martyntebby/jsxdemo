@@ -2,7 +2,6 @@
   Fetches data from hnapi or elsewhere and supplies as json or formatted html.
 */
 export { enableCache, cacheFetch };
-import { getIndexes } from './indexes';
 import { config, version, mylog, path2cmd } from './misc';
 import { renderToMarkup } from './view';
 import { STATIC_TTL, DYNAMIC_TTL, htmlResp } from './server';
@@ -67,8 +66,7 @@ function fetchCF(req: RequestInfo, ttl: number) {
 async function api2resp(resp: Response, cmd: string, arg: string) {
   if(!cmd) return resp; // file
   const data = resp.json();
-  const indexes = getIndexes();
-  const html = renderToMarkup(await data, cmd, arg, await indexes);
+  const html = renderToMarkup(await data, cmd, arg);
   return htmlResp(html, DYNAMIC_TTL);
 }
 

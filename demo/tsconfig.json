@@ -1,6 +1,6 @@
 {
   "extends": "../tsbase",
-  "include": [ "src/*.ts*", "../src/jsxrender.ts", "../package.json" ],
+  "include": [ "src/*.ts*", "../src/jsxrender.ts", "../package.json", "../dist/indexes.ts" ],
   "compilerOptions": {
     "module": "amd",
     "outFile": "../public/main.js",

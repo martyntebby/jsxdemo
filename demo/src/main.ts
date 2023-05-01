@@ -1,6 +1,6 @@
 /*
   Main entry point.
-  Determines environment type and dispatchs to appropriate function.
+  Determines environment type and dispatches to appropriate function.
 */
 import { mylog, version } from './misc';
 import { nodejs } from './nodejs';

@@ -1,8 +1,7 @@
 name = "jsxdemo"
 main = "public/main.js"
-#type = "javascript"
-#zone_id = "$CF_ZONE_ID"
+compatibility_date = "2023-05-01"
+route = "jsxdemo.westinca.com/myapi/*"
+no_bundle = true
+#minify = true
 #account_id = "$CLOUDFLARE_ACCOUNT_ID"
-routes = [
-  "jsxdemo.westinca.com/myapi/*"
-]

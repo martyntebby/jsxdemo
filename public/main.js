@@ -1,7 +1,7 @@
 "use strict";
 define("package", [], {
     "name": "jsxdemo",
-    "version": "0.9.9e",
+    "version": "0.9.9f",
     "description": "Hacker News demo for jsxrender.",
     "homepage": "https://github.com/martyntebby/jsxdemo#readme",
     "main": "public/main.js",
@@ -18,7 +18,7 @@ define("package", [], {
     },
     "scripts": {
         "install": "ln -sf node_modules/jsxrender/src .",
-        "build": "rm -rf dist public/main.js && tsc -b . --force && node dist/bundle.js",
+        "build": "rm -rf dist public/main.js && tsc -p scripts && node dist/bundle.js && tsc -p demo",
         "watch": "tsc -b . -w --listEmittedFiles",
         "clean": "rm -rf dist",
         "start": "node .",
@@ -30,10 +30,10 @@ define("package", [], {
     "author": "Martyn Tebby",
     "license": "ISC",
     "devDependencies": {
-        "typescript": "4.8.4",
-        "@types/node": "18.8.3",
-        "@types/react": "^18.0.21",
-        "@types/react-dom": "^18.0.6",
+        "typescript": "5.0.4",
+        "@types/node": "18.15.12",
+        "@types/react": "^18.0.37",
+        "@types/react-dom": "^18.0.11",
         "jsxrender": "martyntebby/jsxrender"
     },
     "dependencies": {}
@@ -109,6 +109,159 @@ define("demo/src/misc", ["require", "exports", "package", "package"], function (
             default: return `https://api.hnpwa.com/v0/${cmd}/${arg}.json`;
         }
     }
+});
+define("dist/indexes", ["require", "exports"], function (require, exports) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.indexes = void 0;
+    const indexes = [
+        `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>JSX Hacker News</title>
+  <link rel="manifest" href="/public/static/manifest.json">
+  <link rel="icon" href="/public/static/favicon-32.png">
+  <link rel="apple-touch-icon" href="/public/static/favicon-256.png">
+  <base rel="noopener noreferrer nofollow" target="_blank"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Sample Hacker News app using jsxrender"/>
+  <meta name="theme-color" content="orange"/>
+  <style>
+body {
+  margin: 0;
+  overflow-y: scroll;
+}
+.error {
+  color: red;
+  margin: 0.5rem;
+  padding: 0.5rem;
+  border: 0.1rem solid red;
+}
+#nav:not(.other) + .error {
+  display: none;
+}
+.pager {
+  position: sticky;
+  z-index: 1;
+  bottom: 0;
+  background: lightyellow;
+  padding: 0.5rem;
+  display: flex;
+  justify-content: space-evenly;
+  box-shadow: 0 -1px 1px rgba(0,0,0,0.1);
+}
+#nav {
+  position: sticky;
+  z-index: 1;
+  top: 0;
+  background: orange;
+  padding: 0 0.5rem;
+  display: flex;
+  justify-content: space-between;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+#nav > a {
+  margin: 0.5rem 0.5rem;
+}
+#nav > form {
+  flex-grow: 1;
+  text-align: center;
+  align-self: center;
+}
+#nav > a.intro {
+  font-weight: bold;
+  color: purple;
+}
+.intro>.intro, .news>.news, .newest>.newest, .show>.show, .ask>.ask, .jobs>.jobs {
+  text-decoration: underline;
+  text-decoration-thickness: 0.1rem;
+}
+#main {
+  margin: 0;
+  overflow-wrap: break-word;
+}
+.inset {
+  padding: 1rem;
+}
+.ol {
+  margin-left: 1rem;
+}
+.li {
+  margin-bottom: 0.5rem;
+}
+.details {
+  margin-top: 0.5rem;
+  margin-left: 1rem;
+}
+a[data-cmd], .mainlink {
+  color: black;
+  text-decoration: none;
+}
+a:hover {
+  text-decoration: underline;
+}
+.bold {
+  font-weight: bold;
+}
+.large {
+  font-size: large;
+}
+.smallgrey {
+  font-size: small;
+  color: #666;
+}
+.loading {
+  cursor: progress;
+  opacity: 0.1;
+  transition: opacity 1s;
+}
+.nolink {
+  color: #666 !important;
+  pointer-events: none;
+}
+
+@media (max-width: 28rem) {
+  .optional {
+    display: none;
+  }
+  .pager {
+    position: static;
+    padding-bottom: 2rem;
+  }
+}
+</style>
+</head>
+<body>
+  <nav id="nav" class="
+`, `
+">
+    <a href="/public/index.html" class="intro optional" target="_self"
+      data-cmd="/public/static/intro.html">JSX</a>
+    <a href="/myapi/news/1"   class="news"   target="_self" data-cmd>top</a>
+    <a href="/myapi/newest/1" class="newest" target="_self" data-cmd>new</a>
+    <a href="/myapi/show/1"   class="show"   target="_self" data-cmd>show</a>
+    <a href="/myapi/ask/1"    class="ask"    target="_self" data-cmd>ask</a>
+    <a href="/myapi/jobs/1"   class="jobs"   target="_self" data-cmd>jobs</a>
+    <form action="/myapi/search" class="search optional" target="_self" data-cmd>
+      <input type="search" placeholder="search" name="query">
+    </form>
+    <a href="https://github.com/martyntebby/jsxdemo" class="mainlink">about</a>
+  </nav>
+  <noscript id="error"><div class="error">
+    Works best with JavaScript.
+  </div></noscript>
+  <main id="main">
+`, `
+</main>
+  <script async type="module" src="/public/main.js"></script>
+</body>
+</html>
+
+`
+    ];
+    exports.indexes = indexes;
 });
 define("src/jsxrender", ["require", "exports"], function (require, exports) {
     "use strict";
@@ -201,14 +354,19 @@ define("demo/src/model", ["require", "exports"], function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
 });
-define("demo/src/view", ["require", "exports", "demo/src/misc", "src/jsxrender"], function (require, exports, misc_1, jsxrender_1) {
+define("demo/src/view", ["require", "exports", "dist/indexes", "demo/src/misc", "src/jsxrender"], function (require, exports, indexes_1, misc_1, jsxrender_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.renderToMarkup = void 0;
-    function renderToMarkup(data, cmd, arg, indexes) {
+    exports.renderToMarkup = exports.clearFull = void 0;
+    let useFull = true;
+    function clearFull() {
+        useFull = false;
+    }
+    exports.clearFull = clearFull;
+    function renderToMarkup(data, cmd, arg) {
         const vnode = renderToJSX(data, cmd, arg);
         const str = (0, jsxrender_1.renderToStaticMarkup)(vnode);
-        return indexes && indexes.length === 3 ? indexes[0] + cmd + indexes[1] + str + indexes[2] : str;
+        return useFull ? indexes_1.indexes[0] + cmd + indexes_1.indexes[1] + str + indexes_1.indexes[2] : str;
     }
     exports.renderToMarkup = renderToMarkup;
     function renderToJSX(data, cmd, arg) {
@@ -350,41 +508,6 @@ define("demo/src/view", ["require", "exports", "demo/src/misc", "src/jsxrender"]
             details));
     }
 });
-define("demo/src/indexes", ["require", "exports"], function (require, exports) {
-    "use strict";
-    Object.defineProperty(exports, "__esModule", { value: true });
-    exports.setIndexResp = exports.setIndexHtml = exports.getIndexes = void 0;
-    const EMPTY_INDEXES = ['index not set'];
-    let indexes = EMPTY_INDEXES;
-    function getIndexes() {
-        return indexes;
-    }
-    exports.getIndexes = getIndexes;
-    function setIndexHtml(text) {
-        return indexes = splitIndex(text);
-    }
-    exports.setIndexHtml = setIndexHtml;
-    function setIndexResp(respp) {
-        indexes = setIndexResp2(respp);
-    }
-    exports.setIndexResp = setIndexResp;
-    function splitIndex(text) {
-        if (!text)
-            return EMPTY_INDEXES;
-        const nav = '<nav id="nav" class="">';
-        const pos0 = text.indexOf(nav) + nav.length - 2;
-        const main = '<main id="main">';
-        const pos1 = text.indexOf(main) + main.length;
-        const pos2 = text.indexOf('</main>', pos1);
-        return [text.substring(0, pos0), text.substring(pos0, pos1),
-            text.substring(pos2)];
-    }
-    async function setIndexResp2(respp) {
-        const resp = await respp;
-        const index = resp.ok ? await resp.text() : '';
-        return setIndexHtml(index);
-    }
-});
 define("demo/src/server", ["require", "exports"], function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -447,7 +570,7 @@ define("demo/src/server", ["require", "exports"], function (require, exports) {
     }
     exports.htmlResp = htmlResp;
 });
-define("demo/src/control", ["require", "exports", "demo/src/indexes", "demo/src/misc", "demo/src/view", "demo/src/server"], function (require, exports, indexes_1, misc_2, view_1, server_1) {
+define("demo/src/control", ["require", "exports", "demo/src/misc", "demo/src/view", "demo/src/server"], function (require, exports, misc_2, view_1, server_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.cacheFetch = exports.enableCache = void 0;
@@ -505,8 +628,7 @@ define("demo/src/control", ["require", "exports", "demo/src/indexes", "demo/src/
         if (!cmd)
             return resp;
         const data = resp.json();
-        const indexes = (0, indexes_1.getIndexes)();
-        const html = (0, view_1.renderToMarkup)(await data, cmd, arg, await indexes);
+        const html = (0, view_1.renderToMarkup)(await data, cmd, arg);
         return (0, server_1.htmlResp)(html, server_1.DYNAMIC_TTL);
     }
     function cacheable(resp3, cmd, arg) {
@@ -568,7 +690,7 @@ define("demo/src/browser2", ["require", "exports", "demo/src/view", "demo/src/co
         }
     }
 });
-define("demo/src/tests", ["require", "exports", "demo/src/misc", "demo/src/indexes", "demo/src/server", "demo/src/view"], function (require, exports, misc_4, indexes_2, server_2, view_3) {
+define("demo/src/tests", ["require", "exports", "demo/src/misc", "demo/src/server", "demo/src/view"], function (require, exports, misc_4, server_2, view_3) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.perfStr = exports.perfTest = exports.tests = void 0;
@@ -576,7 +698,6 @@ define("demo/src/tests", ["require", "exports", "demo/src/misc", "demo/src/index
         (0, misc_4.mylog)('tests');
         configTest();
         pathTest(false);
-        indexTest();
         serverTest();
         (0, misc_4.mylog)('finished');
     }
@@ -602,13 +723,6 @@ define("demo/src/tests", ["require", "exports", "demo/src/misc", "demo/src/index
         myassert('1' === myapi.arg);
         myassert(!!myapi.url);
         myassert('search' === search.cmd);
-    }
-    function indexTest() {
-        (0, misc_4.mylog)('indexTest');
-        const init = (0, indexes_2.getIndexes)();
-        myassert(Array.isArray(init) && init.length === 1);
-        myassert((0, indexes_2.setIndexHtml)('').length === 1);
-        myassert((0, indexes_2.setIndexHtml)('abc').length === 3);
     }
     function serverTest() {
         (0, misc_4.mylog)('serverTest');
@@ -777,11 +891,10 @@ define("demo/src/browser", ["require", "exports", "demo/src/misc", "demo/src/bro
         }
     }
 });
-define("demo/src/nodejs", ["require", "exports", "fs", "http", "https", "demo/src/misc", "demo/src/server", "demo/src/view", "demo/src/indexes", "demo/src/tests"], function (require, exports, fs, http, https, misc_7, server_3, view_5, indexes_3, tests_2) {
+define("demo/src/nodejs", ["require", "exports", "fs", "http", "https", "demo/src/misc", "demo/src/server", "demo/src/view", "demo/src/tests"], function (require, exports, fs, http, https, misc_7, server_3, view_5, tests_2) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.nodejs = void 0;
-    let indexes;
     ;
     function nodejs() {
         (0, misc_7.mylog)('nodejs');
@@ -801,8 +914,6 @@ define("demo/src/nodejs", ["require", "exports", "fs", "http", "https", "demo/sr
         (0, tests_2.perfTest)(json);
     }
     function doServer(port) {
-        const indexStr = fs.readFileSync('public/index.html', 'utf8');
-        indexes = (0, indexes_3.setIndexHtml)(indexStr);
         const server = http.createServer(onRequest).listen(port);
         (0, misc_7.mylog)('listening', server.address());
     }
@@ -842,7 +953,7 @@ define("demo/src/nodejs", ["require", "exports", "fs", "http", "https", "demo/sr
         if (resp.status === 200) {
             const json = JSON.parse(resp.body);
             const data = !json ? 'No data' : json.error ? json.error.toString() : json;
-            const html = (0, view_5.renderToMarkup)(data, cmd, arg, indexes);
+            const html = (0, view_5.renderToMarkup)(data, cmd, arg);
             resp.headers = (0, server_3.newHeaders)(600, 'text/html', html.length);
             resp.body = html;
         }
@@ -864,7 +975,7 @@ define("demo/src/nodejs", ["require", "exports", "fs", "http", "https", "demo/sr
         });
     }
 });
-define("demo/src/worker", ["require", "exports", "demo/src/misc", "demo/src/control", "demo/src/server", "demo/src/indexes"], function (require, exports, misc_8, control_3, server_4, indexes_4) {
+define("demo/src/worker", ["require", "exports", "demo/src/misc", "demo/src/control", "demo/src/server", "dist/indexes", "demo/src/view"], function (require, exports, misc_8, control_3, server_4, indexes_2, view_6) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.cfworker = exports.sworker = exports.worker = void 0;
@@ -887,6 +998,7 @@ define("demo/src/worker", ["require", "exports", "demo/src/misc", "demo/src/cont
         (0, misc_8.mylog)('sworker');
         (0, misc_8.updateConfig)([], { baseurl: '/public/', worker: 'service' });
         (0, control_3.enableCache)();
+        (0, view_6.clearFull)();
         self.addEventListener('install', onInstall);
         self.addEventListener('activate', onActivate);
         self.addEventListener('fetch', onFetch);
@@ -896,7 +1008,6 @@ define("demo/src/worker", ["require", "exports", "demo/src/misc", "demo/src/cont
         (0, misc_8.mylog)('cfworker');
         const config = (0, misc_8.updateConfig)(self, { worker: 'cf' });
         (0, control_3.enableCache)();
-        (0, indexes_4.setIndexResp)((0, control_3.cacheFetch)(config.baseurl + '/index.html'));
         self.addEventListener('fetch', onFetch);
     }
     exports.cfworker = cfworker;
@@ -922,9 +1033,7 @@ define("demo/src/worker", ["require", "exports", "demo/src/misc", "demo/src/cont
         await cache.addAll(PRE_CACHE);
         const resp = await cache.match('index.html');
         const index = await resp.text();
-        const indexes = (0, indexes_4.setIndexHtml)(index);
-        const html = indexes.join('');
-        (0, indexes_4.setIndexHtml)('');
+        const html = indexes_2.indexes.join('');
         await cache.put('./', (0, server_4.htmlResp)(html, server_4.STATIC_TTL));
         await self.skipWaiting();
     }
