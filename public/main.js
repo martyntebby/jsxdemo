@@ -357,15 +357,11 @@ define("demo/src/model", ["require", "exports"], function (require, exports) {
 define("demo/src/view", ["require", "exports", "dist/indexes", "demo/src/misc", "src/jsxrender"], function (require, exports, indexes_1, misc_1, jsxrender_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.renderToMarkup = exports.clearFull = void 0;
-    let useFull = true;
-    function clearFull() {
-        useFull = false;
-    }
-    exports.clearFull = clearFull;
+    exports.renderToMarkup = void 0;
     function renderToMarkup(data, cmd, arg) {
         const vnode = renderToJSX(data, cmd, arg);
         const str = (0, jsxrender_1.renderToStaticMarkup)(vnode);
+        const useFull = misc_1.config.worker === 'node' || misc_1.config.worker === 'cf';
         return useFull ? indexes_1.indexes[0] + cmd + indexes_1.indexes[1] + str + indexes_1.indexes[2] : str;
     }
     exports.renderToMarkup = renderToMarkup;
@@ -975,7 +971,7 @@ define("demo/src/nodejs", ["require", "exports", "fs", "http", "https", "demo/sr
         });
     }
 });
-define("demo/src/worker", ["require", "exports", "demo/src/misc", "demo/src/control", "demo/src/server", "dist/indexes", "demo/src/view"], function (require, exports, misc_8, control_3, server_4, indexes_2, view_6) {
+define("demo/src/worker", ["require", "exports", "demo/src/misc", "demo/src/control", "demo/src/server", "dist/indexes"], function (require, exports, misc_8, control_3, server_4, indexes_2) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.cfworker = exports.sworker = exports.worker = void 0;
@@ -998,7 +994,6 @@ define("demo/src/worker", ["require", "exports", "demo/src/misc", "demo/src/cont
         (0, misc_8.mylog)('sworker');
         (0, misc_8.updateConfig)([], { baseurl: '/public/', worker: 'service' });
         (0, control_3.enableCache)();
-        (0, view_6.clearFull)();
         self.addEventListener('install', onInstall);
         self.addEventListener('activate', onActivate);
         self.addEventListener('fetch', onFetch);

@@ -1,22 +1,17 @@
 /*
   JSX to render the dynamic part of the UI.
 */
-export { clearFull, renderToMarkup }
+export { renderToMarkup }
 import { indexes } from '../../dist/indexes';
 import { config, resetLog } from './misc';
 import { h, renderToStaticMarkup } from '../../src/jsxrender';
 import type { HnUser, HnComment, HnItem } from './model';
 import type { HnSearchResults, HnSearchItem } from './model';
 
-let useFull = true;
-
-function clearFull() {
-  useFull = false;
-}
-
 function renderToMarkup(data: any, cmd: string, arg: string) {
   const vnode = renderToJSX(data, cmd, arg);
   const str = renderToStaticMarkup(vnode as any);
+  const useFull = config.worker === 'node' || config.worker === 'cf';
   return useFull ? indexes[0] + cmd + indexes[1] + str + indexes[2] : str;
 }
 

@@ -13,7 +13,6 @@ import { version, mylog, updateConfig } from './misc';
 import { enableCache, cacheFetch } from './control';
 import { STATIC_TTL, htmlResp } from './server';
 import { indexes } from '../../dist/indexes';
-import { clearFull } from './view';
 import type { ExtendableEvent, FetchEvent } from './types';
 
 const PRE_CACHE = [ 'index.html'
@@ -39,7 +38,6 @@ function sworker() {
   mylog('sworker');
   updateConfig([], {baseurl: '/public/', worker: 'service'});
   enableCache();
-  clearFull();
   self.addEventListener('install', onInstall);
   self.addEventListener('activate', onActivate);
   self.addEventListener('fetch', onFetch);
