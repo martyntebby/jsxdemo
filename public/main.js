@@ -143,7 +143,8 @@ body {
   display: none;
 }
 .pager {
-  position: sticky;
+  position: fixed;
+  width: 100%;
   z-index: 1;
   bottom: 0;
   background: lightyellow;
@@ -187,6 +188,7 @@ body {
 }
 .ol {
   margin-left: 1rem;
+  margin-bottom: 3.5rem;
 }
 .li {
   margin-bottom: 0.5rem;
